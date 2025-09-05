@@ -36,7 +36,7 @@ class BookingService: ObservableObject {
         self.calendarService = calendarService
     }
     
-    func bookClass(_ classItem: Class, participants: Int = 1, requirements: String? = nil) async throws -> Booking {
+    func bookClass(_ classItem: Class, participants: Int = 1, selectedChildren: [Child]? = nil, requirements: String? = nil) async throws -> Booking {
         // Validate booking
         guard classItem.isAvailable else {
             throw BookingError.classFull
@@ -55,6 +55,7 @@ class BookingService: ObservableObject {
             status: .upcoming,
             bookingDate: Date(),
             numberOfParticipants: participants,
+            selectedChildren: selectedChildren,
             specialRequirements: requirements,
             attended: false
         )
@@ -71,6 +72,7 @@ class BookingService: ObservableObject {
                 status: booking.status,
                 bookingDate: booking.bookingDate,
                 numberOfParticipants: booking.numberOfParticipants,
+                selectedChildren: booking.selectedChildren,
                 specialRequirements: booking.specialRequirements,
                 attended: booking.attended,
                 calendar: Booking.Calendar(eventId: eventId, reminderSet: true)

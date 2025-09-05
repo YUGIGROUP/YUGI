@@ -19,25 +19,60 @@ struct YUGIButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.headline)
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(style == .primary ? Color("Primary") : Color.white.opacity(0.2))
+                .frame(height: 56)
+                .background(
+                    Group {
+                        if style == .primary {
+                            // Transparent background with elegant border
+                            Color.clear
+                        } else {
+                            // Transparent background for secondary style too
+                            Color.clear
+                        }
+                    }
+                )
                 .foregroundColor(.white)
-                .cornerRadius(10)
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            style == .primary ? 
+                            Color.white.opacity(0.3) : 
+                            Color.white.opacity(0.3),
+                            lineWidth: 1.5
+                        )
+                )
+                .shadow(
+                    color: style == .primary ? 
+                    Color.black.opacity(0.1) : 
+                    Color.black.opacity(0.1),
+                    radius: 6,
+                    x: 0,
+                    y: 3
+                )
         }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
 #Preview("YUGI Buttons") {
     ZStack {
-        Color.yugiOrange
-            .ignoresSafeArea()
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color(hex: "#FFF5E9"),
+                Color(hex: "#E8E5DB")
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
         
-        VStack(spacing: 20) {
-            YUGIButton(title: "Primary Button", action: {})
-            YUGIButton(title: "Secondary Button", style: .secondary, action: {})
+        VStack(spacing: 24) {
+            YUGIButton(title: "Get Started", action: {})
+            YUGIButton(title: "Learn More", style: .secondary, action: {})
         }
-        .padding()
+        .padding(.horizontal, 32)
     }
 } 

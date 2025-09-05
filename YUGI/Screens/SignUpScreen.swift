@@ -1,13 +1,17 @@
 import SwiftUI
 import PhotosUI
+import Combine
 
 struct SignUpScreen: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var firebaseAuthService = FirebaseAuthService()
     @State private var currentStep = 1
     @State private var fullName = ""
     @State private var email = ""
     @State private var selectedUserType: UserType = .parent
     @State private var shouldShowWelcome = false
+    @State private var shouldShowProviderVerification = false
+    @State private var shouldNavigateToParentOnboarding = false
     
     // Parent specific fields
     @State private var password = ""
@@ -17,7 +21,6 @@ struct SignUpScreen: View {
     @State private var mobileNumber = ""
     @State private var businessName = ""
     @State private var businessAddress = ""
-    @State private var servicesDescription = ""
     @State private var selectedAgeGroups: Set<String> = []
     @State private var bio = ""
     @State private var providerSubStep = 1
@@ -30,12 +33,7 @@ struct SignUpScreen: View {
     @State private var providerPassword = ""
     @State private var providerConfirmPassword = ""
     
-    // Other specific fields
-    @State private var appUsageDescription = ""
-    @State private var wouldBookClasses = false
-    @State private var otherSubStep = 1
-    @State private var otherPassword = ""
-    @State private var otherConfirmPassword = ""
+
     
     // Form validation
     @State private var showingError = false
@@ -48,7 +46,7 @@ struct SignUpScreen: View {
             VStack(spacing: 0) {
                 // Progress bar
                 ProgressView(value: Double(currentStep), total: 3)
-                    .tint(Color.yugiOrange)
+                    .tint(Color(hex: "#BC6C5C"))
                     .padding()
                 
                 ScrollView {
@@ -68,8 +66,6 @@ struct SignUpScreen: View {
                                 parentSection
                             case .provider:
                                 providerSection
-                            case .other:
-                                otherSection
                             }
                         }
                         
@@ -78,31 +74,13 @@ struct SignUpScreen: View {
                     .padding()
                 }
             }
-            .navigationTitle("Sign Up")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.yugiOrange, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(.white)
-                }
-                
-                ToolbarItem(placement: .principal) {
-                    Text("Sign Up")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                }
-            }
+            .navigationBarHidden(true)
             .alert("Error", isPresented: $showingError) {
                 Button("OK") {}
             } message: {
                 Text(errorMessage)
             }
-            .background(Color.yugiOrange.ignoresSafeArea())
+            .background(Color(hex: "#BC6C5C").ignoresSafeArea())
             .onChange(of: profileImageItem) { oldValue, newValue in
                 if let item = newValue {
                     loadImage(from: item) { image in
@@ -124,8 +102,14 @@ struct SignUpScreen: View {
                     }
                 }
             }
-            .navigationDestination(isPresented: $shouldShowWelcome) {
+            .fullScreenCover(isPresented: $shouldShowWelcome) {
                 WelcomeUserScreen(userName: fullName)
+            }
+            .fullScreenCover(isPresented: $shouldShowProviderVerification) {
+                ProviderVerificationScreen(businessName: businessName)
+            }
+            .navigationDestination(isPresented: $shouldNavigateToParentOnboarding) {
+                ParentOnboardingScreen(parentName: fullName)
                     .navigationBarBackButtonHidden()
             }
         }
@@ -172,7 +156,7 @@ struct SignUpScreen: View {
                                 .foregroundColor(selectedUserType == type ? .white : .white.opacity(0.7))
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(type.rawValue)
+                                Text(type.displayName)
                                     .font(.headline)
                                     .foregroundColor(.white)
                                 Text(type.description)
@@ -281,16 +265,24 @@ struct SignUpScreen: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(selectedAgeGroups.contains(age) ? Color.white : Color.white.opacity(0.2))
-                                .foregroundColor(selectedAgeGroups.contains(age) ? .yugiOrange : .white)
+                                .foregroundColor(selectedAgeGroups.contains(age) ? Color(hex: "#BC6C5C") : .white)
                                 .cornerRadius(20)
                         }
                     }
                 }
             }
             
-            YUGITextEditor(placeholder: "Describe your classes/services", text: $servicesDescription, minHeight: 100)
+            YUGITextEditor(
+                placeholder: "Write a friendly bio that includes a description of your classes/services offered...",
+                text: $bio,
+                minHeight: 120,
+                maxCharacters: 400
+            )
             
-            YUGITextEditor(placeholder: "Write a friendly bio", text: $bio, minHeight: 100)
+            Text("\(bio.count)/400 characters")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.7))
+                .frame(maxWidth: .infinity, alignment: .trailing)
             
             YUGIButton(
                 title: "Next",
@@ -308,15 +300,20 @@ struct SignUpScreen: View {
                 .font(.headline)
                 .foregroundColor(.white)
             
-            Text("Please upload your qualifications and DBS certificate")
+            Text("Please upload your DBS certificate and profile picture. Qualifications are optional.")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.9))
             
             VStack(spacing: 20) {
                 // Profile Image
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Profile Picture")
-                        .foregroundColor(.white)
+                    HStack {
+                        Text("Profile Picture")
+                            .foregroundColor(.white)
+                        Text("(Required)")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
                     
                     PhotosPicker(selection: $profileImageItem, matching: .images) {
                         if let profileImage = profileImage {
@@ -342,8 +339,13 @@ struct SignUpScreen: View {
                 
                 // Qualifications
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Qualifications")
-                        .foregroundColor(.white)
+                    HStack {
+                        Text("Qualifications")
+                            .foregroundColor(.white)
+                        Text("(Optional)")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
                     
                     PhotosPicker(selection: $qualificationsItem, matching: .images) {
                         HStack {
@@ -364,8 +366,13 @@ struct SignUpScreen: View {
                 
                 // DBS Certificate
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("DBS Certificate")
-                        .foregroundColor(.white)
+                    HStack {
+                        Text("DBS Certificate")
+                            .foregroundColor(.white)
+                        Text("(Required)")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
                     
                     PhotosPicker(selection: $dbsCertificateItem, matching: .images) {
                         HStack {
@@ -431,74 +438,7 @@ struct SignUpScreen: View {
         }
     }
     
-    private var otherSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Tell us more")
-                .font(.title2)
-                .bold()
-                .foregroundColor(.white)
-            
-            if otherSubStep == 1 {
-                otherBasicInfoSection
-            } else {
-                otherPasswordSection
-            }
-        }
-    }
-    
-    private var otherBasicInfoSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            YUGITextEditor(placeholder: "What would you use the app for?", text: $appUsageDescription, minHeight: 100)
-            
-            Toggle("Would you like to book classes for children you care for?", isOn: $wouldBookClasses)
-                .tint(.white)
-                .foregroundColor(.white)
-            
-            Spacer()
-            
-            YUGIButton(
-                title: "Next",
-                style: .secondary,
-                action: validateAndProceedOther
-            )
-        }
-    }
-    
-    private var otherPasswordSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Create your password")
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            Text("Choose a strong password to secure your account")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.9))
-            
-            VStack(alignment: .leading, spacing: 16) {
-                YUGISecureField(
-                    placeholder: "Password",
-                    text: $otherPassword
-                )
-                
-                YUGISecureField(
-                    placeholder: "Confirm Password",
-                    text: $otherConfirmPassword
-                )
-                
-                Text("Password must be at least 8 characters")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.9))
-            }
-            
-            Spacer()
-            
-            YUGIButton(
-                title: "Create Account",
-                style: .secondary,
-                action: validateAndSubmitOther
-            )
-        }
-    }
+
     
     private var navigationButtons: some View {
         HStack {
@@ -550,8 +490,35 @@ struct SignUpScreen: View {
             showError("Passwords do not match")
             return
         }
-        // Handle parent signup
-        shouldShowWelcome = true
+        
+        // Create the user account through Firebase Auth first, then backend
+        print("🔐 SignUpScreen: Creating parent account for \(email)")
+        
+        firebaseAuthService.signUp(
+            email: email,
+            password: password,
+            fullName: fullName,
+            userType: .parent,
+            phoneNumber: nil
+        )
+        .receive(on: DispatchQueue.main)
+        .sink(
+            receiveCompletion: { completion in
+                if case let .failure(error) = completion {
+                    print("🔐 SignUpScreen: Parent signup failed: \(error)")
+                    self.errorMessage = error.localizedDescription
+                    self.showingError = true
+                }
+            },
+            receiveValue: { result in
+                print("🔐 SignUpScreen: Firebase parent signup successful!")
+                print("🔐 SignUpScreen: Firebase UID: \(result.user.uid)")
+                
+                // Handle parent signup - show welcome screen first
+                self.shouldShowWelcome = true
+            }
+        )
+        .store(in: &firebaseAuthService.cancellables)
     }
     
     private func validateAndProceedProvider() {
@@ -571,12 +538,12 @@ struct SignUpScreen: View {
             showError("Please select at least one age group")
             return
         }
-        guard !servicesDescription.isEmpty else {
-            showError("Please describe your services")
-            return
-        }
         guard !bio.isEmpty else {
             showError("Please write a bio")
+            return
+        }
+        guard bio.count <= 400 else {
+            showError("Bio must be 400 characters or less")
             return
         }
         
@@ -586,14 +553,15 @@ struct SignUpScreen: View {
     }
     
     private func validateAndProceedToPassword() {
-        guard qualificationsImage != nil else {
-            showError("Please upload your qualifications")
+        guard profileImage != nil else {
+            showError("Please upload your profile picture")
             return
         }
         guard dbsCertificateImage != nil else {
             showError("Please upload your DBS certificate")
             return
         }
+        // Qualifications are now optional - no validation needed
         
         withAnimation {
             providerSubStep = 3
@@ -609,33 +577,63 @@ struct SignUpScreen: View {
             showError("Passwords do not match")
             return
         }
-        // Handle provider signup
-        shouldShowWelcome = true
-    }
-    
-    private func validateAndProceedOther() {
-        guard !appUsageDescription.isEmpty else {
-            showError("Please tell us how you would use the app")
-            return
+        
+        // Save uploaded documents to UserDefaults
+        if let dbsImage = dbsCertificateImage,
+           let dbsData = dbsImage.jpegData(compressionQuality: 0.8) {
+            UserDefaults.standard.set(dbsData, forKey: "providerDBSCertificate")
+            UserDefaults.standard.set(true, forKey: "providerDBSUploaded")
         }
         
-        withAnimation {
-            otherSubStep = 2
+        if let qualificationsImage = qualificationsImage,
+           let qualificationsData = qualificationsImage.jpegData(compressionQuality: 0.8) {
+            UserDefaults.standard.set(qualificationsData, forKey: "providerQualifications")
+            UserDefaults.standard.set(true, forKey: "providerQualificationsUploaded")
         }
+        
+        // Save business information to ProviderBusinessService
+        ProviderBusinessService.shared.updateFromSignUp(
+            businessName: businessName,
+            businessAddress: businessAddress,
+            contactEmail: email,
+            contactPhone: mobileNumber,
+            bio: bio
+        )
+        
+        // Create the user account through Firebase Auth first, then backend
+        print("🔐 SignUpScreen: Creating provider account for \(email)")
+        
+        firebaseAuthService.signUp(
+            email: email,
+            password: providerPassword,
+            fullName: fullName,
+            userType: .provider,
+            phoneNumber: mobileNumber,
+            businessName: businessName,
+            businessAddress: businessAddress,
+            bio: bio
+        )
+        .receive(on: DispatchQueue.main)
+        .sink(
+            receiveCompletion: { completion in
+                if case let .failure(error) = completion {
+                    print("🔐 SignUpScreen: Provider signup failed: \(error)")
+                    self.errorMessage = error.localizedDescription
+                    self.showingError = true
+                }
+            },
+            receiveValue: { result in
+                print("🔐 SignUpScreen: Firebase provider signup successful!")
+                print("🔐 SignUpScreen: Firebase UID: \(result.user.uid)")
+                
+                // Handle provider signup - show verification screen instead of welcome
+                self.shouldShowProviderVerification = true
+            }
+        )
+        .store(in: &firebaseAuthService.cancellables)
     }
     
-    private func validateAndSubmitOther() {
-        guard otherPassword.count >= 8 else {
-            showError("Password must be at least 8 characters")
-            return
-        }
-        guard otherPassword == otherConfirmPassword else {
-            showError("Passwords do not match")
-            return
-        }
-        // Handle other signup
-        shouldShowWelcome = true
-    }
+
     
     private func showError(_ message: String) {
         errorMessage = message
@@ -646,19 +644,6 @@ struct SignUpScreen: View {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
         return emailPredicate.evaluate(with: email)
-    }
-}
-
-extension UserType {
-    var description: String {
-        switch self {
-        case .parent:
-            return "Book and manage classes for your children"
-        case .provider:
-            return "List and manage your classes and services"
-        case .other:
-            return "Tell us how you'd like to use YUGI"
-        }
     }
 }
 

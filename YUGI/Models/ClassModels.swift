@@ -1,13 +1,37 @@
 import Foundation
-import CoreLocation
+import SwiftUI
 
 // MARK: - Enums
 
 enum ClassStatus: String, Codable {
+    case draft
+    case pending
     case upcoming
     case inProgress
     case completed
     case cancelled
+    
+    var displayName: String {
+        switch self {
+        case .draft: return "Draft"
+        case .pending: return "Pending"
+        case .upcoming: return "Upcoming"
+        case .inProgress: return "In Progress"
+        case .completed: return "Completed"
+        case .cancelled: return "Cancelled"
+        }
+    }
+    
+    var backgroundColor: Color {
+        switch self {
+        case .draft: return .gray
+        case .pending: return .yellow
+        case .upcoming: return .yugiGray
+        case .inProgress: return .orange
+        case .completed: return .yugiGray
+        case .cancelled: return .red
+        }
+    }
 }
 
 // MARK: - Models
@@ -36,6 +60,8 @@ struct Class: Identifiable, Codable {
     var isAvailable: Bool {
         currentEnrollment < maxCapacity
     }
+    
+
 }
 
 struct Provider: Identifiable, Codable {
@@ -56,14 +82,11 @@ struct Location: Identifiable, Codable {
     let coordinates: Coordinates
     let accessibilityNotes: String?
     let parkingInfo: String?
+    let babyChangingFacilities: String?
     
     struct Coordinates: Codable {
         let latitude: Double
         let longitude: Double
-        
-        var clLocation: CLLocation {
-            CLLocation(latitude: latitude, longitude: longitude)
-        }
     }
 }
 
@@ -145,9 +168,10 @@ struct Booking: Identifiable, Codable {
     let id: UUID
     let classId: UUID
     let userId: UUID
-    let status: ClassStatus
+    var status: ClassStatus
     let bookingDate: Date
     let numberOfParticipants: Int
+    let selectedChildren: [Child]?
     let specialRequirements: String?
     var attended: Bool
     
@@ -157,4 +181,36 @@ struct Booking: Identifiable, Codable {
     }
     
     var calendar: Calendar?
+}
+
+// Enhanced booking for UI display with class information
+struct EnhancedBooking: Identifiable, Codable, Hashable {
+    let booking: Booking
+    let classInfo: Class
+    
+    var id: UUID { booking.id }
+    var classId: UUID { booking.classId }
+    var userId: UUID { booking.userId }
+    var status: ClassStatus { booking.status }
+    var bookingDate: Date { booking.bookingDate }
+    var numberOfParticipants: Int { booking.numberOfParticipants }
+    var selectedChildren: [Child]? { booking.selectedChildren }
+    var specialRequirements: String? { booking.specialRequirements }
+    var attended: Bool { booking.attended }
+    
+    // Class information
+    var className: String { classInfo.name }
+    var providerName: String { classInfo.provider.name }
+    var price: Decimal { classInfo.pricing.amount }
+    var currency: String { classInfo.pricing.currency }
+    
+    // MARK: - Hashable Conformance
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(booking.id)
+        hasher.combine(classInfo.id)
+    }
+    
+    static func == (lhs: EnhancedBooking, rhs: EnhancedBooking) -> Bool {
+        return lhs.booking.id == rhs.booking.id && lhs.classInfo.id == rhs.classInfo.id
+    }
 } 

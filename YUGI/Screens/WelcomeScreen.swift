@@ -1,68 +1,63 @@
 import SwiftUI
 
 struct WelcomeScreen: View {
-    @State private var isLogoVisible = false
-    @State private var isTextVisible = false
     @State private var isButtonVisible = false
     @State private var shouldNavigate = false
     @State private var buttonOffset: CGFloat = UIScreen.main.bounds.width
     
+    // Animation states for cascade effect
+    @State private var yOffset: CGFloat = -200
+    @State private var letterOpacity: [Double] = [0, 0, 0, 0]
+    
     var body: some View {
-        NavigationStack {
+        GeometryReader { geometry in
             ZStack {
-                // Background
-                Color.yugiOrange
-                    .ignoresSafeArea()
+                // Background Image - TRUE FULL SCREEN (contains logo and text)
+                Image("welcome-background")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                 
-                // Animated background elements
-                GeometryReader { geometry in
-                    ZStack {
-                        ForEach(0..<5) { index in
-                            Circle()
-                                .fill(Color.white.opacity(0.1))
-                                .frame(width: CGFloat.random(in: 100...200))
-                                .position(
-                                    x: CGFloat.random(in: 0...geometry.size.width),
-                                    y: CGFloat.random(in: 0...geometry.size.height)
-                                )
-                                .animation(
-                                    Animation.easeInOut(duration: Double.random(in: 2...4))
-                                        .repeatForever(autoreverses: true)
-                                        .delay(Double.random(in: 0...2)),
-                                    value: isLogoVisible
-                                )
-                        }
-                    }
-                }
+                // Overlay for better button readability (optional)
+                Color.black.opacity(0.2)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                 
-                VStack(spacing: 32) {
+                // Vertical YUGI Text on Left Side - Individual positioning with cascade animation
+                Text("Y")
+                    .font(.custom("Futura", size: 120))
+                    .foregroundColor(Color(hex: "#E8E5DB"))
+                    .position(x: 80, y: geometry.size.height * 0.15)
+                    .offset(y: yOffset)
+                    .opacity(letterOpacity[0])
+                
+                Text("U")
+                    .font(.custom("Futura", size: 120))
+                    .foregroundColor(Color(hex: "#E8E5DB"))
+                    .position(x: 80, y: geometry.size.height * 0.35)
+                    .offset(y: yOffset)
+                    .opacity(letterOpacity[1])
+                
+                Text("G")
+                    .font(.custom("Futura", size: 120))
+                    .foregroundColor(Color(hex: "#E8E5DB"))
+                    .position(x: 80, y: geometry.size.height * 0.55)
+                    .offset(y: yOffset)
+                    .opacity(letterOpacity[2])
+                
+                Text("I")
+                    .font(.custom("Futura", size: 120))
+                    .foregroundColor(Color(hex: "#E8E5DB"))
+                    .position(x: 80, y: geometry.size.height * 0.75)
+                    .offset(y: yOffset)
+                    .opacity(letterOpacity[3])
+                
+                // Only the Get Started Button
+                VStack {
                     Spacer()
                     
-                    // Logo
-                    Image("yugi-logo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 200, height: 200)
-                        .opacity(isLogoVisible ? 1 : 0)
-                        .scaleEffect(isLogoVisible ? 1 : 0.5)
-                    
-                    // Welcome Text
-                    VStack(spacing: 16) {
-                        Text("Welcome")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Text("Discover and book amazing classes\nfor you and your little ones")
-                            .font(.system(size: 17))
-                            .foregroundColor(.white.opacity(0.9))
-                            .multilineTextAlignment(.center)
-                    }
-                    .opacity(isTextVisible ? 1 : 0)
-                    .offset(y: isTextVisible ? 0 : 20)
-                    
-                    Spacer()
-                    
-                    // Get Started Button
                     YUGIButton(
                         title: "Get Started",
                        
@@ -77,20 +72,32 @@ struct WelcomeScreen: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 48)
             }
-            .navigationDestination(isPresented: $shouldNavigate) {
-                AuthScreen()
-            }
+        }
+        .ignoresSafeArea(.all, edges: .all)
+        .navigationDestination(isPresented: $shouldNavigate) {
+            AuthScreen()
         }
         .onAppear {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                isLogoVisible = true
+            // Cascade animation for letters
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.2)) {
+                yOffset = 0
+                letterOpacity[0] = 1
             }
             
-            withAnimation(.easeOut(duration: 0.6).delay(0.3)) {
-                isTextVisible = true
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.4)) {
+                letterOpacity[1] = 1
             }
             
-            withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.6)) {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.6)) {
+                letterOpacity[2] = 1
+            }
+            
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.8)) {
+                letterOpacity[3] = 1
+            }
+            
+            // Button animation after letters finish
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(1.2)) {
                 isButtonVisible = true
             }
         }

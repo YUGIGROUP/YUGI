@@ -1,11 +1,5 @@
 import SwiftUI
 
-enum UserType: String, CaseIterable {
-    case parent = "Parent"
-    case provider = "Provider"
-    case other = "Other"
-}
-
 struct SignUpView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var currentStep = 1
@@ -21,16 +15,13 @@ struct SignUpView: View {
     @State private var mobileNumber = ""
     @State private var businessName = ""
     @State private var businessAddress = ""
-    @State private var servicesDescription = ""
     @State private var selectedAgeGroups: Set<String> = []
     @State private var qualificationsURL: URL?
     @State private var dbsCertificateURL: URL?
     @State private var profileImageData: Data?
     @State private var bio = ""
     
-    // Other specific fields
-    @State private var appUsageDescription = ""
-    @State private var wouldBookClasses = false
+
     
     // Form validation
     @State private var showingError = false
@@ -43,7 +34,7 @@ struct SignUpView: View {
             VStack(spacing: 0) {
                 // Progress bar
                 ProgressView(value: Double(currentStep), total: 3)
-                    .tint(Color("Primary"))
+                    .tint(Color.yugiOrange)
                     .padding()
                 
                 ScrollView {
@@ -63,8 +54,6 @@ struct SignUpView: View {
                                 parentSection
                             case .provider:
                                 providerSection
-                            case .other:
-                                otherSection
                             }
                         }
                         
@@ -139,8 +128,6 @@ struct SignUpView: View {
                     bulletPoint("List your classes and services")
                     bulletPoint("Manage bookings and schedules")
                     bulletPoint("Connect with parents")
-                case .other:
-                    Text("Tell us more about how you'd like to use YUGI")
                 }
             }
             .foregroundColor(.secondary)
@@ -218,9 +205,17 @@ struct SignUpView: View {
                     }
                 }
                 
-                YUGITextEditor(placeholder: "Describe your classes/services", text: $servicesDescription, minHeight: 100)
+                YUGITextEditor(
+                    placeholder: "Write a friendly bio that includes a description of your classes/services offered...",
+                    text: $bio,
+                    minHeight: 120,
+                    maxCharacters: 400
+                )
                 
-                YUGITextEditor(placeholder: "Write a friendly bio", text: $bio, minHeight: 100)
+                Text("\(bio.count)/400 characters")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 
                 DocumentUploadButton(
                     title: "Upload Qualifications",
@@ -253,24 +248,7 @@ struct SignUpView: View {
         }
     }
     
-    private var otherSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Tell us more")
-                .font(.title2)
-                .bold()
-            
-            VStack(alignment: .leading, spacing: 16) {
-                YUGITextEditor(placeholder: "What would you use the app for?", text: $appUsageDescription, minHeight: 100)
-                
-                Toggle("Would you like to book classes for children you care for?", isOn: $wouldBookClasses)
-                    .tint(Color("Primary"))
-            }
-            
-            YUGIButton(title: "Continue") {
-                validateAndSubmitOther()
-            }
-        }
-    }
+
     
     private var navigationButtons: some View {
         HStack {
@@ -346,13 +324,7 @@ struct SignUpView: View {
         // Handle provider signup
     }
     
-    private func validateAndSubmitOther() {
-        guard !appUsageDescription.isEmpty else {
-            showError("Please tell us how you would use the app")
-            return
-        }
-        // Handle other signup
-    }
+
     
     private func showError(_ message: String) {
         errorMessage = message
@@ -376,7 +348,7 @@ struct AgeGroupButton: View {
             Text(age)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color("Primary") : Color.gray.opacity(0.1))
+                .background(isSelected ? Color.yugiOrange : Color.gray.opacity(0.1))
                 .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(20)
         }

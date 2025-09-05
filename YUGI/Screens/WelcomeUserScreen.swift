@@ -2,72 +2,59 @@ import SwiftUI
 
 struct WelcomeUserScreen: View {
     let userName: String
-    @State private var isHelloVisible = false
-    @State private var isNameVisible = false
-    @State private var shouldNavigateToAI = false
+    @Environment(\.dismiss) private var dismiss
+    @State private var shouldNavigateToTermsAgreement = false
+    
+    // Animation states for welcome message
+    @State private var welcomeOpacity: Double = 0
+    @State private var welcomeOffset: CGFloat = 50
+    
+    // Extract first name from full name
+    private var firstName: String {
+        let components = userName.components(separatedBy: " ")
+        return components.first ?? userName
+    }
     
     var body: some View {
-        NavigationStack {
+        GeometryReader { geometry in
             ZStack {
-                // Background
-                Color.yugiOrange
-                    .ignoresSafeArea()
+                // Background Image - TRUE FULL SCREEN (contains all text)
+                Image("welcome-background")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                 
-                // Animated background elements
-                GeometryReader { geometry in
-                    ZStack {
-                        ForEach(0..<5) { index in
-                            Circle()
-                                .fill(Color.white.opacity(0.1))
-                                .frame(width: CGFloat.random(in: 100...200))
-                                .position(
-                                    x: CGFloat.random(in: 0...geometry.size.width),
-                                    y: CGFloat.random(in: 0...geometry.size.height)
-                                )
-                                .animation(
-                                    Animation.easeInOut(duration: Double.random(in: 2...4))
-                                        .repeatForever(autoreverses: true)
-                                        .delay(Double.random(in: 0...2)),
-                                    value: isHelloVisible
-                                )
-                        }
-                    }
-                }
-                
-                // Content
-                VStack(spacing: 24) {
-                    Text("Hello")
-                        .font(.bellotaTextLight(size: 72))
+                // Centered Welcome Message - Moved Higher
+                VStack(spacing: 8) {
+                    Text("Welcome")
+                        .font(.system(size: 64, weight: .light, design: .rounded))
                         .foregroundColor(.white)
-                        .opacity(isHelloVisible ? 1 : 0)
-                        .offset(y: isHelloVisible ? 0 : 20)
-                        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
                     
-                    Text(userName)
-                        .font(.robotoThin(size: 50))
-                        .foregroundColor(.white)
-                        .opacity(isNameVisible ? 1 : 0)
-                        .offset(y: isNameVisible ? 0 : 20)
-                        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+                    Text(firstName)
+                        .font(.system(size: 72, weight: .light, design: .rounded))
+                        .foregroundColor(Color(hex: "#BC6C5C"))
                 }
-                .padding(.horizontal, 24)
+                .opacity(welcomeOpacity)
+                .offset(y: welcomeOffset)
+                .position(x: geometry.size.width / 2, y: geometry.size.height * 0.35) // Moved higher
             }
-            .navigationDestination(isPresented: $shouldNavigateToAI) {
-                AIInteractionScreen(userName: userName)
+        }
+        .ignoresSafeArea(.all, edges: .all)
+        .fullScreenCover(isPresented: $shouldNavigateToTermsAgreement) {
+            TermsAgreementScreen(parentName: userName)
+        }
+        .onAppear {
+            // Beautiful fade-in animation for welcome message
+            withAnimation(.easeOut(duration: 1.2).delay(0.3)) {
+                welcomeOpacity = 1
+                welcomeOffset = 0
             }
-            .onAppear {
-                withAnimation(.easeOut(duration: 0.8)) {
-                    isHelloVisible = true
-                }
-                
-                withAnimation(.easeOut(duration: 0.8).delay(0.4)) {
-                    isNameVisible = true
-                }
-                
-                // Navigate to AI screen after animations
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                    shouldNavigateToAI = true
-                }
+            
+            // Navigate to Terms Agreement screen after animation completes
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                shouldNavigateToTermsAgreement = true
             }
         }
     }
@@ -75,4 +62,4 @@ struct WelcomeUserScreen: View {
 
 #Preview {
     WelcomeUserScreen(userName: "Eva Parmar")
-} 
+}

@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		110BE6B72E5DD03C00731469 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 110BE6B62E5DD03C00731469 /* GoogleService-Info.plist */; };
+		110BE6B92E5DF62A00731469 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 110BE6B82E5DF62A00731469 /* FirebaseAuth */; };
+		110BE6BB2E5DF62A00731469 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 110BE6BA2E5DF62A00731469 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1141A8BA2DE8F972009F1376 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +30,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		110BE6B62E5DD03C00731469 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		1141A8AC2DE8F96F009F1376 /* YUGI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YUGI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1141A8B92DE8F972009F1376 /* YUGITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YUGITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1141A8C32DE8F972009F1376 /* YUGIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YUGIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -52,6 +59,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				110BE6B92E5DF62A00731469 /* FirebaseAuth in Frameworks */,
+				110BE6BB2E5DF62A00731469 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,6 +88,7 @@
 				1141A8BC2DE8F972009F1376 /* YUGITests */,
 				1141A8C62DE8F972009F1376 /* YUGIUITests */,
 				1141A8AD2DE8F96F009F1376 /* Products */,
+				110BE6B62E5DD03C00731469 /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -112,6 +122,8 @@
 			);
 			name = YUGI;
 			packageProductDependencies = (
+				110BE6B82E5DF62A00731469 /* FirebaseAuth */,
+				110BE6BA2E5DF62A00731469 /* FirebaseFirestore */,
 			);
 			productName = YUGI;
 			productReference = 1141A8AC2DE8F96F009F1376 /* YUGI.app */;
@@ -195,6 +207,9 @@
 			);
 			mainGroup = 1141A8A32DE8F96F009F1376;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				110BE6B52E5DCF5E00731469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1141A8AD2DE8F96F009F1376 /* Products */;
 			projectDirPath = "";
@@ -212,6 +227,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				110BE6B72E5DD03C00731469 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -558,6 +574,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		110BE6B52E5DCF5E00731469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		110BE6B82E5DF62A00731469 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 110BE6B52E5DCF5E00731469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		110BE6BA2E5DF62A00731469 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 110BE6B52E5DCF5E00731469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1141A8A42DE8F96F009F1376 /* Project object */;
 }

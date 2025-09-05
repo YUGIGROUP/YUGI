@@ -15,4 +15,20 @@ enum ClassCategory: String, Codable, CaseIterable {
             return "Parent & child wellness classes"
         }
     }
+    
+    var displayName: String {
+        switch self {
+        case .baby: return "Baby"
+        case .toddler: return "Toddler"
+        case .wellness: return "Wellness"
+        }
+    }
+    
+    var iconName: String {
+        switch self {
+        case .baby: return "baby"
+        case .toddler: return "figure.child"
+        case .wellness: return "heart.fill"
+        }
+    }
 } 

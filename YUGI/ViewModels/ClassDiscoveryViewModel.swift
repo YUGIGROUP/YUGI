@@ -1,25 +1,24 @@
 import Foundation
-import CoreLocation
 import Combine
 
 @MainActor
 class ClassDiscoveryViewModel: ObservableObject {
-    private let locationService: LocationService
     private let bookingService: BookingService
+    private let newClassStorage = NewClassStorage.shared
     
     @Published var searchText = ""
     @Published var selectedCategory: ClassCategory?
     @Published var classes: [Class] = []
     @Published var isLoading = false
     @Published var error: Error?
+
     
-    init(locationService: LocationService, bookingService: BookingService) {
-        self.locationService = locationService
+    init(bookingService: BookingService) {
         self.bookingService = bookingService
     }
     
     var filteredClasses: [Class] {
-        classes.filter { classItem in
+        let filtered = classes.filter { classItem in
             let matchesSearch = searchText.isEmpty || 
                 classItem.name.localizedCaseInsensitiveContains(searchText) ||
                 classItem.description.localizedCaseInsensitiveContains(searchText)
@@ -28,89 +27,104 @@ class ClassDiscoveryViewModel: ObservableObject {
             
             return matchesSearch && matchesCategory
         }
+        
+
+        
+        return filtered
     }
+    
+
     
     func startLocationUpdates() {
         Task {
-            locationService.requestLocationPermission()
-            
-            // Wait for location updates
-            for await _ in NotificationCenter.default.notifications(named: .locationDidUpdate) {
-                if let location = locationService.currentLocation {
-                    await updateClasses(near: location)
-                }
-            }
+            // Load sample classes immediately for demo purposes
+            loadClasses()
         }
     }
     
-    private func updateClasses(near location: CLLocation) async {
+    private func loadClasses() {
         isLoading = true
         defer { isLoading = false }
         
-        // Simulated delay for demo purposes
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        // Real classes will be fetched from the backend API
+        let mockClasses: [Class] = []
         
-        // Mock data - in a real app, this would fetch from an API
-        classes = [
+        // Convert newly created classes from shared storage to Class format
+        let newClasses = newClassStorage.newClasses.map { providerClass in
             Class(
-                id: UUID(),
-                name: "Baby Sensory Adventure",
-                description: "A journey of discovery through light, sound, and touch.",
-                category: .baby,
+                id: UUID(), // Generate new UUID for the Class model
+                name: providerClass.name,
+                description: providerClass.description,
+                category: providerClass.category,
                 provider: Provider(
                     id: UUID(),
-                    name: "Sensory World",
-                    description: "Specialists in early development",
-                    qualifications: ["Early Years Development"],
-                    contactEmail: "info@sensoryworld.com",
-                    contactPhone: "020 1234 5678",
-                    website: "www.sensoryworld.com",
-                    rating: 4.8
+                    name: "Your Business", // This would come from the actual provider data
+                    description: "Local provider",
+                    qualifications: ["Certified"],
+                    contactEmail: "contact@yourbusiness.com",
+                    contactPhone: "020 0000 0000",
+                    website: nil,
+                    rating: 5.0 // New classes get 5-star rating
                 ),
                 location: Location(
                     id: UUID(),
-                    name: "Sensory World Studio",
+                    name: providerClass.location,
                     address: Address(
-                        street: "123 High Street",
-                        city: "Richmond",
-                        state: "London",
-                        postalCode: "TW9 1AA",
-                        country: "UK"
+                        street: providerClass.location,
+                        city: "London",
+                        state: "England",
+                        postalCode: "SW1A 1AA",
+                        country: "United Kingdom"
                     ),
-                    coordinates: Location.Coordinates(latitude: 51.4613, longitude: -0.3037),
-                    accessibilityNotes: "Ground floor access, changing facilities available",
-                    parkingInfo: "Free parking available"
+                    coordinates: Location.Coordinates(latitude: 51.5074, longitude: -0.1278),
+                    accessibilityNotes: nil,
+                    parkingInfo: nil,
+                    babyChangingFacilities: nil
                 ),
                 schedule: Schedule(
-                    startDate: Date(),
-                    endDate: Date().addingTimeInterval(7776000), // 90 days
-                    recurringDays: [.monday, .wednesday, .friday],
+                    startDate: providerClass.nextSession ?? Date(),
+                    endDate: Date().addingTimeInterval(7776000),
+                    recurringDays: [.monday], // Default to Monday
                     timeSlots: [
                         Schedule.TimeSlot(
                             startTime: Calendar.current.date(from: DateComponents(hour: 10))!,
                             duration: 3600
                         )
                     ],
-                    totalSessions: 36
+                    totalSessions: 1
                 ),
                 pricing: Pricing(
-                    amount: 15.0,
+                    amount: Decimal(providerClass.price),
                     currency: "GBP",
                     type: .perSession,
-                    description: "Pay as you go"
+                    description: providerClass.isFree ? "Free" : "Pay as you go"
                 ),
-                maxCapacity: 12,
-                currentEnrollment: 8,
-                averageRating: 4.8,
-                ageRange: "0-12 months",
+                maxCapacity: providerClass.maxCapacity,
+                currentEnrollment: providerClass.currentBookings,
+                averageRating: 5.0, // New classes get 5-star rating
+                ageRange: "0-3 years", // Default age range
                 isFavorite: false
             )
-        ]
+        }
+        
+        // Combine mock classes with newly created classes
+        // Put new classes first so they appear at the top
+        classes = newClasses + mockClasses
+        
+        print("🔍 ClassDiscoveryViewModel: Loaded \(mockClasses.count) mock classes + \(newClasses.count) new classes = \(classes.count) total")
     }
+    
+
     
     func toggleFavorite(for classId: UUID) {
         if let index = classes.firstIndex(where: { $0.id == classId }) {
             classes[index].isFavorite.toggle()
+        }
+    }
+    
+    func updateClass(_ updatedClass: Class) {
+        if let index = classes.firstIndex(where: { $0.id == updatedClass.id }) {
+            classes[index] = updatedClass
         }
     }
     

@@ -29,12 +29,12 @@ class AIViewModel: ObservableObject {
     @Published var usageReport: String = "Loading usage data..."
     
     let openAI: OpenAIService
-    let locationService: LocationService
+
     let bookingService: BookingService
     
     // Make initialPrompt nonisolated
     nonisolated static func initialPrompt(userName: String) -> String {
-        return "Hi \(userName)! I'm here to help you find the perfect classes for you and your little one. To get started, you can either:\n\n1. Use the quick buttons above to select an age group\n2. Or share your location to find classes near you"
+        return "Hi \(userName)! I'm here to help you find the perfect classes for you and your little one. To get started, you can use the quick buttons above to select an age group."
     }
     
     enum AgeGroup: String, CaseIterable {
@@ -56,7 +56,7 @@ class AIViewModel: ObservableObject {
     
     init(userName: String = "there") {
         self.openAI = OpenAIService(apiKey: AppConfig.openAIApiKey)
-        self.locationService = LocationService()
+
         let calendarService = CalendarService()
         self.bookingService = BookingService(calendarService: calendarService)
         self.userName = userName
@@ -70,11 +70,7 @@ class AIViewModel: ObservableObject {
         sendMessage()
     }
     
-    func shareLocation() {
-        locationService.requestLocationPermission()
-        messages.append(Message(content: "I'd like to find classes near me", isUser: true))
-        shouldShowClassDiscovery = true
-    }
+
     
     func sendMessage() {
         Task {
@@ -93,15 +89,7 @@ class AIViewModel: ObservableObject {
         isTyping = true
         error = nil
         
-        // Check if message is about location or finding nearby classes
-        if userMessage.content.lowercased().contains("near") || 
-           userMessage.content.lowercased().contains("location") ||
-           userMessage.content.lowercased().contains("around") ||
-           userMessage.content.lowercased().contains("nearby") {
-            shareLocation()
-            isTyping = false
-            return
-        }
+
         
         do {
             // Create system message
@@ -158,7 +146,7 @@ struct AIInteractionScreen: View {
     var body: some View {
         ZStack {
             // Background
-            Color.yugiOrange
+            Color(hex: "#BC6C5C")
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -170,7 +158,7 @@ struct AIInteractionScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Find Classes")
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color.yugiOrange, for: .navigationBar)
+        .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -187,7 +175,6 @@ struct AIInteractionScreen: View {
         }
         .sheet(isPresented: $viewModel.shouldShowClassDiscovery) {
             ClassDiscoveryView(
-                locationService: viewModel.locationService,
                 bookingService: viewModel.bookingService
             )
         }
@@ -218,7 +205,7 @@ private struct QuickActionsBar: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .background(Color.yugiOrange.opacity(0.8))
+        .background(Color(hex: "#BC6C5C").opacity(0.8))
     }
 }
 
@@ -288,17 +275,17 @@ private struct InputBar: View {
             Divider()
                 .background(Color.white)
             HStack(spacing: 12) {
-                TextField("Ask about classes or share your location...", text: $viewModel.currentInput)
+                                        TextField("Ask about classes...", text: $viewModel.currentInput)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .font(.roboto(size: 16))
                     .disabled(viewModel.isTyping)
-                    .foregroundColor(.yugiOrange)
+                    .foregroundColor(Color(hex: "#BC6C5C"))
                 
                 SendButton(viewModel: viewModel)
             }
             .padding()
         }
-        .background(Color.yugiOrange)
+        .background(Color(hex: "#BC6C5C"))
     }
 }
 
@@ -328,7 +315,7 @@ struct QuickActionButton: View {
         Button(action: action) {
             Text(title)
                 .font(.roboto(size: 14))
-                .foregroundColor(isSelected ? .yugiOrange : .white)
+                .foregroundColor(isSelected ? Color(hex: "#BC6C5C") : .white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(

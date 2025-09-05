@@ -17,7 +17,7 @@ struct YUGITextField: View {
         HStack {
             if let icon = icon {
                 Image(systemName: icon)
-                    .foregroundColor(.yugiOrange)
+                    .foregroundColor(Color(hex: "#BC6C5C"))
                     .frame(width: 24)
             }
             

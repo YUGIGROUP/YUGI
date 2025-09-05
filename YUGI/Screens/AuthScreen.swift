@@ -5,6 +5,15 @@ struct AuthScreen: View {
     @State private var password = ""
     @State private var isShowingPassword = false
     @State private var isLoading = false
+    @State private var shouldNavigateToParentDashboard = false
+    @State private var shouldNavigateToProviderDashboard = false
+    @State private var showingError = false
+    @State private var errorMessage = ""
+    @State private var shouldNavigateToSignUp = false
+    @State private var shouldNavigateToForgotPassword = false
+    
+    @StateObject private var biometricService = BiometricAuthService.shared
+    @StateObject private var apiService = APIService.shared
     
     var body: some View {
         ScrollView {
@@ -20,6 +29,27 @@ struct AuthScreen: View {
                         .foregroundColor(.yugiGray.opacity(0.8))
                 }
                 .padding(.top, 48)
+                
+                // Biometric Sign In Button (if available and enabled)
+                if biometricService.isBiometricAvailable && biometricService.isBiometricEnabled() {
+                    biometricSignInButton
+                    
+                    // Divider
+                    HStack {
+                        Rectangle()
+                            .fill(Color.yugiGray.opacity(0.2))
+                            .frame(height: 1)
+                        
+                        Text("or")
+                            .font(.system(size: 15))
+                            .foregroundColor(.yugiGray.opacity(0.6))
+                        
+                        Rectangle()
+                            .fill(Color.yugiGray.opacity(0.2))
+                            .frame(height: 1)
+                    }
+                    .padding(.horizontal)
+                }
                 
                 // Form Fields
                 VStack(spacing: 20) {
@@ -57,84 +87,175 @@ struct AuthScreen: View {
                         }
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                     }
+                    
+                    // Remember Me Toggle
+                    HStack {
+                        Toggle("Remember Me", isOn: $biometricService.isRememberMeEnabled)
+                            .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                            .onChange(of: biometricService.isRememberMeEnabled) { _, newValue in
+                                biometricService.setRememberMeEnabled(newValue)
+                            }
+                        
+                        Spacer()
+                    }
                 }
                 .padding(.horizontal)
                 
                 // Sign In Button
-                YUGIButton(
-                    title: "Sign In",
-                    action: {
-                        isLoading = true
-                        // Add authentication logic here
+                Button(action: signInWithCredentials) {
+                    HStack {
+                        if isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        }
+                        Text(isLoading ? "Signing In..." : "Sign In")
+                            .font(.system(size: 17, weight: .semibold))
                     }
-                )
-                .padding(.horizontal)
-                
-                // Divider
-                HStack {
-                    Rectangle()
-                        .fill(Color.yugiGray.opacity(0.2))
-                        .frame(height: 1)
-                    
-                    Text("or")
-                        .font(.system(size: 15))
-                        .foregroundColor(.yugiGray.opacity(0.6))
-                    
-                    Rectangle()
-                        .fill(Color.yugiGray.opacity(0.2))
-                        .frame(height: 1)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(hex: "#BC6C5C"))
+                    )
                 }
                 .padding(.horizontal)
+                .disabled(isLoading)
                 
-                // Social Sign In Buttons
-                VStack(spacing: 16) {
-                    Button(action: {}) {
-                        HStack {
-                            Image(systemName: "apple.logo")
-                                .imageScale(.medium)
-                            Text("Continue with Apple")
-                                .font(.system(size: 17, weight: .semibold))
-                        }
-                        .foregroundColor(.yugiGray)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.yugiGray.opacity(0.2), lineWidth: 1)
-                        )
-                    }
-                    
-                    Button(action: {}) {
-                        HStack {
-                            Image(systemName: "g.circle.fill")
-                                .imageScale(.medium)
-                            Text("Continue with Google")
-                                .font(.system(size: 17, weight: .semibold))
-                        }
-                        .foregroundColor(.yugiGray)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.yugiGray.opacity(0.2), lineWidth: 1)
-                        )
-                    }
+                // Forgot Password Link
+                Button("Forgot Password?") {
+                    shouldNavigateToForgotPassword = true
                 }
-                .padding(.horizontal)
+                .font(.system(size: 15))
+                .foregroundColor(Color(hex: "#BC6C5C"))
+                .fontWeight(.medium)
+                .padding(.top, 8)
                 
                 // Sign Up Link
                 HStack {
                     Text("Don't have an account?")
                         .foregroundColor(.yugiGray.opacity(0.8))
-                    NavigationLink("Sign Up", destination: SignUpScreen())
-                        .foregroundColor(.yugiOrange)
-                        .fontWeight(.semibold)
+                    Button("Sign Up") {
+                        shouldNavigateToSignUp = true
+                    }
+                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .fontWeight(.semibold)
                 }
                 .font(.system(size: 15))
-                .padding(.top)
+                .padding(.top, 4)
             }
         }
         .background(Color.yugiCream.ignoresSafeArea())
+        .navigationDestination(isPresented: $shouldNavigateToParentDashboard) {
+            ParentDashboardScreen(parentName: apiService.currentUser?.fullName ?? "Parent")
+        }
+        .navigationDestination(isPresented: $shouldNavigateToProviderDashboard) {
+            ProviderDashboardScreen(businessName: apiService.currentUser?.businessName ?? "Provider")
+        }
+        .navigationDestination(isPresented: $shouldNavigateToForgotPassword) {
+            ForgotPasswordScreen()
+        }
+        .sheet(isPresented: $shouldNavigateToSignUp) {
+            SignUpScreen()
+        }
+        .alert("Authentication Error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
+        }
+        .onAppear {
+            loadSavedCredentials()
+        }
+    }
+    
+    // MARK: - Biometric Sign In Button
+    
+    private var biometricSignInButton: some View {
+        Button(action: signInWithBiometrics) {
+            HStack {
+                Image(systemName: biometricService.getBiometricIcon())
+                    .font(.system(size: 20))
+                Text("Sign in with \(biometricService.getBiometricTypeName())")
+                    .font(.system(size: 17, weight: .semibold))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(hex: "#BC6C5C"))
+            )
+        }
+        .padding(.horizontal)
+    }
+    
+    // MARK: - Authentication Methods
+    
+    private func signInWithBiometrics() {
+        Task {
+            let success = await biometricService.authenticateWithBiometrics()
+            
+            await MainActor.run {
+                if success {
+                    // Try to load saved credentials and sign in
+                    if let credentials = biometricService.loadSavedCredentials() {
+                        email = credentials.email
+                        password = credentials.password
+                        signInWithCredentials()
+                    } else {
+                        errorMessage = "No saved credentials found. Please sign in with email and password first."
+                        showingError = true
+                    }
+                } else {
+                    errorMessage = "Biometric authentication failed. Please try again."
+                    showingError = true
+                }
+            }
+        }
+    }
+    
+    private func signInWithCredentials() {
+        guard !email.isEmpty && !password.isEmpty else {
+            errorMessage = "Please enter both email and password."
+            showingError = true
+            return
+        }
+        
+        isLoading = true
+        
+        apiService.login(email: email, password: password)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    isLoading = false
+                    if case let .failure(error) = completion {
+                        errorMessage = error.localizedDescription
+                        showingError = true
+                    }
+                },
+                receiveValue: { response in
+                    // Save credentials if "Remember Me" is enabled
+                    if biometricService.isRememberMeEnabled {
+                        biometricService.saveCredentials(email: email, password: password)
+                    }
+                    
+                    // Navigate to appropriate dashboard based on user type
+                    if response.user.userType == .provider {
+                        shouldNavigateToProviderDashboard = true
+                    } else {
+                        shouldNavigateToParentDashboard = true
+                    }
+                }
+            )
+            .store(in: &apiService.cancellables)
+    }
+    
+    private func loadSavedCredentials() {
+        if let credentials = biometricService.loadSavedCredentials() {
+            email = credentials.email
+            password = credentials.password
+        }
     }
 }
 
