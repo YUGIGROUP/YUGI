@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const emailService = require('../services/emailService');
+const { inMemoryUsers, useInMemoryStorage } = require('../utils/inMemoryStorage');
 
 const router = express.Router();
 
@@ -19,7 +20,6 @@ const generateToken = (id) => {
 // @access  Public
 router.post('/signup', [
   body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 8 }),
   body('fullName').trim().isLength({ min: 2 }),
   body('userType').isIn(['parent', 'provider', 'other'])
 ], async (req, res) => {
@@ -33,7 +33,14 @@ router.post('/signup', [
       });
     }
 
-    const { email, password, fullName, userType, phoneNumber, businessName, businessAddress } = req.body;
+    const { email, password, firebaseUid, fullName, userType, phoneNumber, businessName, businessAddress, businessInfo } = req.body;
+
+    // Validate that either password or firebaseUid is provided
+    if (!password && !firebaseUid) {
+      return res.status(400).json({ 
+        message: 'Either password or firebaseUid is required' 
+      });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -44,21 +51,39 @@ router.post('/signup', [
     // Create user object
     const userData = {
       email,
-      password,
       fullName,
       userType,
       phoneNumber
     };
 
+    // Add password or firebaseUid
+    if (firebaseUid) {
+      // For Firebase authentication, we'll use the firebaseUid as the password
+      // This is a temporary solution - in production you might want to store firebaseUid separately
+      userData.password = firebaseUid;
+      console.log(`Firebase signup for user: ${email} with UID: ${firebaseUid}`);
+    } else {
+      userData.password = password;
+    }
+
     // Add provider-specific fields if user is a provider
     if (userType === 'provider') {
-      if (!businessName || !businessAddress) {
+      // Handle both direct fields and nested businessInfo object
+      let finalBusinessName = businessName;
+      let finalBusinessAddress = businessAddress;
+      
+      if (businessInfo) {
+        finalBusinessName = businessInfo.businessName || businessName;
+        finalBusinessAddress = businessInfo.address || businessAddress;
+      }
+      
+      if (!finalBusinessName || !finalBusinessAddress) {
         return res.status(400).json({ 
           message: 'Business name and address are required for providers' 
         });
       }
-      userData.businessName = businessName;
-      userData.businessAddress = businessAddress;
+      userData.businessName = finalBusinessName;
+      userData.businessAddress = finalBusinessAddress;
     }
 
     // Create user
@@ -87,11 +112,10 @@ router.post('/signup', [
 });
 
 // @route   POST /api/auth/login
-// @desc    Authenticate user & get token
+// @desc    Authenticate user & get token (supports both password and Firebase UID)
 // @access  Public
 router.post('/login', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').exists()
+  body('email').isEmail().normalizeEmail()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -102,10 +126,16 @@ router.post('/login', [
       });
     }
 
-    const { email, password } = req.body;
+    const { email, password, firebaseUid } = req.body;
 
-    // Check for user
-    const user = await User.findOne({ email });
+    // Check for user (use in-memory storage if MongoDB not available)
+    let user;
+    if (useInMemoryStorage()) {
+      user = inMemoryUsers.get(email);
+    } else {
+      user = await User.findOne({ email });
+    }
+    
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -115,26 +145,50 @@ router.post('/login', [
       return res.status(401).json({ message: 'Account is deactivated' });
     }
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    // Firebase authentication (preferred)
+    if (firebaseUid) {
+      // For Firebase auth, we trust the Firebase UID
+      // In production, you should verify the Firebase token on the server
+      console.log(`Firebase login for user: ${email} with UID: ${firebaseUid}`);
+    } 
+    // Traditional password authentication
+    else if (password) {
+      // For in-memory storage, we'll accept any password for development
+      if (useInMemoryStorage()) {
+        console.log(`In-memory login for user: ${email}`);
+      } else {
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+      }
+    } else {
+      return res.status(400).json({ message: 'Either password or firebaseUid is required' });
     }
 
     // Generate token
     const token = generateToken(user._id);
 
     res.json({
-      success: true,
-      message: 'Login successful',
       token,
       user: {
         id: user._id,
         email: user.email,
         fullName: user.fullName,
         userType: user.userType,
-        verificationStatus: user.verificationStatus,
-        businessName: user.businessName
+        profileImage: user.profileImage || null,
+        phoneNumber: user.phoneNumber || null,
+        businessName: user.businessName || null,
+        businessAddress: user.businessAddress || null,
+        qualifications: user.qualifications || null,
+        dbsCertificate: user.dbsCertificate || null,
+        verificationStatus: user.verificationStatus || 'pending',
+        children: user.children || [],
+        isActive: user.isActive !== undefined ? user.isActive : true,
+        isEmailVerified: user.isEmailVerified !== undefined ? user.isEmailVerified : false,
+        createdAt: user.createdAt || new Date().toISOString(),
+        updatedAt: user.updatedAt || new Date().toISOString(),
+        location: user.location || null
       }
     });
 
@@ -149,10 +203,36 @@ router.post('/login', [
 // @access  Private
 router.get('/me', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    let user;
+    if (useInMemoryStorage()) {
+      // For in-memory storage, req.user is already the full user object
+      user = req.user;
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+    } else {
+      user = await User.findById(req.user.id);
+    }
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Convert _id to id for iOS compatibility and clean up response
+    const userResponse = user.toObject ? user.toObject() : { ...user };
+    userResponse.id = userResponse._id;
+    delete userResponse._id;
+    delete userResponse.password; // Ensure password is removed
+    delete userResponse.__v; // Remove Mongoose version field
+    
+    // Handle large profile images - truncate if too large (over 100KB)
+    if (userResponse.profileImage && userResponse.profileImage.length > 100000) {
+      console.log(`⚠️ Large profile image detected (${userResponse.profileImage.length} chars), truncating for /api/auth/me`);
+      userResponse.profileImage = userResponse.profileImage.substring(0, 1000) + "...[truncated]";
+    }
+    
     res.json({
-      success: true,
-      user
+      data: userResponse
     });
   } catch (error) {
     console.error('Get user error:', error);

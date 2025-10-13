@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+// Category normalization function
+const normalizeCategory = (category) => {
+  if (!category) return category;
+  return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+};
+
 const classSchema = new mongoose.Schema({
   // Basic Info
   name: {
@@ -13,8 +19,9 @@ const classSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['baby', 'toddler', 'wellness'],
-    required: true
+    enum: ['baby', 'toddler', 'wellness', 'Baby', 'Toddler', 'Wellness'],
+    required: true,
+    set: normalizeCategory // Normalize to capitalized format when saving
   },
   
   // Provider Info
@@ -50,14 +57,14 @@ const classSchema = new mongoose.Schema({
     default: false
   },
   individualChildSpots: {
-    type: String,
-    enum: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'],
-    default: '1'
+    type: Number,
+    default: 0,
+    min: 0
   },
   siblingPairs: {
-    type: String,
-    enum: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'],
-    default: '0'
+    type: Number,
+    default: 0,
+    min: 0
   },
   siblingPrice: {
     type: Number,
@@ -94,26 +101,66 @@ const classSchema = new mongoose.Schema({
     required: true
   },
   
-  // Location
+  // Location - Updated to match iOS expectations
   location: {
-    name: String,
+    name: {
+      type: String,
+      default: ''
+    },
     address: {
-      street: String,
-      city: String,
-      postcode: String,
-      country: String,
-      formatted: String
+      street: {
+        type: String,
+        default: ''
+      },
+      city: {
+        type: String,
+        default: ''
+      },
+      state: {
+        type: String,
+        default: ''
+      },
+      postalCode: {
+        type: String,
+        default: ''
+      },
+      country: {
+        type: String,
+        default: 'United Kingdom'
+      },
+      formatted: {
+        type: String,
+        default: ''
+      }
     },
     coordinates: {
-      latitude: Number,
-      longitude: Number
+      latitude: {
+        type: Number,
+        default: 0
+      },
+      longitude: {
+        type: Number,
+        default: 0
+      }
+    },
+    accessibilityNotes: {
+      type: String,
+      default: ''
+    },
+    parkingInfo: {
+      type: String,
+      default: ''
+    },
+    babyChangingFacilities: {
+      type: String,
+      default: ''
     }
   },
   
   // Class Details
   ageRange: {
     type: String,
-    required: true
+    default: 'All ages'
   },
   whatToBring: {
     type: String,

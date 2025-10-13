@@ -53,6 +53,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  bio: {
+    type: String,
+    default: null
+  },
+  services: {
+    type: String,
+    default: null
+  },
   verificationStatus: {
     type: String,
     enum: ['pending', 'underReview', 'approved', 'rejected'],

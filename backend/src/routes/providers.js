@@ -61,34 +61,59 @@ router.put('/business-info', [
   protect,
   requireUserType(['provider']),
   body('businessName').optional().trim().isLength({ min: 2 }),
-  body('businessAddress').optional().trim().isLength({ min: 5 }),
-  body('phoneNumber').optional().trim()
+  body('businessAddress').optional().trim().isLength({ min: 2 }),
+  body('phoneNumber').optional().trim(),
+  body('bio').optional().trim(),
+  body('services').optional().trim()
 ], async (req, res) => {
   try {
+    console.log('🔍 Business info update - User type:', req.user.userType);
+    console.log('🔍 Business info update - User ID:', req.user.id);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('🔍 Validation errors:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
       });
     }
 
-    const { businessName, businessAddress, phoneNumber } = req.body;
+    const { businessName, businessAddress, phoneNumber, bio, services } = req.body;
+    
+    // Debug: Log what we're receiving
+    console.log('🔍 Business info update - bio:', bio);
+    console.log('🔍 Business info update - services:', services);
+    console.log('🔍 Business info update - Full request body:', JSON.stringify(req.body, null, 2));
+
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {
         businessName,
         businessAddress,
-        phoneNumber
+        phoneNumber,
+        bio,
+        services
       },
       { new: true, runValidators: true }
     );
 
+    // Clean up response - remove sensitive/large fields
+    const userResponse = updatedUser.toObject();
+    userResponse.id = userResponse._id;
+    delete userResponse._id;
+    delete userResponse.password;
+    delete userResponse.__v;
+    
+    // Truncate large profile images
+    if (userResponse.profileImage && userResponse.profileImage.length > 100000) {
+      console.log(`⚠️ Large profile image detected (${userResponse.profileImage.length} chars), truncating for business-info update`);
+      userResponse.profileImage = userResponse.profileImage.substring(0, 1000) + "...[truncated]";
+    }
+
     res.json({
-      success: true,
-      message: 'Business information updated successfully',
-      data: updatedUser
+      data: userResponse
     });
 
   } catch (error) {

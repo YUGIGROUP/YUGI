@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { inMemoryUsers, useInMemoryStorage } = require('../utils/inMemoryStorage');
 
 // Protect routes - require authentication
 const protect = async (req, res, next) => {
@@ -14,8 +15,16 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from token
-      req.user = await User.findById(decoded.id).select('-password');
+      // Get user from token (use in-memory storage if MongoDB not available)
+      if (useInMemoryStorage()) {
+        // For in-memory storage, find user by ID
+        console.log('🔍 Looking for user with ID:', decoded.id);
+        console.log('🔍 Available users:', Array.from(inMemoryUsers.values()).map(u => ({ id: u._id, email: u.email })));
+        req.user = Array.from(inMemoryUsers.values()).find(u => u._id === decoded.id);
+        console.log('🔍 Found user:', req.user ? { id: req.user._id, email: req.user.email } : 'null');
+      } else {
+        req.user = await User.findById(decoded.id).select('-password');
+      }
 
       if (!req.user) {
         return res.status(401).json({ message: 'User not found' });

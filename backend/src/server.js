@@ -16,15 +16,23 @@ const providerRoutes = require('./routes/providers');
 const adminRoutes = require('./routes/admin');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
 // Connect to MongoDB
-connectDB();
+if (process.env.MONGODB_URI) {
+  connectDB();
+} else {
+  console.log('🔧 Running in development mode without database - using in-memory storage');
+}
 
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    'http://192.168.1.72:3000',
+    'http://127.0.0.1:3000'
+  ],
   credentials: true
 }));
 
@@ -42,8 +50,10 @@ app.use(express.urlencoded({ extended: true }));
 // Static files for admin interface
 app.use('/admin', express.static('public/admin'));
 
-// Compression middleware
-app.use(compression());
+// Compression middleware (disabled in development to simplify client decoding)
+if (process.env.NODE_ENV !== 'development') {
+  app.use(compression());
+}
 
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
@@ -82,8 +92,9 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 YUGI Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📱 Network access: http://192.168.1.72:${PORT}/api/health`);
 }); 

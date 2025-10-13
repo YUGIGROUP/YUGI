@@ -2,7 +2,6 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Class = require('../models/Class');
 const { protect, optionalAuth, requireProviderVerification } = require('../middleware/auth');
-const venueDataService = require('../services/venueDataService');
 
 const router = express.Router();
 
@@ -29,118 +28,19 @@ const normalizeCategoryInResponse = (req, res, next) => {
   next();
 };
 
-// Helper functions to provide default venue information
-const getDefaultParkingInfo = (venueName) => {
-  if (!venueName) return "Street parking available nearby";
-  
-  const name = venueName.toLowerCase();
-  
-  // Check for specific venue types
-  if (name.includes('community') || name.includes('centre') || name.includes('center')) {
-    return "Free parking available on-site";
-  } else if (name.includes('library') || name.includes('museum')) {
-    return "Limited parking - street parking recommended";
-  } else if (name.includes('park') || name.includes('garden')) {
-    return "Free parking available";
-  } else if (name.includes('church') || name.includes('hall')) {
-    return "On-site parking available";
-  } else if (name.includes('cafe') || name.includes('restaurant')) {
-    return "Street parking available nearby";
-  } else {
-    return "Street parking available nearby";
-  }
-};
-
-const getDefaultChangingFacilities = (venueName) => {
-  if (!venueName) return "Baby changing facilities available";
-  
-  const name = venueName.toLowerCase();
-  
-  // Check for specific venue types
-  if (name.includes('community') || name.includes('centre') || name.includes('center')) {
-    return "Baby changing facilities available";
-  } else if (name.includes('library') || name.includes('museum')) {
-    return "Baby changing facilities available";
-  } else if (name.includes('church') || name.includes('hall')) {
-    return "Baby changing facilities available";
-  } else if (name.includes('cafe') || name.includes('restaurant')) {
-    return "Baby changing facilities available";
-  } else if (name.includes('park') || name.includes('garden')) {
-    return "Portable changing facilities recommended";
-  } else {
-    return "Baby changing facilities available";
-  }
-};
-
 // Helper function to transform class for iOS compatibility
-const transformClassForIOS = async (classItem) => {
-  try {
-    console.log(`🔄 Transforming class: ${classItem.name || 'Unknown'}`);
-    
-    const classObj = classItem.toObject();
-    classObj.id = classObj._id;
-    delete classObj._id;
+const transformClassForIOS = (classItem) => {
+  const classObj = classItem.toObject();
+  classObj.id = classObj._id;
+  delete classObj._id;
 
-    // Ensure location object exists with all required fields
-    const location = classObj.location || {};
-    const address = location.address || {};
-    const coordinates = location.coordinates || {};
-
-  // Get venue data from external APIs if available
-  let venueData = null;
-  try {
-    console.log(`🔍 Getting venue data for: "${location.name}"`);
-    venueData = await venueDataService.getRealVenueData(location.name, address);
-    console.log(`🏢 Venue data for "${location.name}":`, {
-      parking: venueData.parkingInfo,
-      changing: venueData.babyChangingFacilities,
-      source: venueData.source
-    });
-
-    // If no coordinates from venue data, try geocoding the address
-    if (!venueData.coordinates && address.street) {
-      console.log(`📍 No coordinates from venue data, trying geocoding for: ${address.street}`);
-      const geocodedCoords = await venueDataService.getCoordinatesForAddress(address);
-      if (geocodedCoords) {
-        venueData.coordinates = geocodedCoords;
-        console.log(`📍 Geocoded coordinates: ${geocodedCoords.latitude}, ${geocodedCoords.longitude}`);
-      }
-    }
-  } catch (error) {
-    console.error('❌ Error getting venue data:', error.message);
-    venueData = {
-      parkingInfo: getDefaultParkingInfo(location.name),
-      babyChangingFacilities: getDefaultChangingFacilities(location.name),
-      accessibilityNotes: null,
-      coordinates: null,
-      source: 'fallback'
-    };
-  }
-
-  // Get provider name (business name or full name) and convert provider to string ID
-  let providerName = 'Unknown Provider';
-  let providerId = classObj.provider;
-  
-  if (classObj.provider) {
-    if (typeof classObj.provider === 'object') {
-      // Provider is populated object - extract ID and name
-      providerId = classObj.provider._id || classObj.provider.id;
-      if (classObj.provider.businessName) {
-        providerName = classObj.provider.businessName;
-      } else if (classObj.provider.fullName) {
-        providerName = classObj.provider.fullName;
-      }
-    } else if (typeof classObj.provider === 'string') {
-      providerName = `Provider ${classObj.provider}`;
-    }
-  }
+  // Ensure location object exists with all required fields
+  const location = classObj.location || {};
+  const address = location.address || {};
+  const coordinates = location.coordinates || {};
 
   return {
     ...classObj,
-    // Convert provider to string ID for iOS compatibility
-    provider: providerId,
-    // Add provider name for display
-    providerName: providerName,
     // Ensure location object matches iOS expectations
     location: {
       id: `location-${classObj.id}`,
@@ -153,12 +53,12 @@ const transformClassForIOS = async (classItem) => {
         country: address.country || 'United Kingdom'
       },
       coordinates: {
-        latitude: venueData?.coordinates?.lat || venueData?.coordinates?.latitude || coordinates.latitude || 0,
-        longitude: venueData?.coordinates?.lng || venueData?.coordinates?.longitude || coordinates.longitude || 0
+        latitude: coordinates.latitude || 0,
+        longitude: coordinates.longitude || 0
       },
-      accessibilityNotes: venueData?.accessibilityNotes || location.accessibilityNotes || null,
-      parkingInfo: venueData?.parkingInfo || location.parkingInfo || getDefaultParkingInfo(location.name),
-      babyChangingFacilities: venueData?.babyChangingFacilities || location.babyChangingFacilities || getDefaultChangingFacilities(location.name)
+      accessibilityNotes: location.accessibilityNotes || null,
+      parkingInfo: location.parkingInfo || null,
+      babyChangingFacilities: location.babyChangingFacilities || null
     },
     // Create schedule object from recurringDays and timeSlots
     schedule: {
@@ -183,35 +83,6 @@ const transformClassForIOS = async (classItem) => {
     // Add isFavorite field
     isFavorite: false
   };
-  } catch (error) {
-    console.error('❌ Error transforming class:', error.message);
-    // Return a basic transformed class with fallback data
-    const classObj = classItem.toObject();
-    classObj.id = classObj._id;
-    delete classObj._id;
-    
-    return {
-      ...classObj,
-      provider: classObj.provider?._id || classObj.provider,
-      providerName: classObj.provider?.businessName || classObj.provider?.fullName || 'Unknown Provider',
-      location: {
-        name: classObj.location?.name || 'Unknown Venue',
-        address: classObj.location?.address || {},
-        coordinates: classObj.location?.coordinates || { latitude: 0, longitude: 0 },
-        accessibilityNotes: null,
-        parkingInfo: 'Street parking available nearby',
-        babyChangingFacilities: 'Baby changing facilities available'
-      },
-      schedule: {
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        recurringDays: classObj.recurringDays || [],
-        timeSlots: classObj.timeSlots || []
-      },
-      currentEnrollment: classObj.currentBookings || 0,
-      isFavorite: false
-    };
-  }
 };
 
 // @route   GET /api/classes
@@ -270,9 +141,8 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
 
     console.log('🔍 Filter:', JSON.stringify(filter, null, 2));
 
-    // Execute query with provider population
+    // Execute query
     const classes = await Class.find(filter)
-      .populate('provider', 'fullName businessName')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -283,7 +153,7 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
     console.log(`✅ Found ${classes.length} published classes (total: ${total})`);
 
     // Transform classes to match iOS model expectations
-    const transformedClasses = await Promise.all(classes.map(transformClassForIOS));
+    const transformedClasses = classes.map(transformClassForIOS);
 
     res.json({
       success: true,
@@ -319,7 +189,7 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Class not available' });
     }
 
-    const transformedClass = await transformClassForIOS(classItem);
+    const transformedClass = transformClassForIOS(classItem);
 
     res.json({
       success: true,
@@ -402,7 +272,7 @@ router.post('/', [
     console.log('✅ Class created successfully:', savedClass.name);
 
     // Transform the response for iOS compatibility
-    const transformedClass = await transformClassForIOS(savedClass);
+    const transformedClass = transformClassForIOS(savedClass);
 
     res.status(201).json({
       success: true,
@@ -448,7 +318,7 @@ router.put('/:id', [
     console.log('✅ Class updated successfully:', updatedClass.name);
 
     // Transform the response for iOS compatibility
-    const transformedClass = await transformClassForIOS(updatedClass);
+    const transformedClass = transformClassForIOS(updatedClass);
 
     res.json({
       success: true,
@@ -494,7 +364,7 @@ router.post('/:id/publish', [
     console.log('✅ Class published successfully:', updatedClass.name);
 
     // Transform the response for iOS compatibility
-    const transformedClass = await transformClassForIOS(updatedClass);
+    const transformedClass = transformClassForIOS(updatedClass);
 
     res.json({
       success: true,
@@ -540,7 +410,7 @@ router.post('/:id/unpublish', [
     console.log('✅ Class unpublished successfully:', updatedClass.name);
 
     // Transform the response for iOS compatibility
-    const transformedClass = await transformClassForIOS(updatedClass);
+    const transformedClass = transformClassForIOS(updatedClass);
 
     res.json({
       success: true,
@@ -625,7 +495,7 @@ router.get('/provider/my-classes', protect, /* requireProviderVerification, */ n
     console.log(`✅ Found ${classes.length} classes for provider (total: ${total})`);
 
     // Transform classes to match iOS model expectations
-    const transformedClasses = await Promise.all(classes.map(transformClassForIOS));
+    const transformedClasses = classes.map(transformClassForIOS);
 
     res.json({
       success: true,
