@@ -28,11 +28,13 @@ if (process.env.MONGODB_URI) {
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://192.168.1.72:3000',
-    'http://127.0.0.1:3000'
-  ],
+  origin: process.env.NODE_ENV === 'production' 
+    ? '*' 
+    : [
+        'http://localhost:3000',
+        'http://192.168.1.72:3000',
+        'http://127.0.0.1:3000'
+      ],
   credentials: true
 }));
 
@@ -59,6 +61,14 @@ if (process.env.NODE_ENV !== 'development') {
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// Root endpoint for Railway
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'YUGI API Server',
+    status: 'running'
+  });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
