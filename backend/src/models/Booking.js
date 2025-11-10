@@ -121,23 +121,30 @@ const bookingSchema = new mongoose.Schema({
 // Generate booking number before saving
 bookingSchema.pre('save', async function(next) {
   if (this.isNew) {
-    const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    
-    // Get count of bookings for today
-    const todayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const todayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-    
-    const count = await this.constructor.countDocuments({
-      createdAt: { $gte: todayStart, $lt: todayEnd }
-    });
-    
-    const sequence = (count + 1).toString().padStart(3, '0');
-    this.bookingNumber = `YUGI${year}${month}${day}${sequence}`;
+    try {
+      const date = new Date();
+      const year = date.getFullYear().toString().slice(-2);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      
+      // Get count of bookings for today
+      const todayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const todayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+      
+      const count = await this.constructor.countDocuments({
+        createdAt: { $gte: todayStart, $lt: todayEnd }
+      });
+      
+      const sequence = (count + 1).toString().padStart(3, '0');
+      this.bookingNumber = `YUGI${year}${month}${day}${sequence}`;
+      next();
+    } catch (error) {
+      console.error('Error generating booking number:', error);
+      next(error);
+    }
+  } else {
+    next();
   }
-  next();
 });
 
 // Indexes

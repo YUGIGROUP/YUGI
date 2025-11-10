@@ -76,11 +76,16 @@ router.post('/', [
       $inc: { currentBookings: 1 }
     });
 
-    // Populate class and provider info
-    await booking.populate([
-      { path: 'class', select: 'name description category price duration ageRange location provider' },
-      { path: 'class.provider', select: 'fullName businessName phoneNumber' }
-    ]);
+    // Populate class and provider info (with error handling)
+    try {
+      await booking.populate([
+        { path: 'class', select: 'name description category price duration ageRange location provider' },
+        { path: 'class.provider', select: 'fullName businessName phoneNumber' }
+      ]);
+    } catch (populateError) {
+      console.error('Populate error (non-fatal):', populateError);
+      // Continue even if populate fails - booking is still created
+    }
 
     res.status(201).json({
       success: true,
@@ -90,7 +95,16 @@ router.post('/', [
 
   } catch (error) {
     console.error('Create booking error:', error);
-    res.status(500).json({ message: 'Server error creating booking' });
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code
+    });
+    res.status(500).json({ 
+      message: 'Server error creating booking',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
