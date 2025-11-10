@@ -120,27 +120,41 @@ const bookingSchema = new mongoose.Schema({
 
 // Generate booking number before saving
 bookingSchema.pre('save', async function(next) {
-  if (this.isNew) {
+  // Only generate if bookingNumber doesn't exist and this is a new document
+  if (this.isNew && !this.bookingNumber) {
     try {
       const date = new Date();
       const year = date.getFullYear().toString().slice(-2);
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const day = date.getDate().toString().padStart(2, '0');
       
-      // Get count of bookings for today
-      const todayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      const todayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-      
-      const count = await this.constructor.countDocuments({
-        createdAt: { $gte: todayStart, $lt: todayEnd }
-      });
+      // Get count of bookings for today (use a simpler query that doesn't rely on createdAt)
+      let count = 0;
+      try {
+        const todayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const todayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+        
+        count = await this.constructor.countDocuments({
+          bookingNumber: { $regex: `^YUGI${year}${month}${day}` }
+        });
+      } catch (countError) {
+        console.error('Error counting bookings (using fallback):', countError);
+        // Fallback: use timestamp-based sequence if count fails
+        count = Math.floor(Date.now() % 1000);
+      }
       
       const sequence = (count + 1).toString().padStart(3, '0');
       this.bookingNumber = `YUGI${year}${month}${day}${sequence}`;
+      
+      console.log(`✅ Generated booking number: ${this.bookingNumber}`);
       next();
     } catch (error) {
       console.error('Error generating booking number:', error);
-      next(error);
+      // Fallback: generate a timestamp-based booking number
+      const timestamp = Date.now().toString().slice(-6);
+      this.bookingNumber = `YUGI${timestamp}`;
+      console.log(`⚠️ Using fallback booking number: ${this.bookingNumber}`);
+      next();
     }
   } else {
     next();
