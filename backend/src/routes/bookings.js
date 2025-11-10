@@ -58,8 +58,33 @@ router.post('/', [
     const serviceFee = 1.99;
     const totalAmount = basePrice + serviceFee;
 
-    // Create booking
+    // Generate booking number before creating
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    
+    let bookingNumber;
+    try {
+      // Count existing bookings with today's prefix
+      const todayPrefix = `YUGI${year}${month}${day}`;
+      const count = await Booking.countDocuments({
+        bookingNumber: { $regex: `^${todayPrefix}` }
+      });
+      const sequence = (count + 1).toString().padStart(3, '0');
+      bookingNumber = `${todayPrefix}${sequence}`;
+      console.log(`✅ Generated booking number: ${bookingNumber}`);
+    } catch (countError) {
+      console.error('Error counting bookings, using timestamp fallback:', countError);
+      // Fallback: use timestamp
+      const timestamp = Date.now().toString().slice(-6);
+      bookingNumber = `YUGI${timestamp}`;
+      console.log(`⚠️ Using fallback booking number: ${bookingNumber}`);
+    }
+
+    // Create booking with bookingNumber
     const booking = await Booking.create({
+      bookingNumber,
       parent: req.user.id,
       class: classId,
       children,
