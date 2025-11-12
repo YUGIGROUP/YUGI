@@ -79,6 +79,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Logging middleware for payment routes - runs BEFORE routes are mounted
+app.use('/api/payments', (req, res, next) => {
+  console.log('🔴🔴🔴 PAYMENT ROUTE HIT (SERVER LEVEL) 🔴🔴🔴');
+  console.log('🔴 Method:', req.method);
+  console.log('🔴 Path:', req.path);
+  console.log('🔴 Original URL:', req.originalUrl);
+  console.log('🔴 Timestamp:', new Date().toISOString());
+  next();
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

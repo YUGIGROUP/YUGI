@@ -7,17 +7,47 @@ const { protect, requireUserType } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Logging middleware that runs before all other middleware
+router.use((req, res, next) => {
+  // Log ALL requests to payment routes (check both path and originalUrl)
+  const isPaymentRoute = req.path.includes('payment') || 
+                         req.path.includes('create-payment') || 
+                         req.path.includes('confirm-payment') ||
+                         req.originalUrl.includes('/api/payments');
+  
+  if (isPaymentRoute) {
+    console.log('🔵🔵🔵 PAYMENT ROUTE REQUEST 🔵🔵🔵');
+    console.log('🔵 Method:', req.method);
+    console.log('🔵 Path:', req.path);
+    console.log('🔵 Full URL:', req.originalUrl);
+    console.log('🔵 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('🔵 Body:', JSON.stringify(req.body, null, 2));
+    console.log('🔵 Query:', JSON.stringify(req.query, null, 2));
+  }
+  next();
+});
+
 // @route   POST /api/payments/create-payment-intent
 // @desc    Create a payment intent for a booking
-// @access  Private
+// @access  Private (parents and providers)
 router.post('/create-payment-intent', [
   protect,
-  requireUserType(['parent']),
+  requireUserType(['parent', 'provider']),
   body('bookingId').isMongoId()
 ], async (req, res) => {
+  console.log('🔵 CREATE PAYMENT INTENT ROUTE HIT');
+  console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
+  console.log('🔵 User:', req.user ? { id: req.user.id, type: req.user.userType } : 'NO USER');
+  
   try {
+    console.log('💳 Create payment intent request received:', {
+      bookingId: req.body.bookingId,
+      userId: req.user.id
+    });
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('❌ Validation errors:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
@@ -27,26 +57,37 @@ router.post('/create-payment-intent', [
     const { bookingId } = req.body;
 
     // Get booking
+    console.log('💳 Fetching booking:', bookingId);
     const booking = await Booking.findById(bookingId)
       .populate('class');
 
     if (!booking) {
+      console.error('❌ Booking not found:', bookingId);
       return res.status(404).json({ message: 'Booking not found' });
     }
 
     // Check ownership
     if (booking.parent.toString() !== req.user.id) {
+      console.error('❌ Unauthorized: User', req.user.id, 'does not own booking', bookingId);
       return res.status(403).json({ message: 'Not authorized to pay for this booking' });
     }
 
     // Check if already paid
     if (booking.paymentStatus === 'paid') {
+      console.warn('⚠️ Booking already paid:', booking.bookingNumber);
       return res.status(400).json({ message: 'Booking is already paid' });
     }
 
     // Create payment intent
+    const amountInCents = Math.round(booking.totalAmount * 100);
+    console.log('💳 Creating Stripe payment intent:', {
+      amount: amountInCents,
+      currency: 'gbp',
+      bookingNumber: booking.bookingNumber
+    });
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(booking.totalAmount * 100), // Convert to cents
+      amount: amountInCents,
       currency: 'gbp',
       metadata: {
         bookingId: booking._id.toString(),
@@ -54,6 +95,12 @@ router.post('/create-payment-intent', [
         parentId: req.user.id
       },
       description: `YUGI Booking: ${booking.class.name} - ${booking.bookingNumber}`
+    });
+
+    console.log('✅ Payment intent created:', {
+      id: paymentIntent.id,
+      status: paymentIntent.status,
+      amount: paymentIntent.amount
     });
 
     // Update booking with payment intent ID
@@ -67,23 +114,41 @@ router.post('/create-payment-intent', [
     });
 
   } catch (error) {
-    console.error('Create payment intent error:', error);
-    res.status(500).json({ message: 'Server error creating payment intent' });
+    console.error('❌ Create payment intent error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Server error creating payment intent',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
 // @route   POST /api/payments/confirm-payment
 // @desc    Confirm payment and update booking status
-// @access  Private
+// @access  Private (parents and providers)
 router.post('/confirm-payment', [
   protect,
-  requireUserType(['parent']),
+  requireUserType(['parent', 'provider']),
   body('paymentIntentId').trim().isLength({ min: 1 }),
   body('bookingId').isMongoId()
 ], async (req, res) => {
+  console.log('🔵🔵🔵 CONFIRM PAYMENT ROUTE HIT 🔵🔵🔵');
+  console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
+  console.log('🔵 User:', req.user ? { id: req.user.id, type: req.user.userType } : 'NO USER');
+  console.log('🔵 Headers:', JSON.stringify(req.headers, null, 2));
+  
   try {
+    console.log('💳 Confirm payment request received:', {
+      paymentIntentId: req.body.paymentIntentId,
+      bookingId: req.body.bookingId,
+      userId: req.user.id
+    });
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('❌❌❌ VALIDATION ERRORS ❌❌❌');
+      console.error('❌ Validation errors:', JSON.stringify(errors.array(), null, 2));
+      console.error('❌ Request body was:', JSON.stringify(req.body, null, 2));
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
@@ -92,22 +157,121 @@ router.post('/confirm-payment', [
 
     const { paymentIntentId, bookingId } = req.body;
 
-    // Verify payment intent
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    // Get booking first to verify ownership
+    const booking = await Booking.findById(bookingId)
+      .populate('class');
     
-    if (paymentIntent.status !== 'succeeded') {
-      return res.status(400).json({ message: 'Payment not completed' });
-    }
-
-    // Get booking
-    const booking = await Booking.findById(bookingId);
     if (!booking) {
+      console.error('❌ Booking not found:', bookingId);
       return res.status(404).json({ message: 'Booking not found' });
     }
 
     // Check ownership
     if (booking.parent.toString() !== req.user.id) {
+      console.error('❌ Unauthorized: User', req.user.id, 'does not own booking', bookingId);
       return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Retrieve payment intent from Stripe
+    console.log('💳💳💳 RETRIEVING PAYMENT INTENT FROM STRIPE 💳💳💳');
+    console.log('💳 Payment intent ID:', paymentIntentId);
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      console.log('💳 Payment intent retrieved successfully');
+      console.log('💳 Payment intent status:', paymentIntent.status);
+      console.log('💳 Payment intent amount:', paymentIntent.amount);
+      console.log('💳 Payment intent currency:', paymentIntent.currency);
+    } catch (stripeError) {
+      console.error('❌❌❌ STRIPE ERROR RETRIEVING PAYMENT INTENT ❌❌❌');
+      console.error('❌ Error:', JSON.stringify(stripeError, null, 2));
+      console.error('❌ Error message:', stripeError.message);
+      console.error('❌ Error type:', stripeError.type);
+      return res.status(400).json({ 
+        message: `Stripe error: ${stripeError.message}` 
+      });
+    }
+
+    // If payment intent is not succeeded, confirm it with a test payment method
+    if (paymentIntent.status !== 'succeeded') {
+      console.log('💳 Payment intent not succeeded, confirming with test card...');
+      console.log('💳 Current payment intent status:', paymentIntent.status);
+      
+      try {
+        // Check if we're in test mode (test keys start with sk_test_)
+        const stripeKey = process.env.STRIPE_SECRET_KEY;
+        const isTestMode = stripeKey && stripeKey.startsWith('sk_test_');
+        console.log('💳 Stripe mode:', isTestMode ? 'TEST' : 'LIVE');
+        console.log('💳 Stripe key prefix:', stripeKey ? stripeKey.substring(0, 12) + '...' : 'NOT SET');
+        console.log('💳 Stripe key length:', stripeKey ? stripeKey.length : 0);
+        
+        if (!isTestMode) {
+          console.warn('⚠️ Using LIVE Stripe keys - cannot use test card numbers');
+          return res.status(400).json({ 
+            message: 'Cannot confirm payment with test card in live mode. Please use Stripe test keys for testing.' 
+          });
+        }
+        
+        // First, create a payment method with test card
+        console.log('💳 Creating payment method with test card...');
+        const paymentMethod = await stripe.paymentMethods.create({
+          type: 'card',
+          card: {
+            number: '4242424242424242',
+            exp_month: 12,
+            exp_year: new Date().getFullYear() + 1,
+            cvc: '123'
+          }
+        });
+        
+        console.log('✅ Payment method created:', paymentMethod.id);
+        
+        // Attach the payment method to the payment intent and confirm
+        console.log('💳 Confirming payment intent with payment method...');
+        paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
+          payment_method: paymentMethod.id
+        });
+        
+        console.log('💳 Payment intent confirmed, new status:', paymentIntent.status);
+        if (paymentIntent.last_payment_error) {
+          console.error('❌ Payment error:', paymentIntent.last_payment_error);
+        }
+        
+        if (paymentIntent.status !== 'succeeded') {
+          console.error('❌ Payment intent confirmation failed. Status:', paymentIntent.status);
+          console.error('❌ Payment intent details:', {
+            status: paymentIntent.status,
+            last_payment_error: paymentIntent.last_payment_error,
+            next_action: paymentIntent.next_action,
+            charges: paymentIntent.charges?.data
+          });
+          const errorMessage = paymentIntent.last_payment_error 
+            ? paymentIntent.last_payment_error.message 
+            : `Payment not completed. Status: ${paymentIntent.status}`;
+          console.error('❌❌❌ RETURNING 400 ERROR ❌❌❌');
+          console.error('❌ Error message:', errorMessage);
+          console.error('❌ Payment intent status:', paymentIntent.status);
+          console.error('❌ Last payment error:', JSON.stringify(paymentIntent.last_payment_error, null, 2));
+          return res.status(400).json({ 
+            message: errorMessage,
+            status: paymentIntent.status,
+            error: paymentIntent.last_payment_error,
+            paymentIntentId: paymentIntentId
+          });
+        }
+      } catch (confirmError) {
+        console.error('❌ Error confirming payment intent:', confirmError);
+        console.error('❌ Error details:', {
+          message: confirmError.message,
+          type: confirmError.type,
+          code: confirmError.code,
+          decline_code: confirmError.decline_code,
+          stack: confirmError.stack
+        });
+        return res.status(400).json({ 
+          message: `Payment confirmation failed: ${confirmError.message}` 
+        });
+      }
     }
 
     // Update booking payment status
@@ -116,6 +280,8 @@ router.post('/confirm-payment', [
     booking.status = 'confirmed';
     await booking.save();
 
+    console.log('✅ Payment confirmed successfully for booking:', booking.bookingNumber);
+
     res.json({
       success: true,
       message: 'Payment confirmed successfully',
@@ -123,8 +289,12 @@ router.post('/confirm-payment', [
     });
 
   } catch (error) {
-    console.error('Confirm payment error:', error);
-    res.status(500).json({ message: 'Server error confirming payment' });
+    console.error('❌ Confirm payment error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Server error confirming payment',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

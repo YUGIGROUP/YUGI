@@ -37,6 +37,14 @@ class VenueDataService {
       const googleData = await this.getGooglePlacesData(venueName, address);
       if (googleData) {
         const result = this.formatVenueData(googleData, 'google');
+        // Add coordinates if missing
+        // Temporarily disabled geocoding to fix timeout issues
+        // if (!result.coordinates) {
+        //   const coordinates = await this.getCoordinatesForAddress(address);
+        //   if (coordinates) {
+        //     result.coordinates = coordinates;
+        //   }
+        // }
         this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
         return result;
       }
@@ -45,12 +53,26 @@ class VenueDataService {
       const foursquareData = await this.getFoursquareData(venueName, address);
       if (foursquareData) {
         const result = this.formatVenueData(foursquareData, 'foursquare');
+        // Add coordinates if missing
+        // Temporarily disabled geocoding to fix timeout issues
+        // if (!result.coordinates) {
+        //   const coordinates = await this.getCoordinatesForAddress(address);
+        //   if (coordinates) {
+        //     result.coordinates = coordinates;
+        //   }
+        // }
         this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
         return result;
       }
 
       // If no real data found, use smart defaults
       const defaultData = this.getDefaultVenueData(venueName);
+      // Add coordinates to default data if available
+      // Temporarily disabled geocoding to fix timeout issues
+      // const coordinates = await this.getCoordinatesForAddress(address);
+      // if (coordinates) {
+      //   defaultData.coordinates = coordinates;
+      // }
       this.cache.set(cacheKey, { data: defaultData, timestamp: Date.now() });
       return defaultData;
 
@@ -120,7 +142,7 @@ class VenueDataService {
       const encodedQuery = encodeURIComponent(query);
       
       const response = await axios.get(
-        `https://api.foursquare.com/v3/places/search?query=${encodedQuery}&limit=1&fields=name,location,categories,rating,price,hours,photos,amenities`,
+        `https://api.foursquare.com/places/search?query=${encodedQuery}&limit=1&fields=name,location,categories,rating,price,hours,photos,amenities`,
         {
           headers: {
             'Authorization': this.foursquareApiKey,
@@ -161,7 +183,7 @@ class VenueDataService {
       parkingInfo,
       babyChangingFacilities: changingFacilities,
       accessibilityNotes: this.generateAccessibilityNotes(apiData, source),
-      coordinates: apiData.coordinates,
+      coordinates: apiData.coordinates || null,
       source: source,
       lastUpdated: new Date().toISOString()
     };
@@ -375,7 +397,7 @@ class VenueDataService {
   }
 
   /**
-   * Get coordinates for an address using Google Geocoding API
+   * Get coordinates for an address using Google Places API Text Search
    */
   async getCoordinatesForAddress(address) {
     if (!this.googlePlacesApiKey) {
@@ -387,8 +409,12 @@ class VenueDataService {
       const addressString = `${address.street}, ${address.city}, ${address.postalCode}, ${address.country}`;
       const encodedAddress = encodeURIComponent(addressString);
       
+      console.log(`📍 No coordinates from venue data, trying geocoding for: ${addressString}`);
+      
+      // Use Google Places Text Search API instead of Geocoding API
       const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${this.googlePlacesApiKey}`
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodedAddress}&key=${this.googlePlacesApiKey}`,
+        { timeout: 5000 } // 5 second timeout
       );
 
       if (response.data.results && response.data.results.length > 0) {
@@ -399,8 +425,14 @@ class VenueDataService {
           longitude: location.lng
         };
       }
+      
+      console.log(`📍 No coordinates found for: ${addressString}`);
     } catch (error) {
-      console.error('❌ Geocoding API error:', error.message);
+      if (error.code === 'ECONNABORTED') {
+        console.log(`⏰ Geocoding timeout for: ${addressString}`);
+      } else {
+        console.error('❌ Geocoding API error:', error.message);
+      }
     }
     
     return null;
