@@ -35,6 +35,7 @@ router.post('/create-payment-intent', [
   requireUserType(['parent', 'provider']),
   body('bookingId').isMongoId()
 ], async (req, res) => {
+  console.log('🔵🔵🔵 CREATE PAYMENT INTENT ROUTE HANDLER EXECUTED 🔵🔵🔵');
   console.log('🔵 CREATE PAYMENT INTENT ROUTE HIT');
   console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
   console.log('🔵 User:', req.user ? { id: req.user.id, type: req.user.userType } : 'NO USER');
@@ -132,6 +133,7 @@ router.post('/confirm-payment', [
   body('paymentIntentId').trim().isLength({ min: 1 }),
   body('bookingId').isMongoId()
 ], async (req, res) => {
+  console.log('🔵🔵🔵 CONFIRM PAYMENT ROUTE HANDLER EXECUTED 🔵🔵🔵');
   console.log('🔵🔵🔵 CONFIRM PAYMENT ROUTE HIT 🔵🔵🔵');
   console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
   console.log('🔵 User:', req.user ? { id: req.user.id, type: req.user.userType } : 'NO USER');
