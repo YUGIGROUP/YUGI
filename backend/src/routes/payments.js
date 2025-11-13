@@ -214,22 +214,33 @@ router.post('/confirm-payment', [
           });
         }
         
-        // Use payment_method_data to provide card details directly
-        // NOTE: This requires "Test mode card data" to be enabled in Stripe Dashboard
-        // Go to: Settings → API → Enable "Test mode card data"
-        // OR use Stripe.js on the frontend to collect card details securely
-        console.log('💳 Confirming payment intent with test card using payment_method_data...');
-        paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
-          payment_method_data: {
-            type: 'card',
-            card: {
-              number: '4242424242424242',
-              exp_month: 12,
-              exp_year: new Date().getFullYear() + 1,
-              cvc: '123'
+        // Try using Stripe test payment method token first
+        // If that doesn't work, we'll need to use Stripe SDK on the frontend
+        console.log('💳 Attempting to confirm with Stripe test payment method token...');
+        
+        try {
+          // First, try to attach a test payment method token
+          // Note: These tokens are typically created by Stripe.js, but we can try using a known test token
+          paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
+            payment_method: 'pm_card_visa' // Stripe test token for Visa
+          });
+        } catch (tokenError) {
+          console.log('⚠️ Test token approach failed, trying payment_method_data...');
+          console.log('⚠️ Error:', tokenError.message);
+          
+          // Fallback: Try payment_method_data (requires "Test mode card data" enabled)
+          paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
+            payment_method_data: {
+              type: 'card',
+              card: {
+                number: '4242424242424242',
+                exp_month: 12,
+                exp_year: new Date().getFullYear() + 1,
+                cvc: '123'
+              }
             }
-          }
-        });
+          });
+        }
         
         console.log('💳 Payment intent confirmed, new status:', paymentIntent.status);
         if (paymentIntent.last_payment_error) {
