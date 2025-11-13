@@ -214,24 +214,21 @@ router.post('/confirm-payment', [
           });
         }
         
-        // First, create a payment method with test card
-        console.log('💳 Creating payment method with test card...');
-        const paymentMethod = await stripe.paymentMethods.create({
-          type: 'card',
-          card: {
-            number: '4242424242424242',
-            exp_month: 12,
-            exp_year: new Date().getFullYear() + 1,
-            cvc: '123'
-          }
-        });
-        
-        console.log('✅ Payment method created:', paymentMethod.id);
-        
-        // Attach the payment method to the payment intent and confirm
-        console.log('💳 Confirming payment intent with payment method...');
+        // Use payment_method_data to provide card details directly
+        // NOTE: This requires "Test mode card data" to be enabled in Stripe Dashboard
+        // Go to: Settings → API → Enable "Test mode card data"
+        // OR use Stripe.js on the frontend to collect card details securely
+        console.log('💳 Confirming payment intent with test card using payment_method_data...');
         paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
-          payment_method: paymentMethod.id
+          payment_method_data: {
+            type: 'card',
+            card: {
+              number: '4242424242424242',
+              exp_month: 12,
+              exp_year: new Date().getFullYear() + 1,
+              cvc: '123'
+            }
+          }
         });
         
         console.log('💳 Payment intent confirmed, new status:', paymentIntent.status);
