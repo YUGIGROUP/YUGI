@@ -90,11 +90,7 @@ router.post('/create-payment-intent', [
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: 'gbp',
-      payment_method_types: ['card'], // Only allow card payments (no redirect-based methods)
-      automatic_payment_methods: {
-        enabled: true,
-        allow_redirects: 'never' // Disable redirects so we don't need return_url
-      },
+      payment_method_types: ['card'], // Only allow card payments (no redirect-based methods like Klarna, Link, etc.)
       metadata: {
         bookingId: booking._id.toString(),
         classId: booking.class._id.toString(),
