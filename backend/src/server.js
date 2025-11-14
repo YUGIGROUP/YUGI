@@ -46,7 +46,16 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
+// Skip JSON parsing for Stripe webhook (needs raw body for signature verification)
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/payments/webhook') {
+    // Use raw body parser for webhook
+    express.raw({ type: 'application/json' })(req, res, next);
+  } else {
+    // Use JSON parser for all other routes
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: true }));
 
 // Static files for admin interface

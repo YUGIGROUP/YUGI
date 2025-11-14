@@ -312,7 +312,8 @@ router.post('/confirm-payment', [
 // @route   POST /api/payments/webhook
 // @desc    Handle Stripe webhooks
 // @access  Public
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+// Note: Raw body parsing is handled at server level for this route
+router.post('/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
