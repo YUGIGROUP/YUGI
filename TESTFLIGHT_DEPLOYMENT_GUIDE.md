@@ -276,6 +276,49 @@ Once testing is complete:
 
 ---
 
+## 🔄 Updating Your App on TestFlight
+
+When you need to make changes and push an update:
+
+### Quick Update Process
+
+1. **Make your code changes** in Xcode
+2. **Increment Build Number**:
+   - Open Xcode → Select your project → General tab
+   - Increase **Build** number (e.g., `1` → `2` → `3`)
+   - Version can stay the same (e.g., `1.0.0`)
+3. **Archive again**:
+   - Select "Any iOS Device"
+   - Product → Archive
+4. **Upload new build**:
+   - In Organizer → Distribute App → App Store Connect → Upload
+5. **Wait for processing** (10-30 minutes)
+6. **Update TestFlight groups**:
+   - Go to App Store Connect → TestFlight
+   - Select your test group
+   - Click "Add Build" and select the new build
+   - Testers will automatically get the update!
+
+### Important Notes
+
+- **Build number MUST increase** each time (can't reuse same number)
+- **Version can stay the same** for bug fixes (e.g., `1.0.0`)
+- **Version should increase** for major updates (e.g., `1.0.0` → `1.1.0`)
+- Testers will see update notification in TestFlight app
+- Old builds remain available if you need to rollback
+
+### Version vs Build Number
+
+- **Version** (`1.0.0`): What users see, increases for major updates
+- **Build** (`1`, `2`, `3`...): Internal number, MUST increase each upload
+
+**Example:**
+- First upload: Version `1.0.0`, Build `1`
+- Bug fix: Version `1.0.0`, Build `2` ✅
+- New feature: Version `1.1.0`, Build `3` ✅
+
+---
+
 ## 🎉 You're Done!
 
 Your app is now on TestFlight! Testers can install and test your app.
