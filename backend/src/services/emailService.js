@@ -88,7 +88,7 @@ class EmailService {
 
   async sendEmail(to, subject, html, text = null) {
     // This is where you would integrate with an email service provider
-    // Examples: SendGrid, AWS SES, Mailgun, etc.
+    // Examples: SendGrid, AWS SES, Mailgun, Gmail SMTP, etc.
     
     if (process.env.EMAIL_PROVIDER === 'sendgrid') {
       return await this.sendWithSendGrid(to, subject, html, text);
@@ -96,6 +96,8 @@ class EmailService {
       return await this.sendWithSES(to, subject, html, text);
     } else if (process.env.EMAIL_PROVIDER === 'mailgun') {
       return await this.sendWithMailgun(to, subject, html, text);
+    } else if (process.env.EMAIL_PROVIDER === 'gmail' || process.env.EMAIL_PROVIDER === 'smtp') {
+      return await this.sendWithSMTP(to, subject, html, text);
     } else {
       // Default: log email (for development)
       console.log(`📧 Email would be sent to ${to}: ${subject}`);
@@ -195,6 +197,53 @@ class EmailService {
       };
     } catch (error) {
       console.error('❌ AWS SES error:', error);
+      throw error;
+    }
+  }
+
+  // Gmail/SMTP integration (works with Squarespace domain emails forwarded to Gmail)
+  async sendWithSMTP(to, subject, html, text) {
+    const nodemailer = require('nodemailer');
+    
+    // Check for required environment variables
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('❌ SMTP configuration missing. Required: EMAIL_USER, EMAIL_PASS');
+      throw new Error('SMTP not properly configured');
+    }
+
+    const emailHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
+    const emailPort = parseInt(process.env.EMAIL_PORT || '587');
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+
+    const transporter = nodemailer.createTransport({
+      host: emailHost,
+      port: emailPort,
+      secure: emailPort === 465, // true for 465, false for other ports
+      auth: {
+        user: emailUser,
+        pass: emailPass
+      }
+    });
+
+    const mailOptions = {
+      from: `${this.fromName} <${this.fromEmail}>`,
+      to: to,
+      subject: subject,
+      html: html,
+      text: text || html.replace(/<[^>]*>/g, '')
+    };
+
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`✅ SMTP email sent successfully. MessageId: ${info.messageId}`);
+      return { 
+        success: true, 
+        message: 'Email sent successfully',
+        messageId: info.messageId
+      };
+    } catch (error) {
+      console.error('❌ SMTP error:', error);
       throw error;
     }
   }
