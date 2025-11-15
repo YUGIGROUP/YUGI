@@ -1,9 +1,9 @@
-const { generatePasswordResetEmail, generateWelcomeEmail } = require('../utils/emailTemplates');
+const { generatePasswordResetEmail, generateWelcomeEmail, generateBookingConfirmationEmail } = require('../utils/emailTemplates');
 
 class EmailService {
   constructor() {
     this.isProduction = process.env.NODE_ENV === 'production';
-    this.fromEmail = process.env.FROM_EMAIL || 'noreply@yugi.uk';
+    this.fromEmail = process.env.FROM_EMAIL || 'info@yugiapp.ai';
     this.fromName = 'YUGI';
   }
 
@@ -49,6 +49,37 @@ class EmailService {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('HTML Content:');
       console.log(emailContent.html);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      
+      return { success: true, message: 'Email logged to console (development mode)' };
+    }
+  }
+
+  async sendBookingConfirmationEmail(userEmail, bookingDetails) {
+    const emailContent = generateBookingConfirmationEmail(bookingDetails);
+    
+    if (this.isProduction) {
+      // In production, send actual email
+      return await this.sendEmail(userEmail, emailContent.subject, emailContent.html, emailContent.text);
+    } else {
+      // In development, log the email content
+      console.log('\n📧 BOOKING CONFIRMATION EMAIL SENT:');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`To: ${userEmail}`);
+      console.log(`Subject: ${emailContent.subject}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('Booking Details:');
+      console.log(`  Booking Number: ${bookingDetails.bookingNumber}`);
+      console.log(`  Class: ${bookingDetails.className}`);
+      console.log(`  Date: ${bookingDetails.sessionDate}`);
+      console.log(`  Time: ${bookingDetails.sessionTime}`);
+      console.log(`  Total: £${bookingDetails.totalAmount.toFixed(2)}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('HTML Content:');
+      console.log(emailContent.html);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('Text Content:');
+      console.log(emailContent.text);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       
       return { success: true, message: 'Email logged to console (development mode)' };

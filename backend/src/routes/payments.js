@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const Booking = require('../models/Booking');
 const Class = require('../models/Class');
 const { protect, requireUserType } = require('../middleware/auth');
+const emailService = require('../services/emailService');
 
 const router = express.Router();
 
@@ -162,7 +163,8 @@ router.post('/confirm-payment', [
 
     // Get booking first to verify ownership
     const booking = await Booking.findById(bookingId)
-      .populate('class');
+      .populate('class')
+      .populate('parent', 'fullName email');
     
     if (!booking) {
       console.error('❌ Booking not found:', bookingId);
@@ -292,6 +294,43 @@ router.post('/confirm-payment', [
     await booking.save();
 
     console.log('✅ Payment confirmed successfully for booking:', booking.bookingNumber);
+
+    // Send booking confirmation email
+    try {
+      // Populate class provider if not already populated
+      if (!booking.class.provider || typeof booking.class.provider === 'string') {
+        await booking.populate({
+          path: 'class',
+          populate: { path: 'provider', select: 'fullName businessName' }
+        });
+      }
+
+      const parentEmail = booking.parent.email;
+      const parentName = booking.parent.fullName || 'there';
+      const providerName = booking.class.provider?.businessName || 
+                          booking.class.provider?.fullName || 
+                          'Unknown Provider';
+
+      const bookingDetails = {
+        parentName,
+        bookingNumber: booking.bookingNumber,
+        className: booking.class.name,
+        providerName,
+        sessionDate: booking.sessionDate,
+        sessionTime: booking.sessionTime,
+        children: booking.children,
+        location: booking.class.location,
+        totalAmount: booking.totalAmount,
+        basePrice: booking.basePrice,
+        serviceFee: booking.serviceFee
+      };
+
+      await emailService.sendBookingConfirmationEmail(parentEmail, bookingDetails);
+      console.log('📧 Booking confirmation email sent to:', parentEmail);
+    } catch (emailError) {
+      console.error('❌ Failed to send booking confirmation email:', emailError);
+      // Don't fail the request if email fails, just log it
+    }
 
     res.json({
       success: true,
