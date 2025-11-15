@@ -1,5 +1,6 @@
 import SwiftUI
 import PassKit
+import Combine
 
 struct BookingView: View {
     let classItem: Class
@@ -12,6 +13,7 @@ struct BookingView: View {
     @State private var isProcessing = false
     @State private var error: Error?
     @State private var showingConfirmation = false
+    @State private var showingErrorAlert = false
     @State private var showingPaymentSheet = false
     @State private var selectedChildren: [Child] = []
     @State private var shouldNavigateToParentDashboard = false
@@ -79,7 +81,26 @@ struct BookingView: View {
         return formatter.string(for: totalPrice as NSDecimalNumber) ?? "£--"
     }
     
-
+    private func setupDefaultPaymentMethod() {
+        // Check if user has saved payment methods
+        if !sharedPaymentService.paymentMethods.isEmpty {
+            // Find the default payment method
+            if let defaultCard = sharedPaymentService.paymentMethods.first(where: { $0.isDefault }) {
+                selectedPaymentMethod = .card
+                selectedSavedCard = defaultCard
+                print("🎯 BookingView: Auto-selected default card: \(defaultCard.lastFourDigits)")
+            } else if let firstCard = sharedPaymentService.paymentMethods.first {
+                selectedPaymentMethod = .card
+                selectedSavedCard = firstCard
+                print("🎯 BookingView: Auto-selected first available card: \(firstCard.lastFourDigits)")
+            }
+        } else {
+            // No saved cards, keep Apple Pay as default
+            selectedPaymentMethod = .applePay
+            selectedSavedCard = nil
+            print("🎯 BookingView: No saved cards, using Apple Pay as default")
+        }
+    }
     
     // Apple Wallet functionality
     private func addToAppleWallet(for booking: Booking) {
@@ -114,57 +135,171 @@ struct BookingView: View {
         return isProviderUser
     }
     
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Color(hex: "#BC6C5C")
-                    .ignoresSafeArea()
-                
-                VStack {
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            // Class Details Card
-                            ClassDetailsCard(classItem: classItem)
-                            
-                            // Booking Options Card
-                            BookingOptionsCard(
-                                participants: $baseParticipants,
-                                requirements: $requirements,
-                                basePrice: basePrice,
-                                serviceFee: serviceFee,
-                                totalPrice: totalPrice
-                            )
-                            
-                            // Child Selection Card (only show if user has children)
-                            if !availableChildren.isEmpty {
-                                ChildSelectionCard(
-                                    availableChildren: availableChildren,
-                                    selectedChildren: $selectedChildren,
-                                    totalParticipants: totalParticipants
-                                )
-                            }
-                            
-                            // Payment Methods Card
-                            PaymentMethodsCard(
-                                selectedMethod: $selectedPaymentMethod,
-                                selectedSavedCard: $selectedSavedCard
-                            )
-                            
-                            // Total and Book Button
-                            TotalAndBookSection(
-                                totalPrice: totalPrice,
-                                isProcessing: isProcessing,
-                                onBook: {
-                                    print("🎯 BookingView: Proceed to Payment button tapped!")
-                                    showingPaymentSheet = true
-                                }
-                            )
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 20)
-                    }
+    // MARK: - View Components
+    
+    private var backgroundView: some View {
+        Color(hex: "#BC6C5C")
+            .ignoresSafeArea()
+    }
+    
+    private var mainContentView: some View {
+        VStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    classDetailsSection
+                    bookingOptionsSection
+                    childSelectionSection
+                    paymentMethodsSection
+                    totalAndBookSection
                 }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 20)
             }
+        }
+    }
+    
+    private var classDetailsSection: some View {
+        ClassDetailsCard(classItem: classItem)
+    }
+    
+    private var bookingOptionsSection: some View {
+        BookingOptionsCard(
+            participants: $baseParticipants,
+            requirements: $requirements,
+            basePrice: basePrice,
+            serviceFee: serviceFee,
+            totalPrice: totalPrice
+        )
+    }
+    
+    private var childSelectionSection: some View {
+        Group {
+            if !availableChildren.isEmpty {
+                ChildSelectionCard(
+                    availableChildren: availableChildren,
+                    selectedChildren: $selectedChildren,
+                    totalParticipants: totalParticipants
+                )
+            }
+        }
+    }
+    
+    private var paymentMethodsSection: some View {
+        PaymentMethodsCard(
+            selectedMethod: $selectedPaymentMethod,
+            selectedSavedCard: $selectedSavedCard
+        )
+    }
+    
+    private var totalAndBookSection: some View {
+        TotalAndBookSection(
+            totalPrice: totalPrice,
+            isProcessing: isProcessing,
+            onBook: {
+                print("🎯 BookingView: Proceed to Payment button tapped!")
+                showingPaymentSheet = true
+            }
+        )
+    }
+    
+    private var contentView: some View {
+        ZStack {
+            backgroundView
+            mainContentView
+        }
+    }
+    
+    private var paymentSheet: some View {
+        PaymentSheet(
+            classItem: classItem,
+            participants: totalParticipants,
+            selectedChildren: selectedChildren,
+            requirements: requirements,
+            totalPrice: totalPrice,
+            paymentMethod: selectedPaymentMethod,
+            selectedSavedCard: selectedSavedCard,
+            onSuccess: handlePaymentSuccess,
+            onError: handlePaymentError
+        )
+    }
+    
+    private func handlePaymentSuccess(_ enhancedBooking: EnhancedBooking) {
+        print("🎯 BookingView: Payment successful!")
+        print("🎯 BookingView: EnhancedBooking created with class: \(enhancedBooking.className)")
+        print("🎯 BookingView: EnhancedBooking created with provider: \(enhancedBooking.providerName)")
+        print("🎯 BookingView: EnhancedBooking created with price: \(enhancedBooking.price)")
+        
+        // Add booking to SharedBookingService so it appears in Children Bookings
+        SharedBookingService.shared.addBooking(enhancedBooking)
+        print("🎯 BookingView: Added booking to SharedBookingService for Children Bookings")
+        
+        // Send notifications
+        notificationService.sendBookingNotification(for: enhancedBooking)
+        notificationService.sendPaymentNotification(amount: enhancedBooking.price, className: enhancedBooking.className)
+        
+        // Send provider notifications
+        let providerId = enhancedBooking.classInfo.provider
+        let parentName = "Sarah Johnson" // In a real app, this would come from user data
+        let bookingDate = enhancedBooking.booking.bookingDate
+        let bookingId = enhancedBooking.booking.id.uuidString
+        let participants = enhancedBooking.booking.numberOfParticipants
+        
+        // Send new booking notification to provider
+        ProviderNotificationService.shared.sendNewBookingNotification(
+            providerId: providerId,
+            className: enhancedBooking.className,
+            bookingDate: bookingDate,
+            parentName: parentName,
+            bookingId: bookingId,
+            participants: participants
+        )
+        
+        // Dismiss the payment sheet
+        showingPaymentSheet = false
+        
+        // Show success confirmation alert
+        showingConfirmation = true
+    }
+    
+    private func handlePaymentError(_ error: Error) {
+        print("❌ BookingView: Payment error occurred: \(error)")
+        if let apiError = error as? APIError {
+            print("❌ BookingView: APIError details: \(apiError.localizedDescription)")
+        }
+        self.error = error
+        showingPaymentSheet = false
+        showingErrorAlert = true
+    }
+    
+    private func errorMessage(for error: Error?) -> String {
+        guard let error = error else {
+            return "An unexpected error occurred"
+        }
+        
+        // Handle APIError
+        if let apiError = error as? APIError {
+            return apiError.localizedDescription
+        }
+        
+        // Handle NSError
+        if let nsError = error as NSError? {
+            if let description = nsError.userInfo[NSLocalizedDescriptionKey] as? String {
+                return description
+            }
+            return nsError.localizedDescription
+        }
+        
+        // Handle BookingService.BookingError
+        if let bookingError = error as? BookingService.BookingError {
+            return bookingError.message
+        }
+        
+        // Fallback
+        return error.localizedDescription.isEmpty ? "An unexpected error occurred" : error.localizedDescription
+    }
+    
+    private var navigationModifiers: some View {
+        EmptyView()
             .navigationTitle("Book Class")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
@@ -178,177 +313,141 @@ struct BookingView: View {
                     .foregroundColor(Color(hex: "#BC6C5C"))
                 }
             }
+    }
+    
+    var body: some View {
+        navigationContent
             .sheet(isPresented: $showingPaymentSheet) {
-                PaymentSheet(
-                    classItem: classItem,
-                    participants: totalParticipants,
-                    selectedChildren: selectedChildren,
-                    requirements: requirements,
-                    totalPrice: totalPrice,
-                    paymentMethod: selectedPaymentMethod,
-                    selectedSavedCard: selectedSavedCard,
-                    onSuccess: { enhancedBooking in
-                        print("🎯 BookingView: Payment successful!")
-                        print("🎯 BookingView: EnhancedBooking created with class: \(enhancedBooking.className)")
-                        print("🎯 BookingView: EnhancedBooking created with provider: \(enhancedBooking.providerName)")
-                        print("🎯 BookingView: EnhancedBooking created with price: \(enhancedBooking.price)")
-                        
-                        // Add booking to SharedBookingService so it appears in Children Bookings
-                        SharedBookingService.shared.addBooking(enhancedBooking)
-                        print("🎯 BookingView: Added booking to SharedBookingService for Children Bookings")
-                        
-                        // Send notifications
-                        notificationService.sendBookingNotification(for: enhancedBooking)
-                        notificationService.sendPaymentNotification(amount: enhancedBooking.price, className: enhancedBooking.className)
-                        
-                        // Send provider notifications
-                        let providerId = enhancedBooking.classInfo.provider.id.uuidString
-                        let parentName = "Sarah Johnson" // In a real app, this would come from user data
-                        let bookingDate = enhancedBooking.booking.bookingDate
-                        let bookingId = enhancedBooking.booking.id.uuidString
-                        let participants = enhancedBooking.booking.numberOfParticipants
-                        
-                        // Send new booking notification to provider
-                        ProviderNotificationService.shared.sendNewBookingNotification(
-                            providerId: providerId,
-                            className: enhancedBooking.className,
-                            bookingDate: bookingDate,
-                            parentName: parentName,
-                            bookingId: bookingId,
-                            participants: participants
-                        )
-                        
-                        // Send payment notification to provider
-                        ProviderNotificationService.shared.sendPaymentNotification(
-                            providerId: providerId,
-                            className: enhancedBooking.className,
-                            amount: enhancedBooking.price,
-                            parentName: parentName,
-                            bookingId: bookingId
-                        )
-                        
-                        // Add to Apple Wallet
-                        addToAppleWallet(for: enhancedBooking.booking)
-                        
-                        // Store the enhanced booking for later notification
-                        // We'll send the notification after the dashboard is loaded
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            NotificationCenter.default.post(name: .bookingCreated, object: enhancedBooking)
-                            print("🎯 BookingView: Notification posted successfully!")
-                        }
-                        
-                        showingConfirmation = true
-                        showingPaymentSheet = false
-                    },
-                    onError: { error in
-                        self.error = error
-                        showingPaymentSheet = false
-                    }
-                )
+                paymentSheet
             }
-            .alert("Payment Error", isPresented: .constant(error != nil)) {
+            .alert("Payment Error", isPresented: $showingErrorAlert) {
                 Button("OK") {
                     error = nil
+                    showingErrorAlert = false
                 }
             } message: {
-                if let error = error as? BookingService.BookingError {
-                    Text(error.message)
-                } else {
-                    Text("An unexpected error occurred")
-                }
+                Text(errorMessage(for: error))
             }
             .alert("Booking Confirmed!", isPresented: $showingConfirmation) {
-                Button(isProvider ? "View Dashboard" : "View My Bookings") {
-                    print("🎯 BookingView: Alert button tapped!")
-                    print("🎯 BookingView: isProvider = \(isProvider)")
-                    print("🎯 BookingView: isProviderUser = \(isProviderUser)")
-                    print("🎯 BookingView: Current user type = \(apiService.currentUser?.userType.rawValue ?? "unknown")")
-                    print("🎯 BookingView: Current user fullName = \(apiService.currentUser?.fullName ?? "unknown")")
-                    print("🎯 BookingView: Current user businessName = \(apiService.currentUser?.businessName ?? "unknown")")
-                    print("🎯 BookingView: Button text = \(isProvider ? "View Dashboard" : "View My Bookings")")
-                    
-                    // Force refresh the provider status right before navigation
-                    let currentUserType = apiService.currentUser?.userType
-                    let isCurrentlyProvider = currentUserType == .provider
-                    
-                    print("🎯 BookingView: Force refresh - currentUserType = \(currentUserType?.rawValue ?? "unknown")")
-                    print("🎯 BookingView: Force refresh - isCurrentlyProvider = \(isCurrentlyProvider)")
-                    
-                    // Debug: Test the enum comparison
-                    if let userType = currentUserType {
-                        print("🎯 BookingView: DEBUG - User type raw value: '\(userType.rawValue)'")
-                        print("🎯 BookingView: DEBUG - Comparing '\(userType.rawValue)' == 'provider': \(userType.rawValue == "provider")")
-                        print("🎯 BookingView: DEBUG - Comparing userType == .provider: \(userType == .provider)")
-                        print("🎯 BookingView: DEBUG - UserType.provider.rawValue: '\(UserType.provider.rawValue)'")
-                    }
-                    
-                    // FIX: Add a small delay to allow user data to be updated, then make navigation decision
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        // Re-check the user type after the delay
-                        let finalUserType = apiService.currentUser?.userType
-                        let finalIsProvider = finalUserType == .provider
-                        
-                        print("🎯 BookingView: FINAL CHECK - finalUserType = \(finalUserType?.rawValue ?? "unknown")")
-                        print("🎯 BookingView: FINAL CHECK - finalIsProvider = \(finalIsProvider)")
-                        
-                        if finalIsProvider {
-                            print("🎯 BookingView: FINAL DECISION - Navigating to provider dashboard...")
-                            shouldNavigateToProviderDashboard = true
-                            print("🎯 BookingView: FINAL DECISION - shouldNavigateToProviderDashboard set to: \(shouldNavigateToProviderDashboard)")
-                        } else {
-                            print("🎯 BookingView: FINAL DECISION - Navigating to parent dashboard...")
-                            shouldNavigateToParentDashboard = true
-                            print("🎯 BookingView: FINAL DECISION - shouldNavigateToParentDashboard set to: \(shouldNavigateToParentDashboard)")
-                        }
-                    }
+                Button("OK") {
+                    showingConfirmation = false
+                    // Dismiss the booking view after showing success
+                    dismiss()
                 }
             } message: {
-                Text("Your booking has been confirmed and added to your Apple Wallet! We'll send you a confirmation email shortly.")
+                Text("Your booking has been confirmed successfully! We'll send you a confirmation email shortly.")
             }
             .fullScreenCover(isPresented: $shouldNavigateToParentDashboard) {
-                let _ = print("🎯 BookingView: ParentDashboardScreen fullScreenCover triggered")
-                let _ = print("🎯 BookingView: shouldNavigateToParentDashboard = \(shouldNavigateToParentDashboard)")
-                let _ = print("🎯 BookingView: shouldNavigateToProviderDashboard = \(shouldNavigateToProviderDashboard)")
                 ParentDashboardScreen(parentName: apiService.currentUser?.fullName ?? "Parent", initialTab: 0)
             }
             .fullScreenCover(isPresented: $shouldNavigateToProviderDashboard) {
-                let _ = print("🎯 BookingView: ProviderDashboardScreen fullScreenCover triggered")
-                let _ = print("🎯 BookingView: shouldNavigateToParentDashboard = \(shouldNavigateToParentDashboard)")
-                let _ = print("🎯 BookingView: shouldNavigateToProviderDashboard = \(shouldNavigateToProviderDashboard)")
                 ProviderDashboardScreen(businessName: apiService.currentUser?.businessName ?? "Provider")
             }
             .onAppear {
-                print("🎯 BookingView loaded for class: \(classItem.name)")
-                print("🎯 BookingView: Available children count: \(availableChildren.count)")
-                print("🎯 BookingView: Current user type: \(apiService.currentUser?.userType.rawValue ?? "unknown")")
-                print("🎯 BookingView: Is provider: \(isProvider)")
-                print("🎯 BookingView: Current user fullName: \(apiService.currentUser?.fullName ?? "unknown")")
-                print("🎯 BookingView: Current user businessName: \(apiService.currentUser?.businessName ?? "unknown")")
-                print("🎯 BookingView: apiService.isAuthenticated: \(apiService.isAuthenticated)")
-                print("🎯 BookingView: apiService.authToken: \(apiService.authToken?.prefix(20) ?? "None")...")
-                
-                // Set initial provider status
-                let initialProviderStatus = apiService.currentUser?.userType == .provider
-                isProviderUser = initialProviderStatus
-                print("🎯 BookingView: Initial provider status set to: \(initialProviderStatus)")
-                print("🎯 BookingView: isProviderUser after setting: \(isProviderUser)")
+                setupBookingView()
             }
             .onReceive(apiService.$currentUser) { user in
-                // Update provider status when user data changes
-                let wasProvider = isProviderUser
-                isProviderUser = user?.userType == .provider
-                print("🎯 BookingView: User data changed - isProviderUser = \(isProviderUser)")
-                print("🎯 BookingView: User type = \(user?.userType.rawValue ?? "unknown")")
-                print("🎯 BookingView: User data changed - wasProvider = \(wasProvider), nowProvider = \(isProviderUser)")
-                print("🎯 BookingView: User data changed - user?.userType == .provider = \(user?.userType == .provider)")
-                
-                // Test: Print the raw value comparison
-                if let userType = user?.userType {
-                    print("🎯 BookingView: User type raw value: '\(userType.rawValue)'")
-                    print("🎯 BookingView: Comparing '\(userType.rawValue)' == 'provider': \(userType.rawValue == "provider")")
-                    print("🎯 BookingView: Comparing userType == .provider: \(userType == .provider)")
-                }
+                handleUserDataChange(user)
             }
+            .onReceive(NotificationCenter.default.publisher(for: .childAdded)) { notification in
+                handleChildAdded(notification)
+            }
+    }
+    
+    private var navigationContent: some View {
+        NavigationStack {
+            contentView
+        }
+        .navigationTitle("Book Class")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .foregroundColor(Color(hex: "#BC6C5C"))
+            }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func handleBookingConfirmation() {
+        print("🎯 BookingView: Alert button tapped!")
+        print("🎯 BookingView: isProvider = \(isProvider)")
+        print("🎯 BookingView: isProviderUser = \(isProviderUser)")
+        print("🎯 BookingView: Current user type = \(apiService.currentUser?.userType.rawValue ?? "unknown")")
+        print("🎯 BookingView: Current user fullName = \(apiService.currentUser?.fullName ?? "unknown")")
+        print("🎯 BookingView: Current user businessName = \(apiService.currentUser?.businessName ?? "unknown")")
+        print("🎯 BookingView: Button text = \(isProvider ? "View Dashboard" : "View My Bookings")")
+        
+        // Force refresh the provider status right before navigation
+        let currentUserType = apiService.currentUser?.userType
+        let isCurrentlyProvider = currentUserType == .provider
+        
+        print("🎯 BookingView: Force refresh - currentUserType = \(currentUserType?.rawValue ?? "unknown")")
+        print("🎯 BookingView: Force refresh - isCurrentlyProvider = \(isCurrentlyProvider)")
+        print("🎯 BookingView: Force refresh - isProviderUser = \(isProviderUser)")
+        print("🎯 BookingView: Force refresh - isProvider = \(isProvider)")
+        
+        // Use the force-refreshed provider status for navigation decision
+        if isCurrentlyProvider {
+            print("🎯 BookingView: FINAL DECISION - Navigating to provider dashboard...")
+            shouldNavigateToProviderDashboard = true
+            print("🎯 BookingView: FINAL DECISION - shouldNavigateToProviderDashboard set to: \(shouldNavigateToProviderDashboard)")
+        } else {
+            print("🎯 BookingView: FINAL DECISION - Navigating to parent dashboard...")
+            shouldNavigateToParentDashboard = true
+            print("🎯 BookingView: FINAL DECISION - shouldNavigateToParentDashboard set to: \(shouldNavigateToParentDashboard)")
+        }
+    }
+    
+    private func setupBookingView() {
+        print("🎯 BookingView loaded for class: \(classItem.name)")
+        print("🎯 BookingView: Available children count: \(availableChildren.count)")
+        print("🎯 BookingView: Current user type: \(apiService.currentUser?.userType.rawValue ?? "unknown")")
+        print("🎯 BookingView: Is provider: \(isProvider)")
+        print("🎯 BookingView: Current user fullName: \(apiService.currentUser?.fullName ?? "unknown")")
+        print("🎯 BookingView: Current user businessName: \(apiService.currentUser?.businessName ?? "unknown")")
+        print("🎯 BookingView: apiService.isAuthenticated: \(apiService.isAuthenticated)")
+        print("🎯 BookingView: apiService.authToken: \(apiService.authToken?.prefix(20) ?? "None")...")
+        
+        // Set initial provider status
+        let initialProviderStatus = apiService.currentUser?.userType == .provider
+        isProviderUser = initialProviderStatus
+        print("🎯 BookingView: Initial provider status set to: \(initialProviderStatus)")
+        
+        // Auto-select default payment method
+        setupDefaultPaymentMethod()
+        print("🎯 BookingView: isProviderUser after setting: \(isProviderUser)")
+    }
+    
+    private func handleUserDataChange(_ user: User?) {
+        // Update provider status when user data changes
+        let wasProvider = isProviderUser
+        isProviderUser = user?.userType == .provider
+        print("🎯 BookingView: User data changed - isProviderUser = \(isProviderUser)")
+        print("🎯 BookingView: User type = \(user?.userType.rawValue ?? "unknown")")
+        print("🎯 BookingView: User data changed - wasProvider = \(wasProvider), nowProvider = \(isProviderUser)")
+        print("🎯 BookingView: User data changed - user?.userType == .provider = \(user?.userType == .provider)")
+        
+        // Test: Print the raw value comparison
+        if let userType = user?.userType {
+            print("🎯 BookingView: User type raw value: '\(userType.rawValue)'")
+            print("🎯 BookingView: Comparing '\(userType.rawValue)' == 'provider': \(userType.rawValue == "provider")")
+            print("🎯 BookingView: Comparing userType == .provider: \(userType == .provider)")
+        }
+    }
+    
+    private func handleChildAdded(_ notification: Notification) {
+        print("🎯 BookingView: Received childAdded notification")
+        if let newChild = notification.object as? Child {
+            print("🎯 BookingView: New child added: \(newChild.name)")
+            // The view will automatically update when availableChildren is re-evaluated
+            // No need to force refresh - SwiftUI will handle this automatically
         }
     }
 }
@@ -367,7 +466,7 @@ struct ClassDetailsCard: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(Color(hex: "#BC6C5C"))
                     
-                    Text(classItem.provider.name)
+                    Text(classItem.providerName ?? "Provider \(classItem.provider)")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(Color(hex: "#BC6C5C").opacity(0.7))
                 }
@@ -378,9 +477,9 @@ struct ClassDetailsCard: View {
             // Details
             VStack(alignment: .leading, spacing: 12) {
                 BookingDetailRow(icon: "calendar", text: formatSchedule(classItem.schedule))
-                BookingDetailRow(icon: "mappin.circle", text: classItem.location.address.formatted)
-                BookingDetailRow(icon: "car.fill", text: classItem.location.parkingInfo ?? "No parking info")
-                BookingDetailRow(icon: "person.2.fill", text: classItem.location.babyChangingFacilities ?? "No changing facilities")
+                BookingDetailRow(icon: "mappin.circle", text: classItem.location?.address.formatted ?? "Location TBD")
+                BookingDetailRow(icon: "car.fill", text: classItem.location?.parkingInfo ?? "No parking info")
+                BookingDetailRow(icon: "person.2.fill", text: classItem.location?.babyChangingFacilities ?? "No changing facilities")
             }
         }
         .padding(20)
@@ -390,13 +489,14 @@ struct ClassDetailsCard: View {
     }
     
     private func formatSchedule(_ schedule: Schedule) -> String {
-        let days = schedule.recurringDays.map { $0.shortName }.joined(separator: ", ")
+        let days = schedule.formattedDays
         guard let timeSlot = schedule.timeSlots.first else {
             return days.isEmpty ? "" : days
         }
         let formatter = DateFormatter()
+        formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        return "\(days) at \(formatter.string(from: timeSlot.startTime))"
+        return "\(days) \(formatter.string(from: timeSlot.startTime))"
     }
 }
 
@@ -835,6 +935,9 @@ struct PaymentSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @State private var isProcessing = false
+    @State private var showingAddPaymentMethod = false
+    @State private var newPaymentMethod: UserPaymentMethod?
+    @StateObject private var sharedPaymentService = SharedPaymentService.shared
     
     var body: some View {
         NavigationView {
@@ -845,25 +948,52 @@ struct PaymentSheet: View {
                     participants: participants,
                     selectedChildren: selectedChildren,
                     totalPrice: totalPrice,
-                    selectedSavedCard: selectedSavedCard,
+                    selectedSavedCard: selectedSavedCard ?? newPaymentMethod,
                     paymentMethod: paymentMethod
                 )
                 
                 Spacer()
                 
-                // Payment Button
-                PaymentButton(
-                    paymentMethod: paymentMethod,
-                    totalPrice: totalPrice,
-                    classItem: classItem,
-                    participants: participants,
-                    selectedChildren: selectedChildren,
-                    requirements: requirements,
-                    selectedSavedCard: selectedSavedCard,
-                    isProcessing: $isProcessing,
-                    onSuccess: onSuccess,
-                    onError: onError
-                )
+                // Payment Button or Add Card Option
+                if paymentMethod == .card && selectedSavedCard == nil && newPaymentMethod == nil {
+                    // Show "Add New Card" button when no saved card is selected
+                    VStack(spacing: 16) {
+                        Button(action: {
+                            showingAddPaymentMethod = true
+                        }) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 18))
+                                Text("Add New Card")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color(hex: "#BC6C5C"))
+                            .cornerRadius(12)
+                        }
+                        
+                        Text("Or use Apple Pay for faster checkout")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                    }
+                } else {
+                    // Show payment button for Apple Pay or when card is selected
+                    PaymentButton(
+                        paymentMethod: paymentMethod,
+                        totalPrice: totalPrice,
+                        classItem: classItem,
+                        participants: participants,
+                        selectedChildren: selectedChildren,
+                        requirements: requirements,
+                        selectedSavedCard: selectedSavedCard ?? newPaymentMethod,
+                        isProcessing: $isProcessing,
+                        onSuccess: onSuccess,
+                        onError: onError
+                    )
+                }
             }
             .padding(24)
             .navigationTitle("Payment")
@@ -873,6 +1003,12 @@ struct PaymentSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                }
+            }
+            .sheet(isPresented: $showingAddPaymentMethod) {
+                AddPaymentMethodScreen { newCard in
+                    newPaymentMethod = newCard
+                    sharedPaymentService.addPaymentMethod(newCard)
                 }
             }
         }
@@ -904,7 +1040,7 @@ struct PaymentSummaryView: View {
             
             VStack(spacing: 12) {
                 SummaryRow(title: "Class", value: classItem.name)
-                SummaryRow(title: "Provider", value: classItem.provider.name)
+                SummaryRow(title: "Provider", value: classItem.providerName ?? "Provider \(classItem.provider)")
                 SummaryRow(title: "Participants", value: "\(participants)")
                 
                 // Show selected children if any
@@ -1121,6 +1257,8 @@ struct StandardPaymentButton: View {
     let onSuccess: (EnhancedBooking) -> Void
     let onError: (Error) -> Void
     
+    @State private var cancellables = Set<AnyCancellable>()
+    
     private var totalPriceText: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
@@ -1166,6 +1304,14 @@ struct StandardPaymentButton: View {
         print("🎯 StandardPaymentButton: Starting payment processing...")
         isProcessing = true
         
+        // Validate that at least one child is selected
+        guard !selectedChildren.isEmpty else {
+            print("❌ StandardPaymentButton: No children selected")
+            isProcessing = false
+            onError(NSError(domain: "BookingError", code: 400, userInfo: [NSLocalizedDescriptionKey: "Please select at least one child to book this class."]))
+            return
+        }
+        
         // Log payment method details
         if let selectedCard = selectedSavedCard {
             print("🎯 StandardPaymentButton: Using saved card: \(selectedCard.type.displayName) ending in \(selectedCard.lastFourDigits)")
@@ -1173,27 +1319,72 @@ struct StandardPaymentButton: View {
             print("🎯 StandardPaymentButton: Using \(paymentMethod.displayName)")
         }
         
-        // Simulate payment processing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            print("🎯 StandardPaymentButton: Payment processing completed!")
-            isProcessing = false
-            let booking = Booking(
-                id: UUID(),
-                classId: classItem.id,
-                userId: UUID(), // TODO: Get from auth service
-                status: .upcoming,
-                bookingDate: Date().addingTimeInterval(86400), // Tomorrow
-                numberOfParticipants: participants,
-                selectedChildren: selectedChildren.isEmpty ? nil : selectedChildren,
-                specialRequirements: requirements.isEmpty ? nil : requirements,
-                attended: false
-            )
-            
-            let enhancedBooking = EnhancedBooking(booking: booking, classInfo: classItem)
-            
-            // Call the success callback instead of handling notifications here
-            onSuccess(enhancedBooking)
+        print("💳 StandardPaymentButton: Booking for \(selectedChildren.count) child(ren): \(selectedChildren.map { $0.name }.joined(separator: ", "))")
+        
+        // Step 1: Create booking via backend
+        let sessionDate = Date().addingTimeInterval(86400) // Tomorrow
+        let apiService = APIService.shared
+        
+        // Get session time from first time slot (format as HH:mm)
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        timeFormatter.timeZone = TimeZone(identifier: "UTC")
+        
+        let sessionTimeString: String
+        if let firstTimeSlot = classItem.schedule.timeSlots.first {
+            sessionTimeString = timeFormatter.string(from: firstTimeSlot.startTime)
+            print("💳 StandardPaymentButton: Extracted session time: \(sessionTimeString) from timeSlot: \(firstTimeSlot.startTime)")
+        } else {
+            // Default to 10:00 if no time found
+            sessionTimeString = "10:00"
+            print("⚠️ StandardPaymentButton: No time slot found, using default: \(sessionTimeString)")
         }
+        
+        apiService.createBooking(
+            classId: classItem.id,
+            children: selectedChildren,
+            sessionDate: sessionDate,
+            sessionTime: sessionTimeString,
+            specialRequests: requirements.isEmpty ? nil : requirements
+        )
+        .flatMap { (bookingResponse, mongoObjectId) -> AnyPublisher<(PaymentIntentResponse, String), APIError> in
+            // Use the MongoDB ObjectId extracted from raw JSON
+            print("💳 StandardPaymentButton: Booking created with MongoDB ObjectId: \(mongoObjectId)")
+            
+            // Step 2: Create payment intent
+            return apiService.createPaymentIntent(bookingId: mongoObjectId)
+                .map { paymentIntentResponse -> (PaymentIntentResponse, String) in
+                    print("💳 StandardPaymentButton: Payment intent created: \(paymentIntentResponse.paymentIntentId)")
+                    return (paymentIntentResponse, mongoObjectId)
+                }
+                .eraseToAnyPublisher()
+        }
+        .flatMap { (paymentIntentResponse, bookingId) -> AnyPublisher<BookingResponse, APIError> in
+            // Step 3: Confirm payment (this will process the payment and trigger webhooks)
+            // For now, we're using the backend to confirm since Stripe SDK isn't integrated
+            // In production, you'd use Stripe SDK here to collect card details
+            return apiService.confirmPayment(
+                paymentIntentId: paymentIntentResponse.paymentIntentId,
+                bookingId: bookingId
+            )
+        }
+        .receive(on: DispatchQueue.main)
+        .sink(
+            receiveCompletion: { completion in
+                isProcessing = false
+                if case .failure(let error) = completion {
+                    print("❌ StandardPaymentButton: Payment failed: \(error)")
+                    onError(error)
+                }
+            },
+            receiveValue: { bookingResponse in
+                print("✅ StandardPaymentButton: Payment confirmed!")
+                let booking = bookingResponse.data
+                let enhancedBooking = EnhancedBooking(booking: booking, classInfo: classItem)
+                onSuccess(enhancedBooking)
+            }
+        )
+        .store(in: &cancellables)
     }
 }
 
