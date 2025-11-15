@@ -103,27 +103,44 @@ class EmailService {
     }
   }
 
-  // Example SendGrid integration
+  // SendGrid integration
   async sendWithSendGrid(to, subject, html, text) {
-    // You would need to install: npm install @sendgrid/mail
-    // const sgMail = require('@sendgrid/mail');
-    // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const sgMail = require('@sendgrid/mail');
     
-    // const msg = {
-    //   to: to,
-    //   from: {
-    //     email: this.fromEmail,
-    //     name: this.fromName
-    //   },
-    //   subject: subject,
-    //   html: html,
-    //   text: text
-    // };
+    // Check for required environment variable
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error('❌ SendGrid API key not configured. Required: SENDGRID_API_KEY');
+      throw new Error('SendGrid not properly configured');
+    }
+
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     
-    // return await sgMail.send(msg);
+    const msg = {
+      to: to,
+      from: {
+        email: this.fromEmail,
+        name: this.fromName
+      },
+      subject: subject,
+      html: html,
+      text: text || html.replace(/<[^>]*>/g, '')
+    };
     
-    console.log(`📧 SendGrid email would be sent to ${to}: ${subject}`);
-    return { success: true, message: 'SendGrid not configured' };
+    try {
+      const result = await sgMail.send(msg);
+      console.log(`✅ SendGrid email sent successfully. Status: ${result[0].statusCode}`);
+      return { 
+        success: true, 
+        message: 'Email sent successfully',
+        statusCode: result[0].statusCode
+      };
+    } catch (error) {
+      console.error('❌ SendGrid error:', error);
+      if (error.response) {
+        console.error('❌ SendGrid error details:', error.response.body);
+      }
+      throw error;
+    }
   }
 
   // AWS SES integration
