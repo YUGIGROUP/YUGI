@@ -126,32 +126,60 @@ class EmailService {
     return { success: true, message: 'SendGrid not configured' };
   }
 
-  // Example AWS SES integration
+  // AWS SES integration
   async sendWithSES(to, subject, html, text) {
-    // You would need to install: npm install aws-sdk
-    // const AWS = require('aws-sdk');
-    // const ses = new AWS.SES({
-    //   region: process.env.AWS_REGION,
-    //   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    //   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    // });
+    const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
     
-    // const params = {
-    //   Source: `${this.fromName} <${this.fromEmail}>`,
-    //   Destination: { ToAddresses: [to] },
-    //   Message: {
-    //     Subject: { Data: subject },
-    //     Body: {
-    //       Html: { Data: html },
-    //       Text: { Data: text || html.replace(/<[^>]*>/g, '') }
-    //     }
-    //   }
-    // };
-    
-    // return await ses.sendEmail(params).promise();
-    
-    console.log(`📧 AWS SES email would be sent to ${to}: ${subject}`);
-    return { success: true, message: 'AWS SES not configured' };
+    // Check for required environment variables
+    if (!process.env.AWS_REGION || !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      console.error('❌ AWS SES configuration missing. Required: AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY');
+      throw new Error('AWS SES not properly configured');
+    }
+
+    const sesClient = new SESClient({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+
+    const params = {
+      Source: `${this.fromName} <${this.fromEmail}>`,
+      Destination: {
+        ToAddresses: [to]
+      },
+      Message: {
+        Subject: {
+          Data: subject,
+          Charset: 'UTF-8'
+        },
+        Body: {
+          Html: {
+            Data: html,
+            Charset: 'UTF-8'
+          },
+          Text: {
+            Data: text || html.replace(/<[^>]*>/g, ''),
+            Charset: 'UTF-8'
+          }
+        }
+      }
+    };
+
+    try {
+      const command = new SendEmailCommand(params);
+      const result = await sesClient.send(command);
+      console.log(`✅ AWS SES email sent successfully. MessageId: ${result.MessageId}`);
+      return { 
+        success: true, 
+        message: 'Email sent successfully',
+        messageId: result.MessageId
+      };
+    } catch (error) {
+      console.error('❌ AWS SES error:', error);
+      throw error;
+    }
   }
 
   // Example Mailgun integration
