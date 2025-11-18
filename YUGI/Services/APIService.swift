@@ -1653,6 +1653,12 @@ struct AuthResponse: Codable {
     let token: String
     let user: User
     
+    // Regular initializer for creating instances in code
+    init(token: String, user: User) {
+        self.token = token
+        self.user = user
+    }
+    
     // Handle both wrapped and unwrapped response formats
     enum CodingKeys: String, CodingKey {
         case token, user, success, message
@@ -1671,6 +1677,12 @@ struct AuthResponse: Codable {
             self.token = try container.decode(String.self, forKey: .token)
             self.user = try container.decode(User.self, forKey: .user)
         }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(token, forKey: .token)
+        try container.encode(user, forKey: .user)
     }
 }
 
