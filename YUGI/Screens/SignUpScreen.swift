@@ -11,6 +11,7 @@ struct SignUpScreen: View {
     @State private var selectedUserType: UserType = .parent
     @State private var shouldShowWelcome = false
     @State private var shouldShowProviderVerification = false
+    @State private var shouldShowProviderTerms = false
     @State private var shouldNavigateToParentOnboarding = false
     
     // Parent specific fields
@@ -104,6 +105,17 @@ struct SignUpScreen: View {
             }
             .fullScreenCover(isPresented: $shouldShowWelcome) {
                 WelcomeUserScreen(userName: fullName)
+            }
+            .fullScreenCover(isPresented: $shouldShowProviderTerms) {
+                TermsPrivacyScreen(
+                    isReadOnly: false,
+                    onTermsAccepted: {
+                        // After accepting terms, show verification screen
+                        shouldShowProviderTerms = false
+                        shouldShowProviderVerification = true
+                    },
+                    userType: .provider
+                )
             }
             .fullScreenCover(isPresented: $shouldShowProviderVerification) {
                 ProviderVerificationScreen(businessName: businessName)
@@ -626,8 +638,8 @@ struct SignUpScreen: View {
                 print("🔐 SignUpScreen: Firebase provider signup successful!")
                 print("🔐 SignUpScreen: Firebase UID: \(result.user.uid)")
                 
-                // Handle provider signup - show verification screen instead of welcome
-                self.shouldShowProviderVerification = true
+                // Handle provider signup - show Terms & Conditions first, then verification screen
+                self.shouldShowProviderTerms = true
             }
         )
         .store(in: &firebaseAuthService.cancellables)
