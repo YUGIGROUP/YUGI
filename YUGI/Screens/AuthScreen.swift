@@ -179,11 +179,21 @@ struct AuthScreen: View {
                     isLoading = false
                     if case let .failure(error) = completion {
                         print("❌ AuthScreen: Sign-in failed: \(error.localizedDescription)")
+                        
+                        // If credential is malformed or expired, clear saved credentials
+                        if error.localizedDescription.contains("malformed") || error.localizedDescription.contains("expired") {
+                            print("🔐 AuthScreen: Clearing stale saved credentials")
+                            biometricService.clearSavedCredentials()
+                            email = ""
+                            password = ""
+                        }
+                        
                         errorMessage = error.localizedDescription
                         showingError = true
                     }
                 },
                 receiveValue: { response in
+                    isLoading = false
                     print("✅ AuthScreen: Sign-in successful for user: \(response.user.fullName)")
                     
                     // Save credentials if "Remember Me" is enabled
