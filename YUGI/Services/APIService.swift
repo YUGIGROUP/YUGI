@@ -351,7 +351,7 @@ class APIService: ObservableObject, @unchecked Sendable {
     }
     
     // MARK: - Authentication
-    func signup(email: String, password: String, fullName: String, userType: UserType, phoneNumber: String? = nil, businessName: String? = nil, businessAddress: String? = nil, bio: String? = nil) -> AnyPublisher<AuthResponse, APIError> {
+    func signup(email: String, password: String, fullName: String, userType: UserType, phoneNumber: String? = nil, businessName: String? = nil, businessAddress: String? = nil, bio: String? = nil, profileImage: String? = nil) -> AnyPublisher<AuthResponse, APIError> {
         print("🔐 APIService: Attempting signup for email: \(email), userType: \(userType.rawValue)")
         
         if APIConfig.useMockMode {
@@ -370,6 +370,11 @@ class APIService: ObservableObject, @unchecked Sendable {
         
         if let phoneNumber = phoneNumber {
             body["phoneNumber"] = phoneNumber
+        }
+        
+        if let profileImage = profileImage {
+            body["profileImage"] = profileImage
+            print("🔐 APIService: Including profile image in signup request")
         }
         
         if userType == .provider {

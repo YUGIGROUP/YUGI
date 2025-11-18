@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import Combine
 
 struct ProviderBusinessProfileScreen: View {
     let businessName: String
@@ -14,6 +15,14 @@ struct ProviderBusinessProfileScreen: View {
     @State private var selectedDocumentType: DocumentType = .dbs
     @State private var selectedDocumentData: Data?
     @State private var documentUpdateTrigger = false // Add this to trigger UI updates
+    
+    // Profile image management state
+    @State private var showingImagePicker = false
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var profileImage: UIImage?
+    @State private var tempProfileImage: UIImage?
+    @State private var isUpdatingProfileImage = false
+    @State private var cancellables = Set<AnyCancellable>()
     
     enum DocumentType: String, CaseIterable {
         case dbs = "DBS Certificate"
@@ -64,6 +73,10 @@ struct ProviderBusinessProfileScreen: View {
                         // Edit Button (no save functionality)
                         Button {
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                if !showingEditMode {
+                                    // Entering edit mode - initialize tempProfileImage with current profileImage
+                                    tempProfileImage = profileImage
+                                }
                                 showingEditMode.toggle()
                             }
                         } label: {
@@ -148,9 +161,26 @@ struct ProviderBusinessProfileScreen: View {
                         isDocumentUploaded: isDocumentUploaded,
                         getDocumentData: getDocumentData,
                         deleteDocument: deleteDocument,
+                        profileImage: $profileImage,
+                        tempProfileImage: $tempProfileImage,
+                        showingImagePicker: $showingImagePicker,
+                        selectedPhotoItem: $selectedPhotoItem,
+                        isUpdatingProfileImage: $isUpdatingProfileImage,
                         onSave: {
-                            // Save the data locally only
+                            print("🔍 ProviderBusinessProfileScreen - Save button pressed")
+                            print("🔍 ProviderBusinessProfileScreen - Bio: '\(businessService.businessInfo.description)'")
+                            print("🔍 ProviderBusinessProfileScreen - Services: '\(businessService.businessInfo.services)'")
+                            
+                            // Save the data locally first
                             businessService.saveBusinessData()
+                            
+                            // Update business info on server
+                            businessService.updateBusinessInfoOnServer()
+                            
+                            // Update profile image if there's a new one
+                            if tempProfileImage != nil {
+                                updateProfileImage()
+                            }
                             
                             // Exit edit mode
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -172,6 +202,28 @@ struct ProviderBusinessProfileScreen: View {
             .onAppear {
                 // Load business data when screen appears
                 businessService.loadBusinessData()
+                
+                // Load profile image from current user
+                loadProfileImage()
+            }
+            .onReceive(APIService.shared.$currentUser) { user in
+                // Reload profile image when user data updates
+                if user != nil {
+                    loadProfileImage()
+                }
+            }
+            .photosPicker(isPresented: $showingImagePicker, selection: $selectedPhotoItem, matching: .images)
+            .onChange(of: selectedPhotoItem) { oldItem, newItem in
+                if let item = newItem {
+                    Task {
+                        if let data = try? await item.loadTransferable(type: Data.self) {
+                            await MainActor.run {
+                                tempProfileImage = UIImage(data: data)
+                                // Don't call updateProfileImage() here - let user save manually
+                            }
+                        }
+                    }
+                }
             }
             .alert("Error", isPresented: .constant(businessService.errorMessage != nil)) {
                 Button("OK") {
@@ -240,6 +292,71 @@ struct ProviderBusinessProfileScreen: View {
         }
         documentUpdateTrigger.toggle() // Trigger UI update
     }
+    
+    private func loadProfileImage() {
+        guard let currentUser = APIService.shared.currentUser,
+              let profileImageString = currentUser.profileImage,
+              !profileImageString.isEmpty,
+              let imageData = Data(base64Encoded: profileImageString),
+              let image = UIImage(data: imageData) else {
+            profileImage = nil
+            return
+        }
+        profileImage = image
+    }
+    
+    private func updateProfileImage() {
+        print("🔍 ProviderBusinessProfileScreen - updateProfileImage called")
+        guard let image = tempProfileImage else { 
+            print("🔍 ProviderBusinessProfileScreen - No temp profile image, returning")
+            return 
+        }
+        
+        print("🔍 ProviderBusinessProfileScreen - Updating profile image...")
+        isUpdatingProfileImage = true
+        
+        // Convert image to base64 string with proper compression
+        guard let profileImageString = ImageCompressor.compressProfileImage(image) else {
+            print("❌ ProviderBusinessProfileScreen: Failed to compress profile image")
+            isUpdatingProfileImage = false
+            return
+        }
+        
+        // Update profile via API
+        APIService.shared.updateProfile(profileImage: profileImageString)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    isUpdatingProfileImage = false
+                    if case .failure(let error) = completion {
+                        print("❌ Failed to update profile image: \(error)")
+                    }
+                },
+                receiveValue: { response in
+                    print("✅ Profile image updated successfully")
+                    profileImage = image
+                    tempProfileImage = nil
+                    
+                    // Update the currentUser in APIService so other screens see the change
+                    if let currentUser = APIService.shared.currentUser {
+                        let updatedUser = User(
+                            id: currentUser.id,
+                            email: currentUser.email,
+                            fullName: currentUser.fullName,
+                            phoneNumber: currentUser.phoneNumber ?? "",
+                            profileImage: profileImageString,
+                            userType: currentUser.userType,
+                            businessName: currentUser.businessName,
+                            businessAddress: currentUser.businessAddress,
+                            children: currentUser.children ?? []
+                        )
+                        APIService.shared.currentUser = updatedUser
+                        print("✅ Updated APIService.currentUser.profileImage")
+                    }
+                }
+            )
+            .store(in: &cancellables)
+    }
 }
 
 // MARK: - Tab Views
@@ -255,12 +372,121 @@ struct BusinessOverviewTab: View {
     let isDocumentUploaded: (ProviderBusinessProfileScreen.DocumentType) -> Bool
     let getDocumentData: (ProviderBusinessProfileScreen.DocumentType) -> Data?
     let deleteDocument: (ProviderBusinessProfileScreen.DocumentType) -> Void
+    @Binding var profileImage: UIImage?
+    @Binding var tempProfileImage: UIImage?
+    @Binding var showingImagePicker: Bool
+    @Binding var selectedPhotoItem: PhotosPickerItem?
+    @Binding var isUpdatingProfileImage: Bool
     let onSave: () -> Void
     @ObservedObject private var businessService = ProviderBusinessService.shared
     
     var body: some View {
         ScrollView {
             VStack(spacing: 28) {
+                // Profile Image Card
+                VStack(alignment: .leading, spacing: 20) {
+                    // Enhanced Header
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .frame(width: 44, height: 44)
+                            
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(Color(hex: "#BC6C5C"))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Business Profile Image")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.yugiGray)
+                            
+                            Text("This image will appear on your classes")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.yugiGray.opacity(0.6))
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                    // Profile Image Display
+                    VStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 120, height: 120)
+                                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            
+                            if let image = tempProfileImage ?? profileImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 120, height: 120)
+                                    .clipShape(Circle())
+                            } else {
+                                Text(String(businessInfo.name.prefix(1).uppercased()))
+                                    .font(.system(size: 48, weight: .bold))
+                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                            }
+                            
+                            if showingEditMode {
+                                // Edit overlay
+                                VStack {
+                                    Spacer()
+                                    HStack {
+                                        Spacer()
+                                        Button(action: {
+                                            showingImagePicker = true
+                                        }) {
+                                            Image(systemName: "camera.fill")
+                                                .font(.system(size: 16))
+                                                .foregroundColor(.white)
+                                                .frame(width: 32, height: 32)
+                                                .background(Color(hex: "#BC6C5C"))
+                                                .clipShape(Circle())
+                                        }
+                                    }
+                                }
+                                .frame(width: 120, height: 120)
+                            }
+                            
+                            if isUpdatingProfileImage {
+                                // Loading overlay
+                                Circle()
+                                    .fill(Color.black.opacity(0.3))
+                                    .frame(width: 120, height: 120)
+                                    .overlay(
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    )
+                            }
+                        }
+                        
+                        if showingEditMode {
+                            Text("Tap the camera icon to update your profile image")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                        } else {
+                            Text("Your profile image will be displayed on all your classes")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                }
+                .padding(24)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 6)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                )
+                
                 // Business Information Card
                 VStack(alignment: .leading, spacing: 20) {
                     // Enhanced Header
@@ -298,9 +524,17 @@ struct BusinessOverviewTab: View {
                         )
                         
                         EditableProfileField(
-                            title: "Bio & Services",
+                            title: "Bio",
                             value: $businessInfo.description,
-                            icon: "text.quote",
+                            icon: "person.text.rectangle",
+                            isEditable: showingEditMode,
+                            isMultiline: true
+                        )
+                        
+                        EditableProfileField(
+                            title: "Services",
+                            value: $businessInfo.services,
+                            icon: "list.bullet.rectangle",
                             isEditable: showingEditMode,
                             isMultiline: true
                         )
@@ -608,7 +842,6 @@ struct DocumentPreviewCard: View {
 struct BusinessSettingsTab: View {
     @State private var notificationsEnabled = true
     @State private var showingDeleteConfirmation = false
-    @State private var showingBiometricSettings = false
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -661,37 +894,6 @@ struct BusinessSettingsTab: View {
                                 .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
                         }
                         .padding(.vertical, 8)
-                        
-                        Divider()
-                        
-                        // Biometric Authentication
-                        Button {
-                            showingBiometricSettings = true
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "faceid")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
-                                
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Biometric Authentication")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.yugiGray)
-                                    
-                                    Text("Face ID & Touch ID settings")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.yugiGray.opacity(0.7))
-                                }
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray.opacity(0.5))
-                            }
-                            .padding(.vertical, 8)
-                        }
-                        .buttonStyle(.plain)
                         
                         Divider()
                         
@@ -749,9 +951,6 @@ struct BusinessSettingsTab: View {
             }
         } message: {
             Text("Are you sure you want to delete your account? This action cannot be undone.")
-        }
-        .sheet(isPresented: $showingBiometricSettings) {
-            BiometricSettingsScreen()
         }
     }
 }

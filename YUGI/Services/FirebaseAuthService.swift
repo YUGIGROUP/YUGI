@@ -48,7 +48,7 @@ class FirebaseAuthService: ObservableObject {
     }
     
     // MARK: - Sign Up
-    func signUp(email: String, password: String, fullName: String, userType: UserType, phoneNumber: String? = nil, businessName: String? = nil, businessAddress: String? = nil, bio: String? = nil) -> AnyPublisher<AuthDataResult, Error> {
+    func signUp(email: String, password: String, fullName: String, userType: UserType, phoneNumber: String? = nil, businessName: String? = nil, businessAddress: String? = nil, bio: String? = nil, profileImage: UIImage? = nil) -> AnyPublisher<AuthDataResult, Error> {
         isLoading = true
         errorMessage = nil
         
@@ -108,7 +108,7 @@ class FirebaseAuthService: ObservableObject {
                         }
                         
                         // Create user in backend
-                        self?.createUserInBackend(firebaseUser: result.user, fullName: fullName, userType: userType, phoneNumber: phoneNumber, businessName: businessName, businessAddress: businessAddress, bio: bio)
+                        self?.createUserInBackend(firebaseUser: result.user, fullName: fullName, userType: userType, phoneNumber: phoneNumber, businessName: businessName, businessAddress: businessAddress, bio: bio, profileImage: profileImage)
                         
                         promise(.success(result))
                     }
@@ -126,7 +126,7 @@ class FirebaseAuthService: ObservableObject {
         return Future { [weak self] promise in
             // Clear any stale Firebase auth state before sign in
             // This helps avoid "malformed or expired credential" errors
-            if let currentUser = Auth.auth().currentUser {
+            if Auth.auth().currentUser != nil {
                 do {
                     try Auth.auth().signOut()
                     print("🔐 FirebaseAuthService: Cleared existing Firebase session before sign in")
@@ -219,7 +219,7 @@ class FirebaseAuthService: ObservableObject {
     }
     
     // MARK: - Backend Integration
-    private func createUserInBackend(firebaseUser: FirebaseAuth.User, fullName: String, userType: UserType, phoneNumber: String?, businessName: String?, businessAddress: String?, bio: String?) {
+    private func createUserInBackend(firebaseUser: FirebaseAuth.User, fullName: String, userType: UserType, phoneNumber: String?, businessName: String?, businessAddress: String?, bio: String?, profileImage: UIImage? = nil) {
         let apiService = APIService.shared
         
         // Get Firebase ID token
@@ -227,6 +227,13 @@ class FirebaseAuthService: ObservableObject {
             if let error = error {
                 print("Error getting ID token: \(error)")
                 return
+            }
+            
+            // Convert profile image to base64 if provided
+            var profileImageString: String? = nil
+            if let image = profileImage {
+                profileImageString = ImageCompressor.compressProfileImage(image)
+                print("🔐 FirebaseAuthService: Profile image compressed and ready for upload")
             }
             
             // Create user in backend with Firebase UID
@@ -238,7 +245,8 @@ class FirebaseAuthService: ObservableObject {
                 phoneNumber: phoneNumber,
                 businessName: businessName,
                 businessAddress: businessAddress,
-                bio: bio
+                bio: bio,
+                profileImage: profileImageString
             )
             .sink(
                 receiveCompletion: { completion in

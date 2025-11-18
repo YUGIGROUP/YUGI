@@ -33,7 +33,7 @@ router.post('/signup', [
       });
     }
 
-    const { email, password, firebaseUid, fullName, userType, phoneNumber, businessName, businessAddress, businessInfo } = req.body;
+    const { email, password, firebaseUid, fullName, userType, phoneNumber, businessName, businessAddress, businessInfo, profileImage } = req.body;
 
     // Validate that either password or firebaseUid is provided
     if (!password && !firebaseUid) {
@@ -55,6 +55,11 @@ router.post('/signup', [
       userType,
       phoneNumber
     };
+    
+    // Add profile image if provided
+    if (profileImage) {
+      userData.profileImage = profileImage;
+    }
 
     // Add password or firebaseUid
     if (firebaseUid) {

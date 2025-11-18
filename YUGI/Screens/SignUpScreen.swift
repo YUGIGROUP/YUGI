@@ -615,6 +615,13 @@ struct SignUpScreen: View {
         // Create the user account through Firebase Auth first, then backend
         print("🔐 SignUpScreen: Creating provider account for \(email)")
         
+        // Convert profile image to base64 if available
+        var profileImageString: String? = nil
+        if let image = profileImage {
+            profileImageString = ImageCompressor.compressProfileImage(image)
+            print("🔐 SignUpScreen: Profile image compressed for provider signup")
+        }
+        
         firebaseAuthService.signUp(
             email: email,
             password: providerPassword,
@@ -623,7 +630,8 @@ struct SignUpScreen: View {
             phoneNumber: mobileNumber,
             businessName: businessName,
             businessAddress: businessAddress,
-            bio: bio
+            bio: bio,
+            profileImage: profileImage
         )
         .receive(on: DispatchQueue.main)
         .sink(
