@@ -1652,6 +1652,26 @@ enum HTTPMethod: String {
 struct AuthResponse: Codable {
     let token: String
     let user: User
+    
+    // Handle both wrapped and unwrapped response formats
+    enum CodingKeys: String, CodingKey {
+        case token, user, success, message
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Handle wrapped response format: {"success":true,"message":"...","token":"...","user":{...}}
+        if container.contains(.success) {
+            // Wrapped format - ignore success and message, decode token and user
+            self.token = try container.decode(String.self, forKey: .token)
+            self.user = try container.decode(User.self, forKey: .user)
+        } else {
+            // Unwrapped format: {"token":"...","user":{...}}
+            self.token = try container.decode(String.self, forKey: .token)
+            self.user = try container.decode(User.self, forKey: .user)
+        }
+    }
 }
 
 struct UserResponse: Codable {
