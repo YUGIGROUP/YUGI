@@ -93,15 +93,25 @@ router.post('/signup', [
     const token = generateToken(user._id);
 
     res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
       token,
       user: {
         id: user._id,
         email: user.email,
         fullName: user.fullName,
         userType: user.userType,
-        verificationStatus: user.verificationStatus
+        profileImage: user.profileImage || null,
+        phoneNumber: user.phoneNumber || null,
+        businessName: user.businessName || null,
+        businessAddress: user.businessAddress || null,
+        qualifications: user.qualifications || null,
+        dbsCertificate: user.dbsCertificate || null,
+        verificationStatus: user.verificationStatus || 'pending',
+        children: user.children || [],
+        isActive: user.isActive !== undefined ? user.isActive : true,
+        isEmailVerified: user.isEmailVerified !== undefined ? user.isEmailVerified : false,
+        createdAt: user.createdAt || new Date().toISOString(),
+        updatedAt: user.updatedAt || new Date().toISOString(),
+        location: user.location || null
       }
     });
 

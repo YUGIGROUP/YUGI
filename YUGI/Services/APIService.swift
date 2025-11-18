@@ -23,13 +23,13 @@ struct APIConfig {
         case .development:
             #if targetEnvironment(simulator)
             // iOS Simulator can only access localhost
-            return "http://localhost:3000/api"
+            return "http://localhost:3001/api"
             #else
             // Physical device can access local network IP
-            return "http://192.168.1.72:3000/api"
+            return "http://192.168.1.72:3001/api"
             #endif
         case .production:
-            return "https://your-production-domain.com/api" // Update with actual production URL
+            return "https://yugi-production.up.railway.app/api"
         }
     }
     
@@ -50,6 +50,10 @@ struct APIConfig {
         
         // Test network connectivity
         testNetworkConnectivity()
+        
+        // Additional debugging info
+        print("🔗 APIConfig: Current timestamp: \(Date())")
+        print("🔗 APIConfig: Bundle identifier: \(Bundle.main.bundleIdentifier ?? "Unknown")")
     }
     
     // Test network connectivity to help debug connection issues
@@ -90,7 +94,7 @@ enum APIError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Invalid URL"
+            return "Invalid URL. Please check your connection settings."
         case .noData:
             return "No data received"
         case .decodingError:
@@ -167,6 +171,9 @@ class APIService: ObservableObject, @unchecked Sendable {
     private init() {
         print("🔐 APIService: Initializing...")
         APIConfig.logBaseURL()
+        
+        // Clear any mock authentication data first
+        clearMockAuthenticationData()
         
         // For development/testing, you can uncomment this line to clear cached data on app start
         // clearCachedData()
@@ -387,6 +394,9 @@ class APIService: ObservableObject, @unchecked Sendable {
                 print("🔐 APIService: Signup successful!")
                 print("🔐 APIService: Received token: \(response.token.prefix(20))...")
                 print("🔐 APIService: User type: \(response.user.userType.rawValue)")
+                print("🔐 APIService: User email: \(response.user.email)")
+                print("🔐 APIService: User fullName: \(response.user.fullName)")
+                print("🔐 APIService: User phoneNumber: \(response.user.phoneNumber ?? "nil")")
                 
                 // Update UI properties on main thread
                 DispatchQueue.main.async { [weak self] in
@@ -398,6 +408,10 @@ class APIService: ObservableObject, @unchecked Sendable {
                     self?.isAuthenticated = true
                     self?.currentUser = response.user
                     print("🔐 APIService: Signup complete - Token saved, user authenticated")
+                    print("🔐 APIService: Current user set - Email: \(response.user.email), Name: \(response.user.fullName)")
+                    
+                    // Fetch fresh user data from backend to ensure we have all fields
+                    self?.fetchCurrentUser()
                 }
             })
             .eraseToAnyPublisher()
@@ -622,10 +636,10 @@ class APIService: ObservableObject, @unchecked Sendable {
         return Future<ChildrenResponse, APIError> { promise in
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: DispatchWorkItem {
                 let newChild = Child(
-                    id: UUID().uuidString,
-                    name: name,
-                    age: age,
-                    dateOfBirth: dateOfBirth
+                    childId: UUID().uuidString,
+                    childName: name,
+                    childAge: age,
+                    childDateOfBirth: dateOfBirth
                 )
                 
                 // Create a new user with updated children array
@@ -664,10 +678,10 @@ class APIService: ObservableObject, @unchecked Sendable {
         return Future<ChildrenResponse, APIError> { promise in
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: DispatchWorkItem {
                 let updatedChild = Child(
-                    id: childId,
-                    name: name,
-                    age: age,
-                    dateOfBirth: dateOfBirth
+                    childId: childId,
+                    childName: name,
+                    childAge: age,
+                    childDateOfBirth: dateOfBirth
                 )
                 
                 // Update the child in the current user's children array
@@ -794,7 +808,7 @@ class APIService: ObservableObject, @unchecked Sendable {
                 // Create a default mock user (this should rarely happen in production)
                 let mockUser = User(
                     id: UUID().uuidString,
-                    email: "mock@example.com",
+                    email: "info@yugiapp.ai",
                     fullName: "Mock User",
                     phoneNumber: "+44 123 456 7890",
                     profileImage: nil,
@@ -811,7 +825,7 @@ class APIService: ObservableObject, @unchecked Sendable {
         })
     }
     
-    private func mockUpdateProfile(fullName: String? = nil, phoneNumber: String? = nil, profileImage: String? = nil) -> AnyPublisher<UserResponse, APIError> {
+    private func mockUpdateProfile(fullName: String? = nil, email: String? = nil, phoneNumber: String? = nil, profileImage: String? = nil) -> AnyPublisher<UserResponse, APIError> {
         print("🔐 APIService: Mock updating profile...")
         print("🔐 APIService: Current auth token: \(authToken?.prefix(20) ?? "None")...")
         print("🔐 APIService: Is authenticated: \(isAuthenticated)")
@@ -822,7 +836,7 @@ class APIService: ObservableObject, @unchecked Sendable {
                 if let currentUser = self.currentUser {
                     let updatedUser = User(
                         id: currentUser.id,
-                        email: currentUser.email,
+                        email: email ?? currentUser.email,
                         fullName: fullName ?? currentUser.fullName,
                         phoneNumber: phoneNumber ?? currentUser.phoneNumber ?? "",
                         profileImage: profileImage ?? currentUser.profileImage,
@@ -884,6 +898,14 @@ class APIService: ObservableObject, @unchecked Sendable {
     }
     
     func createClass(classData: ClassCreationData) -> AnyPublisher<ClassResponse, APIError> {
+        print("🔐 APIService: Creating class - name: \(classData.className)")
+        print("🔐 APIService: Current auth token: \(authToken?.prefix(20) ?? "None")...")
+        print("🔐 APIService: Is authenticated: \(isAuthenticated)")
+        
+        if APIConfig.useMockMode {
+            return mockCreateClass(classData: classData)
+        }
+        
         var body = classData.toDictionary()
         
         // Add provider ID from current user
@@ -915,7 +937,7 @@ class APIService: ObservableObject, @unchecked Sendable {
             return mockFetchMyClasses(status: status, page: page)
         }
         
-        guard let currentUser = currentUser else {
+        guard currentUser != nil else {
             return Fail(error: APIError.unauthorized).eraseToAnyPublisher()
         }
         
@@ -924,7 +946,7 @@ class APIService: ObservableObject, @unchecked Sendable {
             queryItems.append("status=\(status)")
         }
         let queryString = "?\(queryItems.joined(separator: "&"))"
-        return request(endpoint: "/classes/provider/\(currentUser.id)\(queryString)")
+        return request(endpoint: "/classes/provider/my-classes\(queryString)")
     }
     
     func cancelClass(classId: String, reason: String? = nil) -> AnyPublisher<ClassResponse, APIError> {
@@ -941,7 +963,7 @@ class APIService: ObservableObject, @unchecked Sendable {
     }
     
     // MARK: - Bookings
-    func createBooking(classId: String, children: [Child], sessionDate: Date, sessionTime: String, specialRequests: String? = nil) -> AnyPublisher<BookingResponse, APIError> {
+    func createBooking(classId: String, children: [Child], sessionDate: Date, sessionTime: String, specialRequests: String? = nil) -> AnyPublisher<(BookingResponse, String), APIError> {
         guard let currentUser = currentUser else {
             return Fail(error: APIError.unauthorized).eraseToAnyPublisher()
         }
@@ -952,14 +974,131 @@ class APIService: ObservableObject, @unchecked Sendable {
             "classId": classId,
             "children": children.map { ["name": $0.name, "age": $0.age] },
             "numberOfChildren": children.count,
-            "bookingDate": dateFormatter.string(from: sessionDate)
+            "sessionDate": dateFormatter.string(from: sessionDate),
+            "sessionTime": sessionTime
         ]
         
         if let specialRequests = specialRequests {
-            body["parentNotes"] = specialRequests
+            body["specialRequests"] = specialRequests
         }
         
-        return request(endpoint: "/bookings", method: .POST, body: body)
+        let fullURL = "\(APIConfig.baseURL)/bookings"
+        guard let url = URL(string: fullURL) else {
+            return Fail(error: APIError.invalidURL).eraseToAnyPublisher()
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if let token = authToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } else {
+            return Fail(error: APIError.unauthorized).eraseToAnyPublisher()
+        }
+        
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        print("🔗 APIService: Making booking request to: \(fullURL)")
+        print("🔗 APIService: Request body: \(body)")
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { data, response -> (BookingResponse, String) in
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw APIError.networkError(NSError(domain: "", code: -1))
+                }
+                
+                print("🔗 APIService: Booking response status: \(httpResponse.statusCode)")
+                
+                // Log raw response for debugging
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("🔍 APIService: Raw booking response: \(jsonString)")
+                }
+                
+                // Handle error responses first
+                switch httpResponse.statusCode {
+                case 200...299:
+                    // Extract MongoDB ObjectId from raw JSON before decoding (only for success responses)
+                    var mongoObjectId: String?
+                    do {
+                        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                            print("🔍 APIService: Parsed JSON keys: \(json.keys)")
+                            
+                            if let dataDict = json["data"] as? [String: Any] {
+                                print("🔍 APIService: Data dict keys: \(dataDict.keys)")
+                                
+                                if let id = dataDict["_id"] as? String {
+                                    mongoObjectId = id
+                                    print("💳 APIService: Extracted MongoDB ObjectId from raw JSON: \(id)")
+                                } else {
+                                    print("❌ APIService: _id not found in data dict or not a string. _id value: \(String(describing: dataDict["_id"]))")
+                                }
+                            } else {
+                                print("❌ APIService: 'data' key not found or not a dictionary")
+                            }
+                        }
+                    } catch {
+                        print("❌ APIService: Failed to parse JSON: \(error)")
+                    }
+                    
+                    guard let objectId = mongoObjectId else {
+                        print("❌ APIService: Failed to extract MongoDB ObjectId from response")
+                        throw APIError.decodingError
+                    }
+                    let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .custom { decoder in
+                        let container = try decoder.singleValueContainer()
+                        let dateString = try container.decode(String.self)
+                        let formatter = ISO8601DateFormatter()
+                        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                        if let date = formatter.date(from: dateString) {
+                            return date
+                        }
+                        formatter.formatOptions = [.withInternetDateTime]
+                        if let date = formatter.date(from: dateString) {
+                            return date
+                        }
+                        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date format: \(dateString)")
+                    }
+                    let bookingResponse = try decoder.decode(BookingResponse.self, from: data)
+                    return (bookingResponse, objectId)
+                case 400:
+                    // Handle validation errors and business logic errors (like "Class is full")
+                    // Try to extract error message from response
+                    var errorMessage = "Bad request"
+                    do {
+                        // Try parsing as simple message object
+                        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                           let message = json["message"] as? String {
+                            errorMessage = message
+                        } else if let errorResponse = try? JSONDecoder().decode(APIResponse<String>.self, from: data) {
+                            errorMessage = errorResponse.message ?? "Bad request"
+                        }
+                    } catch {
+                        print("⚠️ APIService: Could not parse error message from 400 response")
+                    }
+                    print("❌ APIService: Booking failed: \(errorMessage)")
+                    throw APIError.serverError(errorMessage)
+                case 401:
+                    throw APIError.unauthorized
+                case 403:
+                    throw APIError.forbidden
+                case 404:
+                    throw APIError.notFound
+                default:
+                    if let errorResponse = try? JSONDecoder().decode(APIResponse<String>.self, from: data) {
+                        throw APIError.serverError(errorResponse.message ?? "Server error")
+                    }
+                    throw APIError.serverError("HTTP \(httpResponse.statusCode)")
+                }
+            }
+            .mapError { error -> APIError in
+                if let apiError = error as? APIError {
+                    return apiError
+                }
+                return APIError.networkError(error)
+            }
+            .eraseToAnyPublisher()
     }
     
     func fetchBookings(status: String? = nil, page: Int = 1) -> AnyPublisher<BookingsResponse, APIError> {
@@ -997,16 +1136,41 @@ class APIService: ObservableObject, @unchecked Sendable {
     
     // MARK: - Payments
     func createPaymentIntent(bookingId: String) -> AnyPublisher<PaymentIntentResponse, APIError> {
+        print("💳 APIService: Creating payment intent for booking: \(bookingId)")
         let body = ["bookingId": bookingId]
         return request(endpoint: "/payments/create-payment-intent", method: .POST, body: body)
+            .handleEvents(receiveOutput: { response in
+                print("✅ APIService: Payment intent created successfully")
+                print("💳 APIService: Payment intent ID: \(response.paymentIntentId)")
+                print("💳 APIService: Client secret: \(response.clientSecret.prefix(20))...")
+            }, receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("❌ APIService: Failed to create payment intent: \(error)")
+                }
+            })
+            .eraseToAnyPublisher()
     }
     
     func confirmPayment(paymentIntentId: String, bookingId: String) -> AnyPublisher<BookingResponse, APIError> {
+        print("💳 APIService: Confirming payment")
+        print("💳 APIService: Payment intent ID: \(paymentIntentId)")
+        print("💳 APIService: Booking ID: \(bookingId)")
         let body = [
             "paymentIntentId": paymentIntentId,
             "bookingId": bookingId
         ]
         return request(endpoint: "/payments/confirm-payment", method: .POST, body: body)
+            .handleEvents(receiveOutput: { response in
+                print("✅ APIService: Payment confirmed successfully")
+                print("💳 APIService: Booking ID: \(response.data.id)")
+            }, receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("❌ APIService: Failed to confirm payment: \(error)")
+                    print("❌ APIService: APIError type: \(error)")
+                    print("❌ APIService: APIError description: \(error.localizedDescription)")
+                }
+            })
+            .eraseToAnyPublisher()
     }
     
     // MARK: - Provider Specific
@@ -1014,7 +1178,7 @@ class APIService: ObservableObject, @unchecked Sendable {
         return request(endpoint: "/providers/dashboard")
     }
     
-    func updateBusinessInfo(businessName: String? = nil, businessAddress: String? = nil, phoneNumber: String? = nil) -> AnyPublisher<UserResponse, APIError> {
+    func updateBusinessInfo(businessName: String? = nil, businessAddress: String? = nil, phoneNumber: String? = nil, bio: String? = nil, services: String? = nil) -> AnyPublisher<UserResponse, APIError> {
         var body: [String: Any] = [:]
         if let businessName = businessName {
             body["businessName"] = businessName
@@ -1025,6 +1189,14 @@ class APIService: ObservableObject, @unchecked Sendable {
         if let phoneNumber = phoneNumber {
             body["phoneNumber"] = phoneNumber
         }
+        if let bio = bio {
+            body["bio"] = bio
+        }
+        if let services = services {
+            body["services"] = services
+        }
+        
+        print("🔍 APIService - updateBusinessInfo called with body: \(body)")
         return request(endpoint: "/providers/business-info", method: .PUT, body: body)
     }
     
@@ -1040,19 +1212,27 @@ class APIService: ObservableObject, @unchecked Sendable {
         return request(endpoint: "/providers/analytics?period=\(period)")
     }
     
+    // MARK: - Provider Information
+    func fetchProviderInfo(providerId: String) -> AnyPublisher<ProviderInfoResponse, APIError> {
+        return request(endpoint: "/users/provider/\(providerId)", method: .GET)
+    }
+    
     // MARK: - User Profile
-    func updateProfile(fullName: String? = nil, phoneNumber: String? = nil, profileImage: String? = nil) -> AnyPublisher<UserResponse, APIError> {
-        print("🔐 APIService: Updating profile - fullName: \(fullName ?? "nil"), phoneNumber: \(phoneNumber ?? "nil")")
+    func updateProfile(fullName: String? = nil, email: String? = nil, phoneNumber: String? = nil, profileImage: String? = nil) -> AnyPublisher<UserResponse, APIError> {
+        print("🔐 APIService: Updating profile - fullName: \(fullName ?? "nil"), email: \(email ?? "nil"), phoneNumber: \(phoneNumber ?? "nil")")
         print("🔐 APIService: Current auth token: \(authToken?.prefix(20) ?? "None")...")
         print("🔐 APIService: Is authenticated: \(isAuthenticated)")
         
         if APIConfig.useMockMode {
-            return mockUpdateProfile(fullName: fullName, phoneNumber: phoneNumber, profileImage: profileImage)
+            return mockUpdateProfile(fullName: fullName, email: email, phoneNumber: phoneNumber, profileImage: profileImage)
         }
         
         var body: [String: Any] = [:]
         if let fullName = fullName {
             body["fullName"] = fullName
+        }
+        if let email = email {
+            body["email"] = email
         }
         if let phoneNumber = phoneNumber {
             body["phoneNumber"] = phoneNumber
@@ -1081,6 +1261,12 @@ class APIService: ObservableObject, @unchecked Sendable {
             body["dateOfBirth"] = formatter.string(from: dateOfBirth)
         }
         return request(endpoint: "/users/children", method: .POST, body: body)
+            .handleEvents(receiveOutput: { [weak self] _ in
+                // Refresh current user data after adding a child to get updated children list
+                print("🔐 APIService: Child added successfully, refreshing current user data...")
+                self?.fetchCurrentUser()
+            })
+            .eraseToAnyPublisher()
     }
     
     func editChild(childId: String, name: String, age: Int, dateOfBirth: Date? = nil) -> AnyPublisher<ChildrenResponse, APIError> {
@@ -1101,6 +1287,12 @@ class APIService: ObservableObject, @unchecked Sendable {
             body["dateOfBirth"] = formatter.string(from: dateOfBirth)
         }
         return request(endpoint: "/users/children/\(childId)", method: .PUT, body: body)
+            .handleEvents(receiveOutput: { [weak self] _ in
+                // Refresh current user data after editing a child to get updated children list
+                print("🔐 APIService: Child edited successfully, refreshing current user data...")
+                self?.fetchCurrentUser()
+            })
+            .eraseToAnyPublisher()
     }
     
     func deleteChild(childId: String) -> AnyPublisher<EmptyResponse, APIError> {
@@ -1113,6 +1305,12 @@ class APIService: ObservableObject, @unchecked Sendable {
         }
         
         return request(endpoint: "/users/children/\(childId)", method: .DELETE)
+            .handleEvents(receiveOutput: { [weak self] _ in
+                // Refresh current user data after deleting a child to get updated children list
+                print("🔐 APIService: Child deleted successfully, refreshing current user data...")
+                self?.fetchCurrentUser()
+            })
+            .eraseToAnyPublisher()
     }
     
     // MARK: - Testing Helper
@@ -1124,7 +1322,7 @@ class APIService: ObservableObject, @unchecked Sendable {
         if userType == .provider {
             mockUser = User(
                 id: UUID().uuidString,
-                email: "provider@example.com",
+                email: "info@yugiapp.ai",
                 fullName: "Provider User",
                 phoneNumber: "+44 123 456 7890",
                 profileImage: "https://picsum.photos/150/150",
@@ -1136,7 +1334,7 @@ class APIService: ObservableObject, @unchecked Sendable {
         } else {
             mockUser = User(
                 id: UUID().uuidString,
-                email: "test@example.com",
+                email: "info@yugiapp.ai",
                 fullName: "Sarah Johnson",
                 phoneNumber: "+44 123 456 7890",
                 profileImage: "https://picsum.photos/150/150",
@@ -1193,6 +1391,24 @@ class APIService: ObservableObject, @unchecked Sendable {
         self.currentUser = nil
         
         print("🔐 APIService: All app data cleared")
+    }
+    
+    // MARK: - Clear Mock Authentication Data
+    func clearMockAuthenticationData() {
+        print("🔐 APIService: Clearing mock authentication data...")
+        
+        // Check if current token is a mock token
+        if let token = authToken, token.hasPrefix("mock") {
+            print("🔐 APIService: Found mock token, clearing authentication data")
+            UserDefaults.standard.removeObject(forKey: "authToken")
+            UserDefaults.standard.removeObject(forKey: "currentUser")
+            self.authToken = nil
+            self.isAuthenticated = false
+            self.currentUser = nil
+            print("🔐 APIService: Mock authentication data cleared")
+        } else {
+            print("🔐 APIService: No mock token found, keeping current authentication")
+        }
     }
     
 
@@ -1335,6 +1551,93 @@ class APIService: ObservableObject, @unchecked Sendable {
     
     // MARK: - Private Properties
     var cancellables = Set<AnyCancellable>()
+    
+    // MARK: - Class Management
+    
+    func getProviderClasses() -> AnyPublisher<ClassesResponse, APIError> {
+        print("🔐 APIService: Getting provider classes")
+        print("🔐 APIService: Current auth token: \(authToken?.prefix(20) ?? "None")...")
+        print("🔐 APIService: Is authenticated: \(isAuthenticated)")
+        
+        if APIConfig.useMockMode {
+            return mockGetProviderClasses()
+        }
+        
+        return request(endpoint: "/classes/provider/my-classes?page=1", method: .GET)
+    }
+    
+    // MARK: - Mock Class Methods
+    
+    private func mockCreateClass(classData: ClassCreationData) -> AnyPublisher<ClassResponse, APIError> {
+        print("🔐 APIService: Mock creating class...")
+        
+        return Future<ClassResponse, APIError> { promise in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                let mockClass = Class(
+                    id: "mock-class-\(UUID().uuidString)",
+                    name: classData.className,
+                    description: classData.description,
+                    category: classData.category,
+                    provider: "mock-provider-\(UUID().uuidString)", providerName: "Mock Provider",
+                    location: Location(
+                        id: "mock-location-\(UUID().uuidString)",
+                        name: classData.location,
+                        address: Address(
+                            street: classData.location,
+                            city: "London",
+                            state: "England",
+                            postalCode: "SW1A 1AA",
+                            country: "United Kingdom"
+                        ),
+                        coordinates: Location.Coordinates(latitude: 51.5074, longitude: -0.1278),
+                        accessibilityNotes: nil,
+                        parkingInfo: nil,
+                        babyChangingFacilities: nil
+                    ),
+                    schedule: Schedule(
+                        startDate: Date(),
+                        endDate: Date().addingTimeInterval(86400 * 30), // 30 days
+                        recurringDays: ["monday"],
+                        timeSlots: classData.timeSlots.map { slot in
+                            Schedule.TimeSlot(
+                                startTime: slot.startTime,
+                                duration: TimeInterval(classData.duration * 60)
+                            )
+                        },
+                        totalSessions: 10
+                    ),
+                    pricing: Pricing(
+                        amount: Decimal(classData.price),
+                        currency: "GBP",
+                        type: .perSession,
+                        description: nil
+                    ),
+                    maxCapacity: classData.maxCapacity,
+                    currentEnrollment: 0,
+                    averageRating: 0.0,
+                    ageRange: classData.ageRange,
+                    isFavorite: false
+                )
+                
+                let response = ClassResponse(data: mockClass)
+                promise(.success(response))
+            }
+        }
+        .eraseToAnyPublisher()
+    }
+    
+    private func mockGetProviderClasses() -> AnyPublisher<ClassesResponse, APIError> {
+        print("🔐 APIService: Mock getting provider classes...")
+        
+        return Future<ClassesResponse, APIError> { promise in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                let mockClasses: [Class] = [] // Empty for now
+                let response = ClassesResponse(data: mockClasses, pagination: nil)
+                promise(.success(response))
+            }
+        }
+        .eraseToAnyPublisher()
+    }
 }
 
 // MARK: - HTTP Method
@@ -1395,6 +1698,27 @@ struct APIProviderStats: Codable {
     let totalRevenue: Double
 }
 
+struct ProviderInfoResponse: Codable {
+    let success: Bool
+    let data: ProviderInfo
+}
+
+struct ProviderInfo: Codable {
+    let id: String
+    let fullName: String?
+    let businessName: String?
+    let businessAddress: String?
+    let phoneNumber: String?
+    let email: String
+    let profileImage: String?
+    let qualifications: String?
+    let dbsCertificate: String?
+    let verificationStatus: String?
+    let bio: String?
+    let services: String?
+    let createdAt: String
+}
+
 struct VerificationStatusResponse: Codable {
     let data: VerificationStatusData
 }
@@ -1430,6 +1754,7 @@ struct ChildrenResponse: Codable {
     let data: [Child]
 }
 
+
 struct EmptyResponse: Codable {}
 
 // MARK: - Extensions
@@ -1457,6 +1782,42 @@ extension ClassCreationData {
             ] }
         ]
         
+        // Add structured location data
+        if !venueName.isEmpty || !streetAddress.isEmpty || !city.isEmpty || !postalCode.isEmpty || latitude != 0.0 || longitude != 0.0 {
+            var locationData: [String: Any] = [:]
+            
+            if !venueName.isEmpty {
+                locationData["name"] = venueName
+            }
+            
+            var addressData: [String: Any] = [:]
+            if !streetAddress.isEmpty {
+                addressData["street"] = streetAddress
+            }
+            if !city.isEmpty {
+                addressData["city"] = city
+            }
+            if !postalCode.isEmpty {
+                addressData["postalCode"] = postalCode
+            }
+            addressData["country"] = "United Kingdom" // Default country
+            
+            if !addressData.isEmpty {
+                locationData["address"] = addressData
+            }
+            
+            if latitude != 0.0 && longitude != 0.0 {
+                locationData["coordinates"] = [
+                    "latitude": latitude,
+                    "longitude": longitude
+                ]
+            }
+            
+            if !locationData.isEmpty {
+                dict["location"] = locationData
+            }
+        }
+        
         if !whatToBring.isEmpty {
             dict["whatToBring"] = whatToBring
         }
@@ -1478,4 +1839,5 @@ extension ClassCreationData {
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date)
     }
+    
 } 
