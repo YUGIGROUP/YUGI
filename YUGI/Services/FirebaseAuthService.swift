@@ -53,12 +53,35 @@ class FirebaseAuthService: ObservableObject {
         errorMessage = nil
         
         return Future { [weak self] promise in
+            // Clear any existing Firebase auth state before signup to avoid credential conflicts
+            do {
+                try Auth.auth().signOut()
+                print("🔐 FirebaseAuthService: Cleared existing Firebase auth state before signup")
+            } catch {
+                print("🔐 FirebaseAuthService: No existing Firebase session to clear (this is OK)")
+            }
+            
             Auth.auth().createUser(withEmail: email, password: password) { result, error in
                 DispatchQueue.main.async {
                     self?.isLoading = false
                     
                     if let error = error {
-                        self?.errorMessage = error.localizedDescription
+                        print("❌ FirebaseAuthService: Signup error: \(error.localizedDescription)")
+                        // Provide more helpful error messages
+                        var errorMessage = error.localizedDescription
+                        if let nsError = error as NSError? {
+                            switch nsError.code {
+                            case 17007: // Email already exists
+                                errorMessage = "An account with this email already exists. Please sign in instead."
+                            case 17008: // Invalid email
+                                errorMessage = "Please enter a valid email address."
+                            case 17026: // Weak password
+                                errorMessage = "Password is too weak. Please use at least 8 characters."
+                            default:
+                                break
+                            }
+                        }
+                        self?.errorMessage = errorMessage
                         promise(.failure(error))
                         return
                     }
@@ -70,13 +93,18 @@ class FirebaseAuthService: ObservableObject {
                         return
                     }
                     
+                    print("✅ FirebaseAuthService: Firebase user created successfully: \(result.user.uid)")
+                    
                     // Update user profile
                     let changeRequest = result.user.createProfileChangeRequest()
                     changeRequest.displayName = fullName
                     
                     changeRequest.commitChanges { error in
                         if let error = error {
-                            print("Error updating profile: \(error)")
+                            print("⚠️ FirebaseAuthService: Error updating profile: \(error)")
+                            // Don't fail signup if profile update fails
+                        } else {
+                            print("✅ FirebaseAuthService: Profile updated successfully")
                         }
                         
                         // Create user in backend
@@ -96,12 +124,43 @@ class FirebaseAuthService: ObservableObject {
         errorMessage = nil
         
         return Future { [weak self] promise in
+            // Clear any stale Firebase auth state before sign in
+            // This helps avoid "malformed or expired credential" errors
+            if let currentUser = Auth.auth().currentUser {
+                do {
+                    try Auth.auth().signOut()
+                    print("🔐 FirebaseAuthService: Cleared existing Firebase session before sign in")
+                } catch {
+                    print("🔐 FirebaseAuthService: Error clearing Firebase session: \(error)")
+                }
+            }
+            
             Auth.auth().signIn(withEmail: email, password: password) { result, error in
                 DispatchQueue.main.async {
                     self?.isLoading = false
                     
                     if let error = error {
-                        self?.errorMessage = error.localizedDescription
+                        print("❌ FirebaseAuthService: Sign-in error: \(error.localizedDescription)")
+                        // Provide more helpful error messages
+                        var errorMessage = error.localizedDescription
+                        if let nsError = error as NSError? {
+                            switch nsError.code {
+                            case 17011: // User not found
+                                errorMessage = "No account found with this email. Please sign up first."
+                            case 17009: // Wrong password
+                                errorMessage = "Incorrect password. Please try again."
+                            case 17020: // Network error
+                                errorMessage = "Network error. Please check your connection and try again."
+                            case 17026: // Invalid credential
+                                errorMessage = "Invalid credentials. Please check your email and password."
+                            default:
+                                // Check for malformed/expired credential error
+                                if error.localizedDescription.contains("malformed") || error.localizedDescription.contains("expired") {
+                                    errorMessage = "Authentication session expired. Please try signing in again."
+                                }
+                            }
+                        }
+                        self?.errorMessage = errorMessage
                         promise(.failure(error))
                         return
                     }
@@ -112,6 +171,8 @@ class FirebaseAuthService: ObservableObject {
                         promise(.failure(error))
                         return
                     }
+                    
+                    print("✅ FirebaseAuthService: Sign-in successful: \(result.user.uid)")
                     
                     // Fetch user data from backend
                     self?.fetchUserFromBackend(firebaseUser: result.user)
@@ -231,6 +292,8 @@ extension User {
         self.businessAddress = businessAddress
         self.qualifications = nil
         self.dbsCertificate = nil
+        self.bio = nil
+        self.services = nil
         self.verificationStatus = "pending"
         self.children = children
         self.isActive = true

@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct AuthScreen: View {
     @State private var email = ""
@@ -29,27 +30,6 @@ struct AuthScreen: View {
                         .foregroundColor(.yugiGray.opacity(0.8))
                 }
                 .padding(.top, 48)
-                
-                // Biometric Sign In Button (if available and enabled)
-                if biometricService.isBiometricAvailable && biometricService.isBiometricEnabled() {
-                    biometricSignInButton
-                    
-                    // Divider
-                    HStack {
-                        Rectangle()
-                            .fill(Color.yugiGray.opacity(0.2))
-                            .frame(height: 1)
-                        
-                        Text("or")
-                            .font(.system(size: 15))
-                            .foregroundColor(.yugiGray.opacity(0.6))
-                        
-                        Rectangle()
-                            .fill(Color.yugiGray.opacity(0.2))
-                            .frame(height: 1)
-                    }
-                    .padding(.horizontal)
-                }
                 
                 // Form Fields
                 VStack(spacing: 20) {
@@ -169,51 +149,7 @@ struct AuthScreen: View {
         }
     }
     
-    // MARK: - Biometric Sign In Button
-    
-    private var biometricSignInButton: some View {
-        Button(action: signInWithBiometrics) {
-            HStack {
-                Image(systemName: biometricService.getBiometricIcon())
-                    .font(.system(size: 20))
-                Text("Sign in with \(biometricService.getBiometricTypeName())")
-                    .font(.system(size: 17, weight: .semibold))
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(hex: "#BC6C5C"))
-            )
-        }
-        .padding(.horizontal)
-    }
-    
     // MARK: - Authentication Methods
-    
-    private func signInWithBiometrics() {
-        Task {
-            let success = await biometricService.authenticateWithBiometrics()
-            
-            await MainActor.run {
-                if success {
-                    // Try to load saved credentials and sign in
-                    if let credentials = biometricService.loadSavedCredentials() {
-                        email = credentials.email
-                        password = credentials.password
-                        signInWithCredentials()
-                    } else {
-                        errorMessage = "No saved credentials found. Please sign in with email and password first."
-                        showingError = true
-                    }
-                } else {
-                    errorMessage = "Biometric authentication failed. Please try again."
-                    showingError = true
-                }
-            }
-        }
-    }
     
     private func signInWithCredentials() {
         guard !email.isEmpty && !password.isEmpty else {
@@ -224,17 +160,32 @@ struct AuthScreen: View {
         
         isLoading = true
         
-        apiService.login(email: email, password: password)
+        // First sign in with Firebase, then login to backend
+        let firebaseAuth = FirebaseAuthService()
+        firebaseAuth.signIn(email: email, password: password)
+            .mapError { error -> APIError in
+                // Convert Firebase error to APIError
+                print("❌ AuthScreen: Firebase sign-in failed: \(error.localizedDescription)")
+                return APIError.networkError(error)
+            }
+            .flatMap { _ -> AnyPublisher<AuthResponse, APIError> in
+                // After Firebase sign-in succeeds, login to backend
+                print("✅ AuthScreen: Firebase sign-in successful, logging into backend...")
+                return self.apiService.login(email: self.email, password: self.password)
+            }
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { completion in
                     isLoading = false
                     if case let .failure(error) = completion {
+                        print("❌ AuthScreen: Sign-in failed: \(error.localizedDescription)")
                         errorMessage = error.localizedDescription
                         showingError = true
                     }
                 },
                 receiveValue: { response in
+                    print("✅ AuthScreen: Sign-in successful for user: \(response.user.fullName)")
+                    
                     // Save credentials if "Remember Me" is enabled
                     if biometricService.isRememberMeEnabled {
                         biometricService.saveCredentials(email: email, password: password)
