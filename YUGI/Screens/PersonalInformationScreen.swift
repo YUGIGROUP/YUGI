@@ -126,6 +126,13 @@ struct PersonalInformationScreen: View {
                     fullName = user.fullName
                     email = user.email
                     phoneNumber = user.phoneNumber ?? ""
+                    
+                    // Load profile image from backend if available
+                    if let profileImageString = user.profileImage,
+                       let imageData = Data(base64Encoded: profileImageString),
+                       let image = UIImage(data: imageData) {
+                        profileImage = image
+                    }
                 }
             }
         }
@@ -414,23 +421,21 @@ struct PersonalInformationScreen: View {
     // MARK: - Helper Methods
     
     private func loadUserData() {
-        // Ensure user is authenticated
-        if !apiService.isAuthenticated {
-            print("🔐 PersonalInformation: User not authenticated, forcing authentication for testing")
-            // Use the current user type if available, otherwise default to parent
-            let userType = apiService.currentUser?.userType ?? .parent
-            apiService.forceAuthenticateForTesting(userType: userType)
-        }
-        
         // Fetch current user if not available
         if apiService.currentUser == nil {
-            print("🔐 PersonalInformation: No current user, fetching...")
-            apiService.fetchCurrentUser()
+            if apiService.isAuthenticated {
+                print("🔐 PersonalInformation: No current user but authenticated, fetching...")
+                apiService.fetchCurrentUser()
+            } else {
+                print("🔐 PersonalInformation: User not authenticated and no current user")
+                showError("Please sign in to view your personal information.")
+                return
+            }
         }
         
         guard let user = apiService.currentUser else {
             print("🔐 PersonalInformation: Unable to load user data - no user available")
-            showError("Unable to load user data. Please try again.")
+            showError("Unable to load user data. Please sign in and try again.")
             return
         }
         
@@ -441,10 +446,14 @@ struct PersonalInformationScreen: View {
         phoneNumber = user.phoneNumber ?? ""
         
         // Load profile image if available
-        if let profileImageUrl = user.profileImage {
-            // TODO: Load image from URL
-            // For now, we'll use the placeholder
-            print("🔐 PersonalInformation: Profile image URL available: \(profileImageUrl)")
+        if let profileImageString = user.profileImage,
+           let imageData = Data(base64Encoded: profileImageString),
+           let image = UIImage(data: imageData) {
+            profileImage = image
+            print("🔐 PersonalInformation: Profile image loaded from backend")
+        } else {
+            profileImage = nil
+            print("🔐 PersonalInformation: No profile image available")
         }
         
         print("🔐 PersonalInformation: User data loaded successfully")
@@ -483,10 +492,18 @@ struct PersonalInformationScreen: View {
         
         isLoading = true
         
+        // Convert profile image to base64 string if changed (with proper compression)
+        var profileImageString: String? = nil
+        if let image = tempProfileImage {
+            profileImageString = ImageCompressor.compressProfileImage(image)
+        }
+        
         // Update user data
         apiService.updateProfile(
             fullName: tempFullName.trimmingCharacters(in: .whitespacesAndNewlines),
-            phoneNumber: tempPhoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+            email: tempEmail.trimmingCharacters(in: .whitespacesAndNewlines),
+            phoneNumber: tempPhoneNumber.trimmingCharacters(in: .whitespacesAndNewlines),
+            profileImage: profileImageString
         )
         .receive(on: DispatchQueue.main)
         .sink(
