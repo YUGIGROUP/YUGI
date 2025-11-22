@@ -554,6 +554,52 @@ router.post('/:id/unpublish', [
   }
 });
 
+// @route   PUT /api/classes/:id/cancel
+// @desc    Cancel a class (mark as cancelled, don't delete)
+// @access  Private
+router.put('/:id/cancel', [
+  protect,
+  // requireProviderVerification, // Temporarily disabled for testing
+  normalizeCategoryInResponse
+], async (req, res) => {
+  try {
+    console.log(`🔍 PUT /api/classes/${req.params.id}/cancel - Cancelling class`);
+
+    const classItem = await Class.findById(req.params.id);
+
+    if (!classItem) {
+      return res.status(404).json({ message: 'Class not found' });
+    }
+
+    // Check if user owns this class
+    if (classItem.provider.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to cancel this class' });
+    }
+
+    // Mark class as inactive (cancelled)
+    const updatedClass = await Class.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false, updatedAt: new Date() },
+      { new: true }
+    );
+
+    console.log('✅ Class cancelled successfully:', updatedClass.name);
+
+    // Transform the response for iOS compatibility
+    const transformedClass = await transformClassForIOS(updatedClass);
+
+    res.json({
+      success: true,
+      message: 'Class cancelled successfully',
+      data: transformedClass
+    });
+
+  } catch (error) {
+    console.error('❌ Cancel class error:', error);
+    res.status(500).json({ message: 'Server error cancelling class' });
+  }
+});
+
 // @route   DELETE /api/classes/:id
 // @desc    Delete a class
 // @access  Private

@@ -532,25 +532,35 @@ class ProviderMyClassesViewModel: ObservableObject {
         let apiService = APIService.shared
         
         // Call API to cancel class
-        apiService.cancelClass(classId: classItem.id)
-            .sink(
-                receiveCompletion: { completion in
-                    if case let .failure(error) = completion {
-                        print("❌ Failed to cancel class via API: \(error)")
-                        // Continue with local update even if API call fails
-                    } else {
-                        print("✅ Class cancelled successfully via API")
-                    }
-                },
-                receiveValue: { _ in
-                    print("✅ Class cancelled successfully via API")
-                }
-            )
-            .store(in: &cancellables)
-        
-        // Update local state
-        if let index = classes.firstIndex(where: { $0.id == classItem.id }) {
-            classes[index].status = ClassStatus.cancelled
+        do {
+            let response: ClassResponse = try await withCheckedThrowingContinuation { continuation in
+                apiService.cancelClass(classId: classItem.id)
+                    .sink(
+                        receiveCompletion: { completion in
+                            switch completion {
+                            case .finished:
+                                break
+                            case .failure(let error):
+                                print("❌ Failed to cancel class via API: \(error)")
+                                continuation.resume(throwing: error)
+                            }
+                        },
+                        receiveValue: { response in
+                            print("✅ Class cancelled successfully via API")
+                            continuation.resume(returning: response)
+                        }
+                    )
+                    .store(in: &cancellables)
+            }
+            
+            // Reload classes to get updated data from backend
+            await loadClasses()
+        } catch {
+            print("❌ Failed to cancel class: \(error)")
+            // Update local state even if API call fails
+            if let index = classes.firstIndex(where: { $0.id == classItem.id }) {
+                classes[index].status = ClassStatus.cancelled
+            }
         }
 
         // Find all bookings for this class
@@ -702,24 +712,34 @@ YUGI Team
         let apiService = APIService.shared
         
         // Call API to delete class
-        apiService.deleteClass(id: classItem.id)
-            .sink(
-                receiveCompletion: { completion in
-                    if case let .failure(error) = completion {
-                        print("❌ Failed to delete class via API: \(error)")
-                        // Continue with local update even if API call fails
-                    } else {
-                        print("✅ Class deleted successfully via API")
-                    }
-                },
-                receiveValue: { _ in
-                    print("✅ Class deleted successfully via API")
-                }
-            )
-            .store(in: &cancellables)
-        
-        // Update local state
-        classes.removeAll { $0.id == classItem.id }
+        do {
+            let _: EmptyResponse = try await withCheckedThrowingContinuation { continuation in
+                apiService.deleteClass(id: classItem.id)
+                    .sink(
+                        receiveCompletion: { completion in
+                            switch completion {
+                            case .finished:
+                                break
+                            case .failure(let error):
+                                print("❌ Failed to delete class via API: \(error)")
+                                continuation.resume(throwing: error)
+                            }
+                        },
+                        receiveValue: { response in
+                            print("✅ Class deleted successfully via API")
+                            continuation.resume(returning: response)
+                        }
+                    )
+                    .store(in: &cancellables)
+            }
+            
+            // Reload classes to get updated data from backend
+            await loadClasses()
+        } catch {
+            print("❌ Failed to delete class: \(error)")
+            // Update local state even if API call fails
+            classes.removeAll { $0.id == classItem.id }
+        }
     }
     
     private func addTestBookings() async {
