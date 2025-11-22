@@ -116,20 +116,26 @@ struct ProviderMyClassesScreen: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.top, 20)
+            .padding(.vertical, 16)
         }
+        .background(Color.yugiCream)
     }
     
     private var contentView: some View {
         Group {
             if viewModel.isLoading {
-                Spacer()
-                ProgressView()
-                    .scaleEffect(1.2)
-                    .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#BC6C5C")))
-                Spacer()
+                VStack {
+                    ProgressView()
+                        .scaleEffect(1.2)
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#BC6C5C")))
+                        .padding(.top, 40)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else if viewModel.filteredClasses(selectedFilter).isEmpty {
-                emptyStateView
+                ScrollView {
+                    emptyStateView
+                        .padding(.top, 20)
+                }
             } else {
                 ScrollView {
                     LazyVStack(spacing: 16) {
@@ -155,6 +161,7 @@ struct ProviderMyClassesScreen: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
     
     private var emptyStateView: some View {
@@ -356,6 +363,7 @@ struct ProviderStatusBadge: View {
 class ProviderMyClassesViewModel: ObservableObject {
     @Published var classes: [ProviderClass] = []
     @Published var isLoading = false
+    var cancellables = Set<AnyCancellable>()
     
     private let apiService = APIService.shared
     private let newClassStorage = NewClassStorage.shared
@@ -385,13 +393,13 @@ class ProviderMyClassesViewModel: ObservableObject {
                             continuation.resume(returning: response)
                         }
                     )
-                    .store(in: &apiService.cancellables)
+                    .store(in: &cancellables)
             }
             
             // Convert API classes to ProviderClass format
             let apiClasses = response.data.map { classData in
                 ProviderClass(
-                    id: classData.id.uuidString,
+                    id: classData.id,
                     name: classData.name,
                     description: classData.description,
                     category: classData.category,
@@ -401,7 +409,7 @@ class ProviderMyClassesViewModel: ObservableObject {
                     currentBookings: classData.currentEnrollment,
                     isPublished: true, // Assuming published if it's in the API response
                     status: ClassStatus.upcoming, // Default status
-                    location: classData.location.name,
+                    location: classData.location?.name ?? "Location TBD",
                     nextSession: classData.schedule.startDate,
                     createdAt: Date() // Default to current date since it's not in the model
                 )
@@ -445,7 +453,7 @@ class ProviderMyClassesViewModel: ObservableObject {
             currentBookings: 0,
             isPublished: true,
             status: ClassStatus.upcoming,
-            location: classData.location?.name ?? "Location TBD",
+            location: classData.location.isEmpty ? "Location TBD" : classData.location,
             nextSession: classData.classDates.first?.date,
             createdAt: Date()
         )
@@ -519,8 +527,26 @@ class ProviderMyClassesViewModel: ObservableObject {
     }
     
     func cancelClass(_ classItem: ProviderClass) async {
-        // TODO: Implement API call to cancel class
         print("Cancelling class: \(classItem.name)")
+        
+        let apiService = APIService.shared
+        
+        // Call API to cancel class
+        apiService.cancelClass(classId: classItem.id)
+            .sink(
+                receiveCompletion: { completion in
+                    if case let .failure(error) = completion {
+                        print("❌ Failed to cancel class via API: \(error)")
+                        // Continue with local update even if API call fails
+                    } else {
+                        print("✅ Class cancelled successfully via API")
+                    }
+                },
+                receiveValue: { _ in
+                    print("✅ Class cancelled successfully via API")
+                }
+            )
+            .store(in: &cancellables)
         
         // Update local state
         if let index = classes.firstIndex(where: { $0.id == classItem.id }) {
@@ -528,7 +554,7 @@ class ProviderMyClassesViewModel: ObservableObject {
         }
 
         // Find all bookings for this class
-        let bookingsToCancel = SharedBookingService.shared.bookings.filter { $0.classId.uuidString == classItem.id && $0.status == .upcoming }
+        let bookingsToCancel = SharedBookingService.shared.bookings.filter { $0.classId == classItem.id && $0.status == .upcoming }
         print("Found \(bookingsToCancel.count) bookings to cancel for class \(classItem.name)")
 
         for booking in bookingsToCancel {
@@ -671,8 +697,26 @@ YUGI Team
     }
     
     func deleteClass(_ classItem: ProviderClass) async {
-        // TODO: Implement API call to delete class
         print("Deleting class: \(classItem.name)")
+        
+        let apiService = APIService.shared
+        
+        // Call API to delete class
+        apiService.deleteClass(id: classItem.id)
+            .sink(
+                receiveCompletion: { completion in
+                    if case let .failure(error) = completion {
+                        print("❌ Failed to delete class via API: \(error)")
+                        // Continue with local update even if API call fails
+                    } else {
+                        print("✅ Class deleted successfully via API")
+                    }
+                },
+                receiveValue: { _ in
+                    print("✅ Class deleted successfully via API")
+                }
+            )
+            .store(in: &cancellables)
         
         // Update local state
         classes.removeAll { $0.id == classItem.id }
@@ -688,14 +732,14 @@ YUGI Team
             
             let booking = Booking(
                 id: UUID(),
-                classId: UUID(uuidString: babySensoryClass.id) ?? UUID(),
+                classId: babySensoryClass.id,
                 userId: UUID(),
                 status: .upcoming,
                 bookingDate: bookingDate,
                 numberOfParticipants: 2,
                 selectedChildren: [
-                    Child(id: "test_child_1", name: "Emma", age: 2, dateOfBirth: nil),
-                    Child(id: "test_child_2", name: "Liam", age: 3, dateOfBirth: nil)
+                    Child(childId: "test_child_1", childName: "Emma", childAge: 2, childDateOfBirth: nil),
+                    Child(childId: "test_child_2", childName: "Liam", childAge: 3, childDateOfBirth: nil)
                 ],
                 specialRequirements: "Test booking for cancellation testing",
                 attended: false
@@ -703,22 +747,13 @@ YUGI Team
             
             // Create a mock Class for the EnhancedBooking
             let mockClass = Class(
-                id: UUID(uuidString: babySensoryClass.id) ?? UUID(),
+                id: babySensoryClass.id,
                 name: babySensoryClass.name,
                 description: babySensoryClass.description,
                 category: babySensoryClass.category,
-                provider: Provider(
-                    id: UUID(),
-                    name: "Test Provider",
-                    description: "Test provider for cancellation testing",
-                    qualifications: ["Test Qualification"],
-                    contactEmail: "test@provider.com",
-                    contactPhone: "+44 123 456 7890",
-                    website: nil,
-                    rating: 4.5
-                ),
+                provider: "mock-provider-id-1", providerName: "Mock Provider",
                 location: Location(
-                    id: UUID(),
+                    id: "mock-location-id-1",
                     name: babySensoryClass.location,
                     address: Address(
                         street: "123 Test Street",
@@ -735,7 +770,7 @@ YUGI Team
                 schedule: Schedule(
                     startDate: bookingDate,
                     endDate: bookingDate.addingTimeInterval(3600),
-                    recurringDays: [.monday],
+                    recurringDays: ["monday"],
                     timeSlots: [Schedule.TimeSlot(startTime: bookingDate, duration: 3600)],
                     totalSessions: 1
                 ),
