@@ -533,7 +533,7 @@ class ProviderMyClassesViewModel: ObservableObject {
         
         // Call API to cancel class
         do {
-            let response: ClassResponse = try await withCheckedThrowingContinuation { continuation in
+            let _: ClassResponse = try await withCheckedThrowingContinuation { continuation in
                 apiService.cancelClass(classId: classItem.id)
                     .sink(
                         receiveCompletion: { completion in
