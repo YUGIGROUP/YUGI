@@ -707,16 +707,9 @@ struct TermsAgreementScreen: View {
                                 // Continue Button
                                 Button(action: {
                                     if hasAcceptedTerms {
-                                        if userType == .provider {
-                                            // Save acceptance status for provider
-                                            UserDefaults.standard.set(true, forKey: "providerTermsAccepted")
-                                            // Call the callback to proceed to verification screen
-                                            onTermsAccepted?()
-                                        } else {
-                                            // Save acceptance status for parent onboarding
-                                            UserDefaults.standard.set(true, forKey: "parentTermsAccepted")
-                                            shouldNavigateToOnboarding = true
-                                        }
+                                        // Save acceptance status for parent onboarding
+                                        UserDefaults.standard.set(true, forKey: "parentTermsAccepted")
+                                        shouldNavigateToOnboarding = true
                                     }
                                 }) {
                                     HStack {
