@@ -53,6 +53,9 @@ class VenueDataService {
             googleData.coordinates.lat,
             googleData.coordinates.lng
           );
+          console.log(`🚇 getRealVenueData: Found ${nearbyStations.length} transit stations: ${nearbyStations.join(', ')}`);
+        } else {
+          console.log(`🚇 getRealVenueData: No coordinates available for transit station lookup`);
         }
         
         const result = this.formatVenueData(googleData, 'google', nearbyStations);
@@ -548,10 +551,14 @@ class VenueDataService {
       console.log(`🚇 Transit stations found: ${response?.data?.results?.length || 0}`);
 
       if (response.data.results && response.data.results.length > 0) {
+        console.log(`🚇 Raw station results before filtering: ${response.data.results.length}`);
         // Filter to only include actual train/tube stations (exclude car parks, roads, etc.)
         const stations = response.data.results
           .filter(station => {
-            if (!station?.name) return false;
+            if (!station?.name) {
+              console.log(`🚇 Excluding station - no name`);
+              return false;
+            }
             
             const name = station.name.toLowerCase();
             const types = station.types || [];
@@ -559,17 +566,20 @@ class VenueDataService {
             // Exclude car parks, roads, bus stops, and other non-station places
             const excludedKeywords = ['car park', 'parking', 'road', 'street', 'avenue', 'way', 'lane', 'bus stop', 'bus station', 'fire station', 'theatre', 'theater', 'cinema', 'restaurant', 'cafe', 'shop', 'store', 'garden', 'park', '(stop', 'stop e)', 'stop f)', 'stop g)', 'stop h)', 'stop a)', 'stop b)', 'stop c)', 'stop d)'];
             if (excludedKeywords.some(keyword => name.includes(keyword))) {
+              console.log(`🚇 Excluding '${station.name}' - contains excluded keyword`);
               return false;
             }
             
             // Exclude bus stops (check for bus-related types)
             if (types.some(type => type.includes('bus_station') || type.includes('bus_stop'))) {
+              console.log(`🚇 Excluding '${station.name}' - bus stop type`);
               return false;
             }
             
             // Exclude if types indicate it's not a train/tube station
             const excludedTypes = ['parking', 'route', 'street_address', 'premise', 'establishment'];
             if (types.some(type => excludedTypes.some(excluded => type.toLowerCase().includes(excluded)))) {
+              console.log(`🚇 Excluding '${station.name}' - excluded type`);
               return false;
             }
             
@@ -582,10 +592,18 @@ class VenueDataService {
                                        name.includes('underground') || name.includes('railway');
             
             // Include if it's a station type OR name suggests station
-            return isStationType || nameSuggestsStation;
+            const shouldInclude = isStationType || nameSuggestsStation;
+            if (shouldInclude) {
+              console.log(`🚇 Including '${station.name}' (types: ${types.join(', ')})`);
+            } else {
+              console.log(`🚇 Excluding '${station.name}' - not a station type`);
+            }
+            return shouldInclude;
           })
           .map(station => station.name)
           .filter(Boolean);
+        
+        console.log(`🚇 Stations after filtering: ${stations.length} - ${stations.join(', ')}`);
         
         // Remove duplicates and prefer names with "station" in them
         // Process stations in distance order and take the first 2 closest unique stations
@@ -661,6 +679,8 @@ class VenueDataService {
       return this.getDefaultVenueData('');
     }
     
+    console.log(`🏢 formatVenueData: source=${source}, nearbyStations=${nearbyStations.length} (${nearbyStations.join(', ')})`);
+    
     try {
       const parkingInfo = this.generateParkingInfo(apiData, source, nearbyStations);
       const changingFacilities = this.generateChangingFacilities(apiData, source);
@@ -705,6 +725,8 @@ class VenueDataService {
       const editorialSummary = apiData.editorialSummary || '';
       const reviews = (apiData.reviews && Array.isArray(apiData.reviews)) ? apiData.reviews : [];
       
+      console.log(`🚗 generateParkingInfo: editorialSummary length: ${String(editorialSummary).length}, reviews count: ${reviews.length}, nearbyStations: ${nearbyStations.length}`);
+      
       // Build parking info from reviews
       const parkingKeywords = ['parking', 'car park', 'parking lot', 'street parking', 'pay and display', 'meter', 'parking bay', 'parking space'];
       const parkingReviews = reviews
@@ -717,8 +739,14 @@ class VenueDataService {
       const summaryLower = String(editorialSummary).toLowerCase();
       const hasParkingInSummary = parkingKeywords.some(keyword => summaryLower.includes(keyword));
       
-      // Build detailed parking info if we have data
-      if (parkingReviews.length > 0 || hasParkingInSummary) {
+      console.log(`🚗 generateParkingInfo: parkingReviews found: ${parkingReviews.length}, hasParkingInSummary: ${hasParkingInSummary}`);
+      
+      // Special handling for theatres in London (often have limited parking)
+      const isLondonTheatre = (venueName.includes('theatre') || venueName.includes('theater') || types.some(type => type.includes('theatre') || type.includes('theater'))) && 
+                               (address.includes('london') || address.includes('city') || address.includes('central'));
+      
+      // Build detailed parking info if we have data OR if it's a London theatre with transit stations
+      if (parkingReviews.length > 0 || hasParkingInSummary || (isLondonTheatre && nearbyStations.length > 0)) {
         let parkingText = '';
         
         // Check for on-site parking mentions
@@ -735,17 +763,21 @@ class VenueDataService {
           parkingText = "On-site parking available";
         } else if (hasStreetParking) {
           parkingText = "Limited street parking available - public transport recommended";
+        } else if (isLondonTheatre) {
+          parkingText = "Limited street parking available - public transport recommended";
         } else {
           parkingText = "Limited street parking available - public transport recommended";
         }
         
         // Add transit stations if available
         if (nearbyStations.length > 0) {
-          parkingText += `. Nearest stations: ${nearbyStations.join(', ')}.`;
+          parkingText += ` Nearest stations: ${nearbyStations.join(', ')}.`;
+          console.log(`🚗 generateParkingInfo: Added transit stations to parking info`);
         } else {
           parkingText += " Check for pay-and-display bays nearby.";
         }
         
+        console.log(`🚗 generateParkingInfo: Returning enhanced parking info: ${parkingText}`);
         return parkingText;
       }
     }
