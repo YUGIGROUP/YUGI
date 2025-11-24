@@ -740,7 +740,7 @@ class VenueDataService {
         .filter(review => review && review.text)
         .map(review => review.text.toLowerCase())
         .filter(text => parkingKeywords.some(keyword => text.includes(keyword)))
-        .slice(0, 3); // Take first 3 relevant reviews
+        .slice(0, 5); // Take first 5 relevant reviews for better analysis
       
       // Check editorial summary for parking info
       const summaryLower = String(editorialSummary).toLowerCase();
@@ -761,26 +761,54 @@ class VenueDataService {
           text.includes('on-site') || text.includes('on site') || text.includes('car park') || text.includes('parking lot')
         ) || summaryLower.includes('car park') || summaryLower.includes('parking lot');
         
+        // Check for positive street parking indicators (readily available)
+        const positiveParkingIndicators = ['plenty of parking', 'easy parking', 'parking available', 'parking nearby', 'good parking', 'lots of parking', 'ample parking', 'parking is easy', 'parking was easy', 'found parking', 'parking found'];
+        const hasGoodParking = parkingReviews.some(text => 
+          positiveParkingIndicators.some(indicator => text.includes(indicator))
+        );
+        
+        // Check for negative parking indicators (limited/difficult)
+        const negativeParkingIndicators = ['limited parking', 'difficult parking', 'no parking', 'hard to park', 'parking is difficult', 'parking was difficult', 'no parking available', 'parking is limited', 'parking was limited'];
+        const hasLimitedParking = parkingReviews.some(text => 
+          negativeParkingIndicators.some(indicator => text.includes(indicator))
+        );
+        
         // Check for street parking mentions
-        const hasStreetParking = parkingReviews.some(text => 
+        const hasStreetParkingMention = parkingReviews.some(text => 
           text.includes('street parking') || text.includes('street park') || text.includes('pay and display') || text.includes('meter')
         ) || summaryLower.includes('street parking');
         
         if (hasOnSiteParking) {
           parkingText = "On-site parking available";
-        } else if (hasStreetParking) {
+        } else if (hasGoodParking && !hasLimitedParking) {
+          // Reviews indicate parking is readily available
+          parkingText = "Street parking available nearby";
+        } else if (hasLimitedParking) {
+          // Reviews explicitly mention limited parking
           parkingText = "Limited street parking available - public transport recommended";
+        } else if (hasStreetParkingMention) {
+          // Street parking mentioned but no clear indication of availability
+          parkingText = "Street parking available nearby";
         } else if (isLondonTheatre) {
+          // Default for London theatres (often limited)
           parkingText = "Limited street parking available - public transport recommended";
         } else {
-          parkingText = "Limited street parking available - public transport recommended";
+          // Default fallback
+          parkingText = "Street parking available nearby";
         }
         
-        // Add transit stations if available
+        // Add transit stations if available (always helpful, even if parking is good)
         if (nearbyStations.length > 0) {
-          parkingText += ` Nearest stations: ${nearbyStations.join(', ')}.`;
+          if (hasGoodParking && !hasLimitedParking) {
+            // If parking is good, mention transit as alternative option
+            parkingText += ` Public transport also available: ${nearbyStations.join(', ')}.`;
+          } else {
+            // If parking is limited, emphasize transit
+            parkingText += ` Nearest stations: ${nearbyStations.join(', ')}.`;
+          }
           console.log(`🚗 generateParkingInfo: Added transit stations to parking info`);
-        } else {
+        } else if (!hasGoodParking) {
+          // Only add this if parking isn't clearly good
           parkingText += " Check for pay-and-display bays nearby.";
         }
         
