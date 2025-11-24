@@ -72,6 +72,58 @@ const getDefaultChangingFacilities = (venueName) => {
   }
 };
 
+// Helper function to correct common city name typos
+const correctCityName = (city) => {
+  if (!city) return city;
+  
+  const trimmedCity = city.trim();
+  const cityLower = trimmedCity.toLowerCase();
+  
+  // Common typos and corrections
+  const corrections = {
+    'londo': 'London',
+    'londn': 'London',
+    'londom': 'London',
+    'manchestr': 'Manchester',
+    'manchest': 'Manchester',
+    'birmngham': 'Birmingham',
+    'birminghm': 'Birmingham',
+    'edinbrugh': 'Edinburgh',
+    'edinburg': 'Edinburgh',
+    'glasgo': 'Glasgow',
+    'glasgow': 'Glasgow' // Already correct, but included for consistency
+  };
+  
+  if (corrections[cityLower]) {
+    return corrections[cityLower];
+  }
+  
+  return trimmedCity;
+};
+
+// Helper function to parse Google Places formatted_address to extract city
+const parseCityFromFormattedAddress = (formattedAddress) => {
+  if (!formattedAddress) return null;
+  
+  // Google Places formatted_address format: "240 The Broadway, London SW19 1SB, UK"
+  // Try to extract city name (usually the second component before postal code)
+  const parts = formattedAddress.split(',').map(p => p.trim());
+  
+  if (parts.length >= 2) {
+    // City is usually the second part (index 1), before postal code
+    const cityPart = parts[1];
+    // Remove postal code if present (e.g., "London SW19 1SB" -> "London")
+    const cityMatch = cityPart.match(/^([A-Za-z\s]+?)(?:\s+[A-Z0-9\s]+)?$/);
+    if (cityMatch && cityMatch[1]) {
+      return cityMatch[1].trim();
+    }
+    // Fallback: just take the second part
+    return cityPart.split(/\s+/)[0]; // Take first word (usually the city)
+  }
+  
+  return null;
+};
+
 // Helper function to transform class for iOS compatibility
 const transformClassForIOS = async (classItem) => {
   try {
@@ -88,6 +140,7 @@ const transformClassForIOS = async (classItem) => {
 
   // Get venue data from external APIs if available
   let venueData = null;
+  let googlePlacesFormattedAddress = null;
   try {
     console.log(`🔍 Getting venue data for: "${location.name}"`);
     venueData = await venueDataService.getRealVenueData(location.name, address);
@@ -96,6 +149,20 @@ const transformClassForIOS = async (classItem) => {
       changing: venueData.babyChangingFacilities,
       source: venueData.source
     });
+
+    // Try to get Google Places formatted address for address correction
+    if (venueData.source === 'google') {
+      try {
+        const googleData = await venueDataService.getGooglePlacesData(location.name, address);
+        if (googleData && googleData.address) {
+          googlePlacesFormattedAddress = googleData.address;
+          console.log(`📍 Google Places formatted address: ${googlePlacesFormattedAddress}`);
+        }
+      } catch (e) {
+        // Ignore errors - we'll just use the correction function
+        console.log(`⚠️ Could not get Google Places formatted address: ${e.message}`);
+      }
+    }
 
     // If no coordinates from venue data, try geocoding the address
     if (!venueData.coordinates && address.street) {
@@ -115,6 +182,21 @@ const transformClassForIOS = async (classItem) => {
       coordinates: null,
       source: 'fallback'
     };
+  }
+  
+  // Correct city name - use Google Places formatted address if available, otherwise use correction function
+  let correctedCity = correctCityName(address.city || '');
+  if (googlePlacesFormattedAddress) {
+    const parsedCity = parseCityFromFormattedAddress(googlePlacesFormattedAddress);
+    if (parsedCity) {
+      correctedCity = parsedCity;
+      console.log(`📍 Corrected city from Google Places: "${address.city}" -> "${correctedCity}"`);
+    }
+  } else {
+    const originalCity = address.city || '';
+    if (originalCity !== correctedCity) {
+      console.log(`📍 Corrected city name: "${originalCity}" -> "${correctedCity}"`);
+    }
   }
 
   // Get provider name (business name or full name) and convert provider to string ID
@@ -147,7 +229,7 @@ const transformClassForIOS = async (classItem) => {
       name: location.name || '',
       address: {
         street: (address.street || '').trim(),
-        city: (address.city || '').trim(),
+        city: correctedCity.trim(),
         state: (address.state || '').trim(),
         postalCode: (address.postalCode || '').trim(),
         country: (address.country || 'United Kingdom').trim()
@@ -190,6 +272,9 @@ const transformClassForIOS = async (classItem) => {
     classObj.id = classObj._id;
     delete classObj._id;
     
+    // Correct city name in error fallback case too
+    const fallbackCity = correctCityName((classObj.location?.address?.city || '').trim());
+    
     return {
       ...classObj,
       provider: classObj.provider?._id || classObj.provider,
@@ -198,7 +283,7 @@ const transformClassForIOS = async (classItem) => {
         name: classObj.location?.name || 'Unknown Venue',
         address: {
           street: (classObj.location?.address?.street || '').trim(),
-          city: (classObj.location?.address?.city || '').trim(),
+          city: fallbackCity,
           state: (classObj.location?.address?.state || '').trim(),
           postalCode: (classObj.location?.address?.postalCode || '').trim(),
           country: (classObj.location?.address?.country || 'United Kingdom').trim()
