@@ -533,14 +533,19 @@ class VenueDataService {
    */
   async findNearbyTransitStations(lat, lng) {
     if (!this.googlePlacesApiKey) {
+      console.log('🚇 Transit stations: API key not configured');
       return [];
     }
 
     try {
+      console.log(`🚇 Searching for transit stations near ${lat}, ${lng}`);
       // Search for transit_station to get both tube and overground stations
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=1500&type=transit_station&key=${this.googlePlacesApiKey}`
       );
+      
+      console.log(`🚇 Transit stations API response status: ${response?.data?.status || 'unknown'}`);
+      console.log(`🚇 Transit stations found: ${response?.data?.results?.length || 0}`);
 
       if (response.data.results && response.data.results.length > 0) {
         // Filter to only include actual train/tube stations (exclude car parks, roads, etc.)
@@ -695,6 +700,56 @@ class VenueDataService {
     const types = (apiData.types && Array.isArray(apiData.types)) ? apiData.types : ((apiData.categories && Array.isArray(apiData.categories)) ? apiData.categories : []);
     const address = (apiData && typeof apiData === 'object' && apiData.address) ? String(apiData.address).toLowerCase() : '';
     
+    // Extract information from Google Places editorial summary and reviews
+    if (source === 'google') {
+      const editorialSummary = apiData.editorialSummary || '';
+      const reviews = (apiData.reviews && Array.isArray(apiData.reviews)) ? apiData.reviews : [];
+      
+      // Build parking info from reviews
+      const parkingKeywords = ['parking', 'car park', 'parking lot', 'street parking', 'pay and display', 'meter', 'parking bay', 'parking space'];
+      const parkingReviews = reviews
+        .filter(review => review && review.text)
+        .map(review => review.text.toLowerCase())
+        .filter(text => parkingKeywords.some(keyword => text.includes(keyword)))
+        .slice(0, 3); // Take first 3 relevant reviews
+      
+      // Check editorial summary for parking info
+      const summaryLower = String(editorialSummary).toLowerCase();
+      const hasParkingInSummary = parkingKeywords.some(keyword => summaryLower.includes(keyword));
+      
+      // Build detailed parking info if we have data
+      if (parkingReviews.length > 0 || hasParkingInSummary) {
+        let parkingText = '';
+        
+        // Check for on-site parking mentions
+        const hasOnSiteParking = parkingReviews.some(text => 
+          text.includes('on-site') || text.includes('on site') || text.includes('car park') || text.includes('parking lot')
+        ) || summaryLower.includes('car park') || summaryLower.includes('parking lot');
+        
+        // Check for street parking mentions
+        const hasStreetParking = parkingReviews.some(text => 
+          text.includes('street parking') || text.includes('street park') || text.includes('pay and display') || text.includes('meter')
+        ) || summaryLower.includes('street parking');
+        
+        if (hasOnSiteParking) {
+          parkingText = "On-site parking available";
+        } else if (hasStreetParking) {
+          parkingText = "Limited street parking available - public transport recommended";
+        } else {
+          parkingText = "Limited street parking available - public transport recommended";
+        }
+        
+        // Add transit stations if available
+        if (nearbyStations.length > 0) {
+          parkingText += `. Nearest stations: ${nearbyStations.join(', ')}.`;
+        } else {
+          parkingText += " Check for pay-and-display bays nearby.";
+        }
+        
+        return parkingText;
+      }
+    }
+    
     // First, check if we have actual parking data from APIs
     if (source === 'google' && apiData.parkingLot !== undefined) {
       if (apiData.parkingLot === true) {
@@ -815,6 +870,49 @@ class VenueDataService {
     const types = apiData.types || apiData.categories || [];
     const venueName = apiData.name?.toLowerCase() || '';
     
+    // Extract information from Google Places editorial summary and reviews
+    if (source === 'google') {
+      const editorialSummary = apiData.editorialSummary || '';
+      const reviews = (apiData.reviews && Array.isArray(apiData.reviews)) ? apiData.reviews : [];
+      
+      // Build changing facilities info from editorial summary and reviews
+      const summaryLower = String(editorialSummary).toLowerCase();
+      const changingKeywords = ['baby changing', 'changing facilities', 'changing room', 'nappy changing', 'diaper changing', 'family-friendly', 'children', 'kids', 'family'];
+      
+      // Check if editorial summary mentions family-friendly features
+      const hasFamilyFeatures = changingKeywords.some(keyword => summaryLower.includes(keyword));
+      
+      // Check reviews for changing facilities mentions
+      const changingReviews = reviews
+        .filter(review => review && review.text)
+        .map(review => review.text.toLowerCase())
+        .filter(text => changingKeywords.some(keyword => text.includes(keyword)))
+        .slice(0, 2); // Take first 2 relevant reviews
+      
+      // Build detailed description if we have data
+      if (hasFamilyFeatures || changingReviews.length > 0) {
+        let changingText = '';
+        
+        // Check for specific mentions of baby changing facilities
+        const hasChangingMention = summaryLower.includes('baby changing') || 
+                                   summaryLower.includes('changing facilities') ||
+                                   changingReviews.some(text => text.includes('baby changing') || text.includes('changing facilities'));
+        
+        // Build description based on editorial summary
+        if (summaryLower.includes('children') || summaryLower.includes('kids') || summaryLower.includes('family')) {
+          if (hasChangingMention) {
+            changingText = String(editorialSummary).split('.')[0] + ' - baby changing facilities available in restrooms';
+          } else {
+            changingText = String(editorialSummary).split('.')[0] + ' - baby changing facilities available in restrooms';
+          }
+        } else {
+          changingText = "Family-friendly venue - baby changing facilities available in restrooms";
+        }
+        
+        return changingText;
+      }
+    }
+    
     // Check for venue types that typically have changing facilities
     if (types.some(type => 
       ['shopping_mall', 'supermarket', 'hospital', 'university', 'school', 'library', 'museum'].includes(type) ||
@@ -877,6 +975,45 @@ class VenueDataService {
     }
     
     const types = apiData.types || apiData.categories || [];
+    const address = (apiData && typeof apiData === 'object' && apiData.address) ? String(apiData.address).toLowerCase() : '';
+    const venueName = (apiData && typeof apiData === 'object' && apiData.name) ? String(apiData.name).toLowerCase() : '';
+    
+    // Extract information from Google Places editorial summary and reviews
+    if (source === 'google') {
+      const editorialSummary = apiData.editorialSummary || '';
+      const reviews = (apiData.reviews && Array.isArray(apiData.reviews)) ? apiData.reviews : [];
+      
+      // Build accessibility info from editorial summary and reviews
+      const summaryLower = String(editorialSummary).toLowerCase();
+      const accessibilityKeywords = ['wheelchair', 'accessible', 'accessibility', 'disabled access', 'ramp', 'elevator', 'lift'];
+      
+      // Check if editorial summary mentions accessibility
+      const hasAccessibilityMention = accessibilityKeywords.some(keyword => summaryLower.includes(keyword));
+      
+      // Check reviews for accessibility mentions
+      const accessibilityReviews = reviews
+        .filter(review => review && review.text)
+        .map(review => review.text.toLowerCase())
+        .filter(text => accessibilityKeywords.some(keyword => text.includes(keyword)))
+        .slice(0, 2); // Take first 2 relevant reviews
+      
+      // Build detailed description if we have data
+      if (hasAccessibilityMention || accessibilityReviews.length > 0) {
+        // Check for wheelchair accessible entrance
+        if (apiData.wheelchairAccessibleEntrance === true) {
+          return "Wheelchair accessible entrance confirmed - accessibility features available";
+        } else if (apiData.wheelchairAccessibleEntrance === false) {
+          return "Wheelchair accessibility may be limited - please contact venue for specific accessibility features";
+        }
+        
+        // Build description based on venue type and location
+        if (address.includes('london') || address.includes('city') || address.includes('central')) {
+          return "Central London venue - accessibility varies by location. Contact venue for specific accessibility features and wheelchair access details.";
+        } else {
+          return "Accessibility features available - contact venue for specific details";
+        }
+      }
+    }
     
     // First, check if we have actual accessibility data from Google Places API
     if (source === 'google' && apiData.wheelchairAccessibleEntrance !== undefined) {
