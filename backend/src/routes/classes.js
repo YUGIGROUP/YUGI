@@ -146,11 +146,11 @@ const transformClassForIOS = async (classItem) => {
       id: `location-${classObj.id}`,
       name: location.name || '',
       address: {
-        street: address.street || '',
-        city: address.city || '',
-        state: address.state || '',
-        postalCode: address.postalCode || '',
-        country: address.country || 'United Kingdom'
+        street: (address.street || '').trim(),
+        city: (address.city || '').trim(),
+        state: (address.state || '').trim(),
+        postalCode: (address.postalCode || '').trim(),
+        country: (address.country || 'United Kingdom').trim()
       },
       coordinates: {
         latitude: venueData?.coordinates?.lat || venueData?.coordinates?.latitude || coordinates.latitude || 0,
@@ -196,7 +196,13 @@ const transformClassForIOS = async (classItem) => {
       providerName: classObj.provider?.businessName || classObj.provider?.fullName || 'Unknown Provider',
       location: {
         name: classObj.location?.name || 'Unknown Venue',
-        address: classObj.location?.address || {},
+        address: {
+          street: (classObj.location?.address?.street || '').trim(),
+          city: (classObj.location?.address?.city || '').trim(),
+          state: (classObj.location?.address?.state || '').trim(),
+          postalCode: (classObj.location?.address?.postalCode || '').trim(),
+          country: (classObj.location?.address?.country || 'United Kingdom').trim()
+        },
         coordinates: classObj.location?.coordinates || { latitude: 0, longitude: 0 },
         accessibilityNotes: null,
         parkingInfo: 'Street parking available nearby',
@@ -687,6 +693,53 @@ router.get('/provider/my-classes', protect, /* requireProviderVerification, */ n
   } catch (error) {
     console.error('❌ Get provider classes error:', error);
     res.status(500).json({ message: 'Server error fetching provider classes' });
+  }
+});
+
+// @route   POST /api/classes/venues/analyze
+// @desc    Analyze a venue and get detailed information
+// @access  Private
+router.post('/venues/analyze', protect, async (req, res) => {
+  try {
+    const { venueName, address } = req.body;
+
+    if (!venueName || !address) {
+      return res.status(400).json({ 
+        message: 'Venue name and address are required' 
+      });
+    }
+
+    console.log(`🔍 Analyzing venue: ${venueName} at ${address.street}, ${address.city}`);
+
+    // Get real venue data from external APIs
+    const venueData = await venueDataService.getRealVenueData(venueName, address);
+
+    // Get coordinates if not already available
+    let coordinates = venueData.coordinates;
+    if (!coordinates && address.street) {
+      coordinates = await venueDataService.getCoordinatesForAddress(address);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        venueName: venueName,
+        address: address,
+        coordinates: coordinates,
+        parkingInfo: venueData.parkingInfo,
+        babyChangingFacilities: venueData.babyChangingFacilities,
+        accessibilityNotes: venueData.accessibilityNotes,
+        source: venueData.source,
+        lastUpdated: venueData.lastUpdated || new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Venue analysis error:', error);
+    res.status(500).json({ 
+      message: 'Server error analyzing venue',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
