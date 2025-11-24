@@ -570,35 +570,42 @@ class VenueDataService {
               return false;
             }
             
+            // FIRST: Check if it's a transit station type (this takes priority)
+            const stationTypes = ['subway_station', 'train_station', 'transit_station', 'light_rail_station'];
+            const isStationType = types.some(type => stationTypes.some(stType => type.includes(stType)));
+            
+            // If it's a transit station type, include it (even if it also has other types like 'establishment')
+            if (isStationType) {
+              console.log(`🚇 Including '${station.name}' - transit station type (types: ${types.join(', ')})`);
+              return true;
+            }
+            
             // Exclude bus stops (check for bus-related types)
             if (types.some(type => type.includes('bus_station') || type.includes('bus_stop'))) {
               console.log(`🚇 Excluding '${station.name}' - bus stop type`);
               return false;
             }
             
-            // Exclude if types indicate it's not a train/tube station
-            const excludedTypes = ['parking', 'route', 'street_address', 'premise', 'establishment'];
+            // Exclude if types indicate it's not a train/tube station (only if it's NOT already a station type)
+            const excludedTypes = ['parking', 'route', 'street_address'];
+            // Don't exclude 'premise' or 'establishment' as stations can have these types too
             if (types.some(type => excludedTypes.some(excluded => type.toLowerCase().includes(excluded)))) {
               console.log(`🚇 Excluding '${station.name}' - excluded type`);
               return false;
             }
             
-            // Include if types indicate it's a transit station
-            const stationTypes = ['subway_station', 'train_station', 'transit_station', 'light_rail_station'];
-            const isStationType = types.some(type => stationTypes.some(stType => type.includes(stType)));
-            
             // Also include if name suggests it's a station
             const nameSuggestsStation = name.includes('station') || name.includes('tube') || 
                                        name.includes('underground') || name.includes('railway');
             
-            // Include if it's a station type OR name suggests station
-            const shouldInclude = isStationType || nameSuggestsStation;
-            if (shouldInclude) {
-              console.log(`🚇 Including '${station.name}' (types: ${types.join(', ')})`);
-            } else {
-              console.log(`🚇 Excluding '${station.name}' - not a station type`);
+            // Include if name suggests station
+            if (nameSuggestsStation) {
+              console.log(`🚇 Including '${station.name}' - name suggests station (types: ${types.join(', ')})`);
+              return true;
             }
-            return shouldInclude;
+            
+            console.log(`🚇 Excluding '${station.name}' - not a station type`);
+            return false;
           })
           .map(station => station.name)
           .filter(Boolean);
