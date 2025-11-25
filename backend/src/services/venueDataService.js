@@ -53,9 +53,6 @@ class VenueDataService {
             googleData.coordinates.lat,
             googleData.coordinates.lng
           );
-          console.log(`🚇 getRealVenueData: Found ${nearbyStations.length} transit stations: ${nearbyStations.join(', ')}`);
-        } else {
-          console.log(`🚇 getRealVenueData: No coordinates available for transit station lookup`);
         }
         
         const result = this.formatVenueData(googleData, 'google', nearbyStations);
@@ -142,30 +139,6 @@ class VenueDataService {
         console.log('⚠️ Response object:', JSON.stringify(response, null, 2));
         return null;
       }
-      
-      // Log full response structure for debugging
-      console.log('🔍 Google Places API response structure:', {
-        hasData: !!response.data,
-        dataType: typeof response.data,
-        hasStatus: !!(response.data && response.data.status),
-        status: response.data?.status,
-        hasResults: !!(response.data && response.data.results),
-        resultsType: response.data?.results ? typeof response.data.results : 'N/A',
-        resultsIsArray: Array.isArray(response.data?.results),
-        resultsLength: Array.isArray(response.data?.results) ? response.data.results.length : 0
-      });
-      
-      // Log the full response data for debugging (truncated if too large)
-      try {
-        const responseStr = JSON.stringify(response.data, null, 2);
-        if (responseStr.length > 5000) {
-          console.log('🔍 Google Places API full response (truncated):', responseStr.substring(0, 5000) + '...');
-        } else {
-          console.log('🔍 Google Places API full response:', responseStr);
-        }
-      } catch (e) {
-        console.log('⚠️ Could not stringify response data:', e.message);
-      }
 
       const responseStatus = (response.data && typeof response.data === 'object' && response.data.status) ? response.data.status : 'unknown';
       console.log(`🔍 Google Places API response status: ${responseStatus}`);
@@ -240,27 +213,6 @@ class VenueDataService {
         );
 
         // Log details response structure
-        console.log('🔍 Google Places Details API response structure:', {
-          hasResponse: !!detailsResponse,
-          hasData: !!(detailsResponse && detailsResponse.data),
-          dataType: detailsResponse?.data ? typeof detailsResponse.data : 'N/A',
-          hasStatus: !!(detailsResponse?.data?.status),
-          status: detailsResponse?.data?.status,
-          hasResult: !!(detailsResponse?.data?.result),
-          resultType: detailsResponse?.data?.result ? typeof detailsResponse.data.result : 'N/A'
-        });
-
-        // Log full details response for debugging
-        try {
-          const detailsStr = JSON.stringify(detailsResponse?.data, null, 2);
-          if (detailsStr && detailsStr.length > 5000) {
-            console.log('🔍 Google Places Details API full response (truncated):', detailsStr.substring(0, 5000) + '...');
-          } else if (detailsStr) {
-            console.log('🔍 Google Places Details API full response:', detailsStr);
-          }
-        } catch (e) {
-          console.log('⚠️ Could not stringify details response data:', e.message);
-        }
 
         // Check for API errors in details response
         if (detailsResponse?.data?.status && detailsResponse.data.status !== 'OK') {
@@ -541,22 +493,16 @@ class VenueDataService {
     }
 
     try {
-      console.log(`🚇 Searching for transit stations near ${lat}, ${lng}`);
       // Search for transit_station to get both tube and overground stations
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=1500&type=transit_station&key=${this.googlePlacesApiKey}`
       );
-      
-      console.log(`🚇 Transit stations API response status: ${response?.data?.status || 'unknown'}`);
-      console.log(`🚇 Transit stations found: ${response?.data?.results?.length || 0}`);
 
       if (response.data.results && response.data.results.length > 0) {
-        console.log(`🚇 Raw station results before filtering: ${response.data.results.length}`);
         // Filter to only include actual train/tube stations (exclude car parks, roads, etc.)
         const stations = response.data.results
           .filter(station => {
             if (!station?.name) {
-              console.log(`🚇 Excluding station - no name`);
               return false;
             }
             
@@ -566,7 +512,6 @@ class VenueDataService {
             // Exclude car parks, roads, bus stops, and other non-station places
             const excludedKeywords = ['car park', 'parking', 'road', 'street', 'avenue', 'way', 'lane', 'bus stop', 'bus station', 'fire station', 'theatre', 'theater', 'cinema', 'restaurant', 'cafe', 'shop', 'store', 'garden', 'park', '(stop', 'stop e)', 'stop f)', 'stop g)', 'stop h)', 'stop a)', 'stop b)', 'stop c)', 'stop d)'];
             if (excludedKeywords.some(keyword => name.includes(keyword))) {
-              console.log(`🚇 Excluding '${station.name}' - contains excluded keyword`);
               return false;
             }
             
@@ -576,13 +521,11 @@ class VenueDataService {
             
             // If it's a transit station type, include it (even if it also has other types like 'establishment')
             if (isStationType) {
-              console.log(`🚇 Including '${station.name}' - transit station type (types: ${types.join(', ')})`);
               return true;
             }
             
             // Exclude bus stops (check for bus-related types)
             if (types.some(type => type.includes('bus_station') || type.includes('bus_stop'))) {
-              console.log(`🚇 Excluding '${station.name}' - bus stop type`);
               return false;
             }
             
@@ -590,7 +533,6 @@ class VenueDataService {
             const excludedTypes = ['parking', 'route', 'street_address'];
             // Don't exclude 'premise' or 'establishment' as stations can have these types too
             if (types.some(type => excludedTypes.some(excluded => type.toLowerCase().includes(excluded)))) {
-              console.log(`🚇 Excluding '${station.name}' - excluded type`);
               return false;
             }
             
@@ -600,17 +542,13 @@ class VenueDataService {
             
             // Include if name suggests station
             if (nameSuggestsStation) {
-              console.log(`🚇 Including '${station.name}' - name suggests station (types: ${types.join(', ')})`);
               return true;
             }
             
-            console.log(`🚇 Excluding '${station.name}' - not a station type`);
             return false;
           })
           .map(station => station.name)
           .filter(Boolean);
-        
-        console.log(`🚇 Stations after filtering: ${stations.length} - ${stations.join(', ')}`);
         
         // Remove duplicates and prefer names with "station" in them
         // Process stations in distance order and take the first 2 closest unique stations
@@ -634,7 +572,6 @@ class VenueDataService {
             // We've seen this base name before
             // If current station has "station" and existing doesn't, replace it
             if (hasStation && !stationInfo[baseName].hasStation) {
-              console.log(`🚇 Updating '${stationInfo[baseName].name}' to '${station}' (preferring version with 'station', but keeping original distance order)`);
               stationInfo[baseName].name = station;
               stationInfo[baseName].hasStation = true;
             }
@@ -652,16 +589,12 @@ class VenueDataService {
           .slice(0, 2);
         
         const uniqueStations = sortedStations.map(([baseName, info]) => {
-          console.log(`🚇 Adding station: '${info.name}' (baseName: '${baseName}', original index: ${info.index})`);
           return info.name;
         });
         
         // Take up to 2 stations (closest ones)
         const finalStations = uniqueStations.slice(0, 2);
         
-        if (finalStations.length > 0) {
-          console.log(`🚇 Found nearby transit stations: ${finalStations.join(', ')}`);
-        }
         return finalStations;
       }
     } catch (error) {
@@ -685,8 +618,6 @@ class VenueDataService {
       // Return default data if apiData is null/undefined/not an object
       return this.getDefaultVenueData('');
     }
-    
-    console.log(`🏢 formatVenueData: source=${source}, nearbyStations=${nearbyStations.length} (${nearbyStations.join(', ')})`);
     
     try {
       const parkingInfo = this.generateParkingInfo(apiData, source, nearbyStations);
@@ -732,8 +663,6 @@ class VenueDataService {
       const editorialSummary = apiData.editorialSummary || '';
       const reviews = (apiData.reviews && Array.isArray(apiData.reviews)) ? apiData.reviews : [];
       
-      console.log(`🚗 generateParkingInfo: editorialSummary length: ${String(editorialSummary).length}, reviews count: ${reviews.length}, nearbyStations: ${nearbyStations.length}`);
-      
       // Build parking info from reviews
       const parkingKeywords = ['parking', 'car park', 'parking lot', 'street parking', 'pay and display', 'meter', 'parking bay', 'parking space'];
       const parkingReviews = reviews
@@ -745,8 +674,6 @@ class VenueDataService {
       // Check editorial summary for parking info
       const summaryLower = String(editorialSummary).toLowerCase();
       const hasParkingInSummary = parkingKeywords.some(keyword => summaryLower.includes(keyword));
-      
-      console.log(`🚗 generateParkingInfo: parkingReviews found: ${parkingReviews.length}, hasParkingInSummary: ${hasParkingInSummary}`);
       
       // Special handling for theatres in London (often have limited parking)
       const isLondonTheatre = (venueName.includes('theatre') || venueName.includes('theater') || types.some(type => type.includes('theatre') || type.includes('theater'))) && 
@@ -806,13 +733,11 @@ class VenueDataService {
             // If parking is limited, emphasize transit
             parkingText += ` Nearest stations: ${nearbyStations.join(', ')}.`;
           }
-          console.log(`🚗 generateParkingInfo: Added transit stations to parking info`);
         } else if (!hasGoodParking) {
           // Only add this if parking isn't clearly good
           parkingText += " Check for pay-and-display bays nearby.";
         }
         
-        console.log(`🚗 generateParkingInfo: Returning enhanced parking info: ${parkingText}`);
         return parkingText;
       }
     }
