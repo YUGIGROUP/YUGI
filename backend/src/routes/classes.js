@@ -116,21 +116,29 @@ const parseCityFromFormattedAddress = (formattedAddress) => {
     const cityPart = parts[1];
     console.log(`📍 parseCityFromFormattedAddress: cityPart: "${cityPart}"`);
     
-    // Remove postal code if present (e.g., "London SW19 1SB" -> "London")
-    // Match city name (letters and spaces) before postal code pattern (letters/numbers)
-    const cityMatch = cityPart.match(/^([A-Za-z\s]+?)(?:\s+[A-Z0-9]{1,3}\s*\d{1,2}[A-Z]{0,2})?/);
-    if (cityMatch && cityMatch[1]) {
-      const extractedCity = cityMatch[1].trim();
-      console.log(`📍 parseCityFromFormattedAddress: extracted city: "${extractedCity}"`);
+    // UK postcode pattern: 1-2 letters + 1-2 digits + space + 1 digit + 2 letters
+    // Examples: "SW19 1SB", "TW9 1EU", "M1 1AA"
+    // Match city name (letters and spaces) before UK postcode pattern
+    // Use greedy match to get the full city name before the postcode
+    const ukPostcodePattern = /\s+[A-Z]{1,2}\d{1,2}\s+\d[A-Z]{2}/i;
+    const postcodeIndex = cityPart.search(ukPostcodePattern);
+    
+    if (postcodeIndex > 0) {
+      // Found a postcode, extract everything before it
+      const extractedCity = cityPart.substring(0, postcodeIndex).trim();
+      console.log(`📍 parseCityFromFormattedAddress: extracted city (before postcode): "${extractedCity}"`);
       return extractedCity;
     }
-    // Fallback: just take the first word(s) before postal code pattern
+    
+    // Fallback: try to match city name before any postal code pattern
+    // Match one or more words (letters and spaces) before postal code indicators
     const fallbackMatch = cityPart.match(/^([A-Za-z]+(?:\s+[A-Za-z]+)*)/);
     if (fallbackMatch && fallbackMatch[1]) {
       const extractedCity = fallbackMatch[1].trim();
       console.log(`📍 parseCityFromFormattedAddress: fallback extracted city: "${extractedCity}"`);
       return extractedCity;
     }
+    
     // Last resort: take first word
     const firstWord = cityPart.split(/\s+/)[0];
     console.log(`📍 parseCityFromFormattedAddress: using first word: "${firstWord}"`);
