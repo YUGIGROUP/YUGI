@@ -138,6 +138,60 @@ const parseCityFromFormattedAddress = (formattedAddress) => {
   return null;
 };
 
+// Helper function to get the next occurrence date for a recurring class
+const getNextOccurrenceDate = (recurringDays) => {
+  if (!recurringDays || recurringDays.length === 0) {
+    // Default to next Monday if no days specified
+    recurringDays = ['monday'];
+  }
+  
+  const dayMap = {
+    'sunday': 0,
+    'monday': 1,
+    'tuesday': 2,
+    'wednesday': 3,
+    'thursday': 4,
+    'friday': 5,
+    'saturday': 6
+  };
+  
+  const today = new Date();
+  const currentDay = today.getDay();
+  
+  // Convert day names to day numbers
+  const dayNumbers = recurringDays.map(day => dayMap[day.toLowerCase()]).filter(d => d !== undefined).sort((a, b) => a - b);
+  
+  if (dayNumbers.length === 0) {
+    // Fallback to next Monday
+    dayNumbers.push(1);
+  }
+  
+  // Find the next occurrence (could be today if today is one of the recurring days)
+  let daysUntilNext = 0;
+  for (const dayNum of dayNumbers) {
+    if (dayNum >= currentDay) {
+      daysUntilNext = dayNum - currentDay;
+      break;
+    }
+  }
+  
+  // If no day found this week, use the first day of next week
+  if (daysUntilNext === 0 && dayNumbers[0] < currentDay) {
+    daysUntilNext = 7 - currentDay + dayNumbers[0];
+  }
+  
+  // If today is one of the recurring days, use today
+  if (dayNumbers.includes(currentDay)) {
+    daysUntilNext = 0;
+  }
+  
+  const nextDate = new Date(today);
+  nextDate.setDate(today.getDate() + daysUntilNext);
+  nextDate.setHours(0, 0, 0, 0); // Reset to start of day
+  
+  return nextDate;
+};
+
 // Helper function to transform class for iOS compatibility
 const transformClassForIOS = async (classItem) => {
   try {
@@ -233,6 +287,11 @@ const transformClassForIOS = async (classItem) => {
     }
   }
 
+  // Calculate the next occurrence date for this recurring class
+  const nextOccurrenceDate = getNextOccurrenceDate(classObj.recurringDays);
+  const endDate = new Date(nextOccurrenceDate);
+  endDate.setMonth(endDate.getMonth() + 6); // Set end date to 6 months from next occurrence
+
   return {
     ...classObj,
     // Convert provider to string ID for iOS compatibility
@@ -260,13 +319,23 @@ const transformClassForIOS = async (classItem) => {
     },
     // Create schedule object from recurringDays and timeSlots
     schedule: {
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      startDate: nextOccurrenceDate,
+      endDate: endDate,
       recurringDays: classObj.recurringDays || ['monday'],
-      timeSlots: (classObj.timeSlots || []).map(slot => ({
-        startTime: new Date(`2000-01-01T${slot.startTime}:00Z`),
-        duration: classObj.duration * 60
-      })),
+      timeSlots: (classObj.timeSlots || []).map(slot => {
+        // Parse the time string (e.g., "10:00" or "14:30") and combine with next occurrence date
+        const timeParts = (slot.startTime || '').split(':');
+        const hours = parseInt(timeParts[0] || '0', 10);
+        const minutes = parseInt(timeParts[1] || '0', 10);
+        
+        const slotDate = new Date(nextOccurrenceDate);
+        slotDate.setHours(hours, minutes, 0, 0);
+        
+        return {
+          startTime: slotDate,
+          duration: classObj.duration * 60
+        };
+      }),
       totalSessions: 1
     },
     // Create pricing object
@@ -309,12 +378,33 @@ const transformClassForIOS = async (classItem) => {
         parkingInfo: 'Street parking available nearby',
         babyChangingFacilities: 'Baby changing facilities available'
       },
-      schedule: {
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        recurringDays: classObj.recurringDays || [],
-        timeSlots: classObj.timeSlots || []
-      },
+      schedule: (() => {
+        // Calculate the next occurrence date for this recurring class
+        const nextOccurrenceDate = getNextOccurrenceDate(classObj.recurringDays || []);
+        const endDate = new Date(nextOccurrenceDate);
+        endDate.setMonth(endDate.getMonth() + 6); // Set end date to 6 months from next occurrence
+        
+        return {
+          startDate: nextOccurrenceDate,
+          endDate: endDate,
+          recurringDays: classObj.recurringDays || [],
+          timeSlots: (classObj.timeSlots || []).map(slot => {
+            // Parse the time string (e.g., "10:00" or "14:30") and combine with next occurrence date
+            const timeParts = (slot.startTime || '').split(':');
+            const hours = parseInt(timeParts[0] || '0', 10);
+            const minutes = parseInt(timeParts[1] || '0', 10);
+            
+            const slotDate = new Date(nextOccurrenceDate);
+            slotDate.setHours(hours, minutes, 0, 0);
+            
+            return {
+              startTime: slotDate,
+              duration: (classObj.duration || 60) * 60
+            };
+          }),
+          totalSessions: 1
+        };
+      })(),
       currentEnrollment: classObj.currentBookings || 0,
       isFavorite: false
     };
