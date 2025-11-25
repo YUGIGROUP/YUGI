@@ -109,40 +109,29 @@ const parseCityFromFormattedAddress = (formattedAddress) => {
   // Try to extract city name (usually the second component before postal code)
   const parts = formattedAddress.split(',').map(p => p.trim());
   
-  console.log(`📍 parseCityFromFormattedAddress: "${formattedAddress}" -> parts:`, parts);
-  
   if (parts.length >= 2) {
     // City is usually the second part (index 1), before postal code
     const cityPart = parts[1];
-    console.log(`📍 parseCityFromFormattedAddress: cityPart: "${cityPart}"`);
     
     // UK postcode pattern: 1-2 letters + 1-2 digits + space + 1 digit + 2 letters
     // Examples: "SW19 1SB", "TW9 1EU", "M1 1AA"
     // Match city name (letters and spaces) before UK postcode pattern
-    // Use greedy match to get the full city name before the postcode
     const ukPostcodePattern = /\s+[A-Z]{1,2}\d{1,2}\s+\d[A-Z]{2}/i;
     const postcodeIndex = cityPart.search(ukPostcodePattern);
     
     if (postcodeIndex > 0) {
       // Found a postcode, extract everything before it
-      const extractedCity = cityPart.substring(0, postcodeIndex).trim();
-      console.log(`📍 parseCityFromFormattedAddress: extracted city (before postcode): "${extractedCity}"`);
-      return extractedCity;
+      return cityPart.substring(0, postcodeIndex).trim();
     }
     
     // Fallback: try to match city name before any postal code pattern
-    // Match one or more words (letters and spaces) before postal code indicators
     const fallbackMatch = cityPart.match(/^([A-Za-z]+(?:\s+[A-Za-z]+)*)/);
     if (fallbackMatch && fallbackMatch[1]) {
-      const extractedCity = fallbackMatch[1].trim();
-      console.log(`📍 parseCityFromFormattedAddress: fallback extracted city: "${extractedCity}"`);
-      return extractedCity;
+      return fallbackMatch[1].trim();
     }
     
     // Last resort: take first word
-    const firstWord = cityPart.split(/\s+/)[0];
-    console.log(`📍 parseCityFromFormattedAddress: using first word: "${firstWord}"`);
-    return firstWord;
+    return cityPart.split(/\s+/)[0];
   }
   
   console.log(`📍 parseCityFromFormattedAddress: no city found`);
@@ -178,25 +167,17 @@ const transformClassForIOS = async (classItem) => {
     // Try to get Google Places formatted address for address correction
     if (venueData.source === 'google') {
       try {
-        console.log(`📍 Attempting to get Google Places formatted address for city correction...`);
         const googleData = await venueDataService.getGooglePlacesData(location.name, address);
-        console.log(`📍 Google Places data received:`, {
-          hasGoogleData: !!googleData,
-          hasAddress: !!(googleData && googleData.address),
-          address: googleData?.address
-        });
         if (googleData && googleData.address) {
           googlePlacesFormattedAddress = googleData.address;
-          console.log(`📍 Google Places formatted address: ${googlePlacesFormattedAddress}`);
-        } else {
-          console.log(`⚠️ Google Places data missing address field`);
         }
       } catch (e) {
-        // Ignore errors - we'll just use the correction function
-        console.log(`⚠️ Could not get Google Places formatted address: ${e.message}`);
+        // Silently fall back to typo correction function
+        // Only log if it's a critical error (not just missing data)
+        if (e.message && !e.message.includes('missing')) {
+          console.log(`⚠️ Could not get Google Places formatted address: ${e.message}`);
+        }
       }
-    } else {
-      console.log(`📍 Venue data source is not 'google' (source: ${venueData.source}), skipping Google Places formatted address lookup`);
     }
 
     // If no coordinates from venue data, try geocoding the address
@@ -221,27 +202,18 @@ const transformClassForIOS = async (classItem) => {
   
   // Correct city name - use Google Places formatted address if available, otherwise use correction function
   const originalCity = (address.city || '').trim();
-  console.log(`📍 Original city from database: "${originalCity}"`);
   let correctedCity = correctCityName(originalCity);
-  console.log(`📍 After correctCityName: "${correctedCity}"`);
   
   if (googlePlacesFormattedAddress) {
     const parsedCity = parseCityFromFormattedAddress(googlePlacesFormattedAddress);
-    if (parsedCity) {
+    if (parsedCity && parsedCity !== originalCity) {
       correctedCity = parsedCity;
       console.log(`📍 Corrected city from Google Places: "${originalCity}" -> "${correctedCity}"`);
-    } else {
-      console.log(`📍 Could not parse city from Google Places formatted address, using corrected city: "${correctedCity}"`);
     }
-  } else {
-    if (originalCity !== correctedCity) {
-      console.log(`📍 Corrected city name using typo correction: "${originalCity}" -> "${correctedCity}"`);
-    } else {
-      console.log(`📍 City name unchanged: "${originalCity}"`);
-    }
+  } else if (originalCity !== correctedCity) {
+    // Only log when there's an actual correction
+    console.log(`📍 Corrected city name: "${originalCity}" -> "${correctedCity}"`);
   }
-  
-  console.log(`📍 Final corrected city: "${correctedCity}"`);
 
   // Get provider name (business name or full name) and convert provider to string ID
   let providerName = 'Unknown Provider';
