@@ -16,22 +16,13 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
         // Mock data - in a real app, this would fetch from an API
         classes = [
             Class(
-                id: UUID(),
+                id: "mock-class-1",
                 name: "Baby Sensory Adventure",
                 description: "A journey of discovery through light, sound, and touch.",
                 category: .baby,
-                provider: Provider(
-                    id: UUID(),
-                    name: "Sensory World",
-                    description: "Specialists in early development",
-                    qualifications: ["Early Years Development"],
-                    contactEmail: "info@sensoryworld.com",
-                    contactPhone: "020 1234 5678",
-                    website: "www.sensoryworld.com",
-                    rating: 4.8
-                ),
+                provider: "mock-provider-1", providerName: "Provider 1",
                 location: Location(
-                    id: UUID(),
+                    id: "mock-location-1",
                     name: "Sensory World Studio",
                     address: Address(
                         street: "123 High Street",
@@ -48,7 +39,7 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 schedule: Schedule(
                     startDate: Date(),
                     endDate: Date().addingTimeInterval(7776000),
-                    recurringDays: [.monday, .wednesday, .friday],
+                    recurringDays: ["monday", "wednesday", "friday"],
                     timeSlots: [
                         Schedule.TimeSlot(
                             startTime: Calendar.current.date(from: DateComponents(hour: 10))!,
@@ -67,25 +58,17 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 currentEnrollment: 8,
                 averageRating: 4.8,
                 ageRange: "0-12 months",
-                isFavorite: false
+                isFavorite: false,
+                isActive: true
             ),
             Class(
-                id: UUID(),
+                id: "mock-class-2",
                 name: "Toddler Music & Movement",
                 description: "Fun and engaging music sessions for toddlers to develop rhythm and coordination.",
                 category: .toddler,
-                provider: Provider(
-                    id: UUID(),
-                    name: "Little Musicians",
-                    description: "Music education for early years",
-                    qualifications: ["Music Education", "Early Years Development"],
-                    contactEmail: "hello@littlemusicians.com",
-                    contactPhone: "020 2345 6789",
-                    website: "www.littlemusicians.com",
-                    rating: 4.6
-                ),
+                provider: "mock-provider-2", providerName: "Provider 2",
                 location: Location(
-                    id: UUID(),
+                    id: "mock-location-2",
                     name: "Music Studio",
                     address: Address(
                         street: "456 Church Road",
@@ -102,7 +85,7 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 schedule: Schedule(
                     startDate: Date(),
                     endDate: Date().addingTimeInterval(7776000),
-                    recurringDays: [.tuesday, .thursday],
+                    recurringDays: ["tuesday", "thursday"],
                     timeSlots: [
                         Schedule.TimeSlot(
                             startTime: Calendar.current.date(from: DateComponents(hour: 11))!,
@@ -121,25 +104,17 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 currentEnrollment: 12,
                 averageRating: 4.6,
                 ageRange: "1-3 years",
-                isFavorite: true
+                isFavorite: true,
+                isActive: true
             ),
             Class(
-                id: UUID(),
+                id: "mock-class-3",
                 name: "Parent & Baby Yoga",
                 description: "Gentle yoga sessions for parents and babies to bond and relax together.",
                 category: .wellness,
-                provider: Provider(
-                    id: UUID(),
-                    name: "Mindful Mums",
-                    description: "Wellness and mindfulness for families",
-                    qualifications: ["Yoga Teacher Training", "Postnatal Yoga"],
-                    contactEmail: "info@mindfulmums.com",
-                    contactPhone: "020 3456 7890",
-                    website: "www.mindfulmums.com",
-                    rating: 4.9
-                ),
+                provider: "mock-provider-3", providerName: "Provider 3",
                 location: Location(
-                    id: UUID(),
+                    id: "mock-location-3",
                     name: "Wellness Centre",
                     address: Address(
                         street: "789 Station Road",
@@ -156,7 +131,7 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 schedule: Schedule(
                     startDate: Date(),
                     endDate: Date().addingTimeInterval(7776000),
-                    recurringDays: [.saturday],
+                    recurringDays: ["saturday"],
                     timeSlots: [
                         Schedule.TimeSlot(
                             startTime: Calendar.current.date(from: DateComponents(hour: 10))!,
@@ -175,7 +150,8 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 currentEnrollment: 7,
                 averageRating: 4.9,
                 ageRange: "0-12 months",
-                isFavorite: false
+                isFavorite: false,
+                isActive: true
             )
         ]
     }
@@ -362,8 +338,8 @@ struct ProviderClassDiscoveryScreen: View {
         if !searchText.isEmpty {
             filtered = filtered.filter { classItem in
                 classItem.name.localizedCaseInsensitiveContains(searchText) ||
-                classItem.provider.name.localizedCaseInsensitiveContains(searchText) ||
-                classItem.location.name.localizedCaseInsensitiveContains(searchText) ||
+                "Provider \(classItem.provider)".localizedCaseInsensitiveContains(searchText) ||
+                classItem.location?.name.localizedCaseInsensitiveContains(searchText) == true ||
                 classItem.description.localizedCaseInsensitiveContains(searchText)
             }
         }
@@ -392,7 +368,7 @@ struct ProviderClassCard: View {
                             .multilineTextAlignment(.leading)
                         
                         VStack(alignment: .leading, spacing: 6) {
-                            Text(classItem.provider.name)
+                            Text(classItem.providerName ?? "Provider \(classItem.provider)")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(Color(hex: "#BC6C5C"))
                             
@@ -439,7 +415,7 @@ struct ProviderClassCard: View {
                     HStack(spacing: 16) {
                         InsightBadge(
                             icon: "graduationcap.fill",
-                            text: "\(classItem.provider.qualifications.count) qualifications"
+                            text: "Provider qualifications"
                         )
                         
                         InsightBadge(
@@ -456,7 +432,7 @@ struct ProviderClassCard: View {
                             .font(.system(size: 12))
                             .foregroundColor(.yugiGray.opacity(0.6))
                         
-                        Text(classItem.location.name)
+                        Text(classItem.location?.name ?? "Location TBD")
                             .font(.system(size: 12))
                             .foregroundColor(.yugiGray.opacity(0.8))
                     }
@@ -479,7 +455,7 @@ struct ProviderClassCard: View {
             ProviderClassDetailSheet(classItem: classItem)
         }
         .sheet(isPresented: $showingProviderProfile) {
-            ProviderProfilePopup(provider: classItem.provider)
+            ProviderProfilePopup(providerId: classItem.provider)
         }
     }
 }
@@ -565,8 +541,8 @@ struct ProviderClassDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     private func openInAppleMaps() {
-        let coordinates = classItem.location.coordinates
-        let venueName = classItem.location.name
+        let coordinates = classItem.location?.coordinates ?? Location.Coordinates(latitude: 51.5074, longitude: -0.1278)
+        let venueName = classItem.location?.name ?? "Location TBD"
         
         print("🗺️ Attempting to open Apple Maps for venue: \(venueName)")
         print("🗺️ Coordinates: \(coordinates.latitude), \(coordinates.longitude)")
@@ -620,7 +596,7 @@ struct ProviderClassDetailSheet: View {
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(.yugiGray)
                         
-                        Text("by \(classItem.provider.name)")
+                        Text("by Provider \(classItem.provider)")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(Color(hex: "#BC6C5C"))
                     }
@@ -640,7 +616,7 @@ struct ProviderClassDetailSheet: View {
                             DetailRow(
                                 icon: "graduationcap.fill",
                                 title: "Qualifications",
-                                value: classItem.provider.qualifications.joined(separator: ", ")
+                                value: "Provider qualifications"
                             )
                             
                             DetailRow(
@@ -652,7 +628,7 @@ struct ProviderClassDetailSheet: View {
                             DetailRow(
                                 icon: "location.fill",
                                 title: "Location",
-                                value: classItem.location.name
+                                value: classItem.location?.name ?? "Location TBD"
                             )
                             
                             Button(action: {

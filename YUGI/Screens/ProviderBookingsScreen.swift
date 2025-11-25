@@ -255,7 +255,7 @@ struct ProviderBookingRow: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.yugiGray)
                     
-                    Text("sarah.johnson@email.com")
+                    Text("info@yugiapp.ai")
                         .font(.system(size: 12))
                         .foregroundColor(.yugiGray.opacity(0.7))
                 }
@@ -278,7 +278,7 @@ struct ProviderBookingRow: View {
                 
                 // Email button
                 Button(action: {
-                    let email = "sarah.johnson@email.com"
+                    let email = "info@yugiapp.ai"
                     UIPasteboard.general.string = email
                     
                     if let url = URL(string: "mailto:\(email)") {
@@ -378,8 +378,8 @@ struct ProviderBookingRow: View {
     }
     
     private func handleEmailFallback() {
-        print("📧 Email app not available, copying email to clipboard: sarah.johnson@email.com")
-        UIPasteboard.general.string = "sarah.johnson@email.com"
+        print("📧 Email app not available, copying email to clipboard: info@yugiapp.ai")
+        UIPasteboard.general.string = "info@yugiapp.ai"
         DispatchQueue.main.async {
             print("📧 Setting showingEmailAlert to true")
             showingEmailAlert = true

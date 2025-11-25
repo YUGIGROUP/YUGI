@@ -5,6 +5,7 @@ import Foundation
 struct BusinessInfo: Codable {
     var name: String = ""
     var description: String = ""
+    var services: String = ""
 }
 
 struct ContactInfo: Codable {

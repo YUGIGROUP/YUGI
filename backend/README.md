@@ -212,7 +212,7 @@ The admin verification system allows administrators to review and approve/reject
    ```
    
    This creates an admin user with:
-   - Email: `admin@yugi.com`
+   - Email: `info@yugiapp.ai`
    - Password: `admin123456`
    - **Important**: Change the password after first login!
 

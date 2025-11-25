@@ -37,14 +37,14 @@ actor OpenAIService {
     private let inputTokenCost = 0.0015 / 1000.0  // $0.0015 per 1K tokens
     private let outputTokenCost = 0.002 / 1000.0   // $0.002 per 1K tokens
     
-    struct Message: Codable {
+    struct OpenAIMessage: Codable {
         let role: String
         let content: String
     }
     
     struct ChatRequest: Codable {
         let model: String
-        let messages: [Message]
+        let messages: [OpenAIMessage]
         let temperature: Double
         let max_tokens: Int
     }
@@ -57,7 +57,7 @@ actor OpenAIService {
     
     struct ChatResponse: Codable {
         struct Choice: Codable {
-            let message: Message
+            let message: OpenAIMessage
             let finish_reason: String
         }
         
@@ -108,7 +108,7 @@ actor OpenAIService {
         #endif
     }
     
-    func sendMessage(_ messages: [Message]) async throws -> String {
+    func sendMessage(_ messages: [OpenAIMessage]) async throws -> String {
         guard !apiKey.isEmpty else {
             print("❌ Error: API key is empty")
             throw OpenAIError.invalidAPIKey

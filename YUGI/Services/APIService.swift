@@ -432,6 +432,17 @@ class APIService: ObservableObject, @unchecked Sendable {
         UserDefaults.standard.removeObject(forKey: "currentUser")
         UserDefaults.standard.removeObject(forKey: "authToken")
         
+        // Clear business profile data to prevent showing wrong user's data
+        UserDefaults.standard.removeObject(forKey: "providerBusinessName")
+        UserDefaults.standard.removeObject(forKey: "providerBusinessDescription")
+        UserDefaults.standard.removeObject(forKey: "providerBusinessServices")
+        UserDefaults.standard.removeObject(forKey: "providerContactEmail")
+        UserDefaults.standard.removeObject(forKey: "providerContactPhone")
+        UserDefaults.standard.removeObject(forKey: "providerWebsite")
+        UserDefaults.standard.removeObject(forKey: "providerBusinessAddress")
+        UserDefaults.standard.removeObject(forKey: "providerDBSCertificate")
+        UserDefaults.standard.removeObject(forKey: "providerQualifications")
+        
         print("🔐 APIService: User signed out successfully")
     }
     
@@ -462,11 +473,26 @@ class APIService: ObservableObject, @unchecked Sendable {
                     UserDefaults.standard.removeObject(forKey: "currentUser")
                     print("🔐 APIService: Cleared existing user data from UserDefaults")
                     
+                    // Clear business profile data to prevent showing wrong user's data
+                    UserDefaults.standard.removeObject(forKey: "providerBusinessName")
+                    UserDefaults.standard.removeObject(forKey: "providerBusinessDescription")
+                    UserDefaults.standard.removeObject(forKey: "providerBusinessServices")
+                    UserDefaults.standard.removeObject(forKey: "providerContactEmail")
+                    UserDefaults.standard.removeObject(forKey: "providerContactPhone")
+                    UserDefaults.standard.removeObject(forKey: "providerWebsite")
+                    UserDefaults.standard.removeObject(forKey: "providerBusinessAddress")
+                    print("🔐 APIService: Cleared business profile data from UserDefaults")
+                    
                     self?.authToken = response.token
                     self?.isAuthenticated = true
                     self?.currentUser = response.user
                     print("🔐 APIService: Login complete - Token saved, user authenticated")
                     print("🔐 APIService: Authentication state updated - isAuthenticated: \(self?.isAuthenticated ?? false)")
+                    
+                    // Reload business profile data from the new user
+                    if response.user.userType == .provider {
+                        ProviderBusinessService.shared.fetchBusinessInfoFromServer()
+                    }
                 }
             })
             .eraseToAnyPublisher()
@@ -551,10 +577,16 @@ class APIService: ObservableObject, @unchecked Sendable {
                 },
                 receiveValue: { [weak self] (response: UserResponse) in
                     print("🔐 APIService: Successfully fetched current user: \(response.data.fullName)")
+                    print("🔐 APIService: User email: \(response.data.email)")
                     print("🔐 APIService: User type: \(response.data.userType.rawValue)")
                     self?.currentUser = response.data
                     self?.isAuthenticated = true
                     print("🔐 APIService: Current user updated - isAuthenticated: \(self?.isAuthenticated ?? false)")
+                    
+                    // Reload business profile data for providers
+                    if response.data.userType == .provider {
+                        ProviderBusinessService.shared.fetchBusinessInfoFromServer()
+                    }
                 }
             )
             .store(in: &cancellables)
@@ -965,6 +997,20 @@ class APIService: ObservableObject, @unchecked Sendable {
     func updateClassStatus(classId: String, status: String) -> AnyPublisher<ClassResponse, APIError> {
         let body = ["status": status]
         return request(endpoint: "/classes/\(classId)/status", method: .PUT, body: body)
+    }
+    
+    func analyzeVenue(venueName: String, address: Address) -> AnyPublisher<VenueAnalysisResponse, APIError> {
+        let body: [String: Any] = [
+            "venueName": venueName,
+            "address": [
+                "street": address.street,
+                "city": address.city,
+                "state": address.state,
+                "postalCode": address.postalCode,
+                "country": address.country
+            ]
+        ]
+        return request(endpoint: "/classes/venues/analyze", method: .POST, body: body)
     }
     
     // MARK: - Bookings
@@ -1621,7 +1667,8 @@ class APIService: ObservableObject, @unchecked Sendable {
                     currentEnrollment: 0,
                     averageRating: 0.0,
                     ageRange: classData.ageRange,
-                    isFavorite: false
+                    isFavorite: false,
+                    isActive: true
                 )
                 
                 let response = ClassResponse(data: mockClass)
@@ -1702,6 +1749,26 @@ struct ClassesResponse: Codable {
 
 struct ClassResponse: Codable {
     let data: Class
+}
+
+struct VenueAnalysisResponse: Codable {
+    let data: VenueAnalysisAPIData
+}
+
+struct VenueAnalysisAPIData: Codable {
+    let venueName: String
+    let address: Address
+    let coordinates: VenueCoordinates?
+    let parkingInfo: String
+    let babyChangingFacilities: String
+    let accessibilityNotes: String?
+    let source: String
+    let lastUpdated: String
+    
+    struct VenueCoordinates: Codable {
+        let latitude: Double
+        let longitude: Double
+    }
 }
 
 struct BookingsResponse: Codable {

@@ -82,7 +82,7 @@ class SharedBookingService: ObservableObject {
                     id: booking.id,
                     classId: booking.classId,
                     userId: booking.userId,
-                    status: .completed,
+                    status: ClassStatus.completed,
                     bookingDate: booking.bookingDate,
                     numberOfParticipants: booking.numberOfParticipants,
                     selectedChildren: booking.selectedChildren,
@@ -157,28 +157,19 @@ class SharedBookingService: ObservableObject {
     
     private func createInitialBookings() {
         // Create mock provider children for testing (matching the ones in ProviderDashboardScreen)
-        let providerChild1 = Child(id: "provider_child_1", name: "Emma", age: 2, dateOfBirth: Date().addingTimeInterval(-365 * 2 * 24 * 60 * 60))
-        let providerChild2 = Child(id: "provider_child_2", name: "Liam", age: 3, dateOfBirth: Date().addingTimeInterval(-365 * 3 * 24 * 60 * 60))
-        let providerChild3 = Child(id: "provider_child_3", name: "Ava", age: 2, dateOfBirth: Date().addingTimeInterval(-365 * 2 * 24 * 60 * 60))
+        let providerChild1 = Child(childId: "provider_child_1", childName: "Emma", childAge: 2, childDateOfBirth: Date().addingTimeInterval(-365 * 2 * 24 * 60 * 60))
+        let providerChild2 = Child(childId: "provider_child_2", childName: "Liam", childAge: 3, childDateOfBirth: Date().addingTimeInterval(-365 * 3 * 24 * 60 * 60))
+        let providerChild3 = Child(childId: "provider_child_3", childName: "Ava", childAge: 2, childDateOfBirth: Date().addingTimeInterval(-365 * 2 * 24 * 60 * 60))
         
         // Create mock class for testing
         let mockClass = Class(
-            id: UUID(),
+            id: "mock-class-id-1",
             name: "Baby Sensory Adventure",
             description: "A fun sensory experience for babies",
             category: .baby,
-            provider: Provider(
-                id: UUID(),
-                name: "Little Learners",
-                description: "Professional early years education provider",
-                qualifications: ["Early Years Teacher", "DBS Checked"],
-                contactEmail: "info@littlelearners.com",
-                contactPhone: "+44 123 456 7890",
-                website: "https://littlelearners.com",
-                rating: 4.8
-            ),
+            provider: "mock-provider-id-1", providerName: "Mock Provider",
             location: Location(
-                id: UUID(),
+                id: "mock-location-id-1",
                 name: "Community Center",
                 address: Address(
                     street: "123 Main St",
@@ -195,7 +186,7 @@ class SharedBookingService: ObservableObject {
             schedule: Schedule(
                 startDate: Date(),
                 endDate: Date().addingTimeInterval(86400 * 30), // 30 days from now
-                recurringDays: [.monday, .wednesday, .friday],
+                recurringDays: ["monday", "wednesday", "friday"],
                 timeSlots: [
                     Schedule.TimeSlot(
                         startTime: {
@@ -223,15 +214,16 @@ class SharedBookingService: ObservableObject {
             currentEnrollment: 5,
             averageRating: 4.8,
             ageRange: "0-2 years",
-            isFavorite: false
+            isFavorite: false,
+            isActive: true
         )
         
         bookings = [
             Booking(
                 id: UUID(),
-                classId: UUID(),
+                classId: "mock-class-id-1",
                 userId: UUID(),
-                status: .upcoming,
+                status: ClassStatus.upcoming,
                 bookingDate: {
                     let calendar = Calendar.current
                     var futureDate = calendar.date(byAdding: .day, value: 2, to: Date()) ?? Date()
@@ -249,9 +241,9 @@ class SharedBookingService: ObservableObject {
             ),
             Booking(
                 id: UUID(),
-                classId: UUID(),
+                classId: "mock-class-id-1",
                 userId: UUID(),
-                status: .upcoming,
+                status: ClassStatus.upcoming,
                 bookingDate: {
                     let calendar = Calendar.current
                     var futureDate = calendar.date(byAdding: .day, value: 4, to: Date()) ?? Date()
@@ -269,9 +261,9 @@ class SharedBookingService: ObservableObject {
             ),
             Booking(
                 id: UUID(),
-                classId: UUID(),
+                classId: "mock-class-id-1",
                 userId: UUID(),
-                status: .completed,
+                status: ClassStatus.completed,
                 bookingDate: Date().addingTimeInterval(-86400),
                 numberOfParticipants: 2,
                 selectedChildren: nil,
@@ -294,7 +286,7 @@ class SharedBookingService: ObservableObject {
                 id: UUID(),
                 classId: mockClass.id,
                 userId: UUID(),
-                status: .completed,
+                status: ClassStatus.completed,
                 bookingDate: Date().addingTimeInterval(-86400 * 7), // Last week
                 numberOfParticipants: 1,
                 selectedChildren: [providerChild1],
@@ -388,7 +380,6 @@ struct ParentDashboardScreen: View {
 
     @State private var showingPaymentMethods = false
     @State private var shouldSignOut = false
-    @State private var showingBiometricSettings = false
     @State private var showingClassBookings = false
     @State private var showingRefundPolicy = false
     @State private var showingCancelConfirmation = false
@@ -616,9 +607,6 @@ struct ParentDashboardScreen: View {
             .sheet(isPresented: $showingPaymentMethods) {
                 PaymentMethodsScreen()
             }
-            .sheet(isPresented: $showingBiometricSettings) {
-                BiometricSettingsScreen()
-            }
             .sheet(isPresented: $showingContactForm) {
                 ContactFormScreen()
             }
@@ -719,30 +707,33 @@ struct ParentDashboardScreen: View {
                 AuthScreen()
                     .navigationBarBackButtonHidden()
             }
-            .overlay(
-                // Success Message Overlay
-                Group {
-                    if showingSuccessMessage {
-                        VStack {
-                            HStack {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                Text(successMessage)
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.white)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Color.black.opacity(0.8))
-                            .cornerRadius(25)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        .padding(.top, 100)
-                        .animation(.easeInOut(duration: 0.3), value: showingSuccessMessage)
+            .overlay(successMessageOverlay)
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var successMessageOverlay: some View {
+        Group {
+            if showingSuccessMessage {
+                VStack {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text(successMessage)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.black.opacity(0.8))
+                    .cornerRadius(25)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
-            )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .padding(.top, 100)
+                .animation(.easeInOut(duration: 0.3), value: showingSuccessMessage)
+            }
         }
     }
     
@@ -798,7 +789,7 @@ struct ParentDashboardScreen: View {
         notificationService.addNotification(cancellationNotification)
         
         // Send cancellation notification to provider
-        let providerId = booking.classInfo.provider.id.uuidString
+        let providerId = booking.classInfo.provider
         let parentName = apiService.currentUser?.fullName ?? "Unknown User"
         let bookingDate = booking.booking.bookingDate
         let bookingId = booking.booking.id.uuidString
@@ -1031,7 +1022,7 @@ struct ParentDashboardScreen: View {
                     } else {
                         ForEach(children, id: \.id) { child in
                             ChildCard(child: child) {
-                                // Edit child - TODO: Implement edit functionality
+                                // Edit child
                                 print("Edit child: \(child.name)")
                                 childToEdit = child
                                 showingEditChild = true
@@ -1100,17 +1091,6 @@ struct ParentDashboardScreen: View {
                             badge: notificationService.unreadCount > 0 ? "\(notificationService.unreadCount)" : nil
                         ) {
                             showingNotifications = true
-                        }
-                        
-
-                        
-                        ProfileRow(
-                            icon: "faceid",
-                            title: "Biometric Authentication",
-                            subtitle: "Face ID & Touch ID settings",
-                            badge: nil
-                        ) {
-                            showingBiometricSettings = true
                         }
                     }
                 }
@@ -1246,18 +1226,9 @@ struct ParentDashboardScreen: View {
                         name: "Booked Class",
                         description: "A class you've booked",
                         category: .wellness,
-                        provider: Provider(
-                            id: UUID(),
-                            name: "Class Provider",
-                            description: "Provider of your booked class",
-                            qualifications: ["Certified Instructor"],
-                            contactEmail: "info@provider.com",
-                            contactPhone: "+44 20 0000 0000",
-                            website: nil,
-                            rating: 4.5
-                        ),
+                        provider: "mock-provider-id-1", providerName: "Mock Provider",
                         location: Location(
-                            id: UUID(),
+                            id: "mock-location-id-1",
                             name: "Class Location",
                             address: Address(
                                 street: "Class Street",
@@ -1274,7 +1245,7 @@ struct ParentDashboardScreen: View {
                         schedule: Schedule(
                             startDate: Date(),
                             endDate: Date().addingTimeInterval(86400 * 30),
-                            recurringDays: [.monday],
+                            recurringDays: ["monday"],
                             timeSlots: [Schedule.TimeSlot(startTime: {
                                 let calendar = Calendar.current
                                 var futureDate = calendar.date(byAdding: .day, value: 5, to: Date()) ?? Date()
@@ -1292,7 +1263,8 @@ struct ParentDashboardScreen: View {
                         currentEnrollment: 5,
                         averageRating: 4.5,
                         ageRange: "0-5 years",
-                        isFavorite: false
+                        isFavorite: false,
+                        isActive: true
                     )
                     let enhancedBooking = EnhancedBooking(booking: booking, classInfo: genericClass)
                     sharedBookingService.enhancedBookings[booking.id] = enhancedBooking
@@ -1437,7 +1409,7 @@ struct BookingCard: View {
                                     .foregroundColor(Color(hex: "#BC6C5C"))
                                     .frame(width: 16)
                                 
-                                Text(enhancedBooking.classInfo.location.address.formatted)
+                                Text(enhancedBooking.classInfo.location?.address.formatted ?? "Location TBD")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.8))
                                     .multilineTextAlignment(.leading)
@@ -1448,9 +1420,9 @@ struct BookingCard: View {
                             // Maps button - more prominent
                             Button(action: {
                                 print("🎫 BookingCard: Maps button tapped")
-                                print("🎫 BookingCard: Venue name: \(enhancedBooking.classInfo.location.name)")
-                                print("🎫 BookingCard: Venue address: \(enhancedBooking.classInfo.location.address.formatted)")
-                                print("🎫 BookingCard: Coordinates: \(enhancedBooking.classInfo.location.coordinates.latitude), \(enhancedBooking.classInfo.location.coordinates.longitude)")
+                                print("🎫 BookingCard: Venue name: \(enhancedBooking.classInfo.location?.name ?? "Location TBD")")
+                                print("🎫 BookingCard: Venue address: \(enhancedBooking.classInfo.location?.address.formatted ?? "Location TBD")")
+                                print("🎫 BookingCard: Coordinates: \(enhancedBooking.classInfo.location?.coordinates.latitude ?? 51.5074), \(enhancedBooking.classInfo.location?.coordinates.longitude ?? -0.1278)")
                                 openInAppleMaps(enhancedBooking: enhancedBooking)
                             }) {
                                 HStack(spacing: 6) {
@@ -1468,8 +1440,8 @@ struct BookingCard: View {
                         }
                         .onAppear {
                             print("🎫 BookingCard: Enhanced booking available for venue address section")
-                            print("🎫 BookingCard: Venue name: \(enhancedBooking.classInfo.location.name)")
-                            print("🎫 BookingCard: Venue address: \(enhancedBooking.classInfo.location.address.formatted)")
+                            print("🎫 BookingCard: Venue name: \(enhancedBooking.classInfo.location?.name ?? "Location TBD")")
+                            print("🎫 BookingCard: Venue address: \(enhancedBooking.classInfo.location?.address.formatted ?? "Location TBD")")
                         }
                     } else {
                         EmptyView()
@@ -1533,8 +1505,8 @@ struct BookingCard: View {
     }
     
     private func openInAppleMaps(enhancedBooking: EnhancedBooking) {
-        let coordinates = enhancedBooking.classInfo.location.coordinates
-        let venueName = enhancedBooking.classInfo.location.name
+        let coordinates = enhancedBooking.classInfo.location?.coordinates ?? Location.Coordinates(latitude: 51.5074, longitude: -0.1278)
+        let venueName = enhancedBooking.classInfo.location?.name ?? "Location TBD"
         
         print("🗺️ Attempting to open Apple Maps for venue: \(venueName)")
         print("🗺️ Coordinates: \(coordinates.latitude), \(coordinates.longitude)")

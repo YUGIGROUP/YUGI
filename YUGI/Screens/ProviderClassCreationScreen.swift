@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct ProviderClassCreationScreen: View {
     let businessName: String
@@ -7,7 +8,6 @@ struct ProviderClassCreationScreen: View {
     @State private var classData = ClassCreationData()
     @State private var currentStep = 0
     @State private var isSaving = false
-    @State private var showingLocationPicker = false
     @State private var showingSuccessAlert = false
     
     private let steps = [
@@ -48,9 +48,6 @@ struct ProviderClassCreationScreen: View {
             .background(Color.yugiCream.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
 
-            .sheet(isPresented: $showingLocationPicker) {
-                LocationPickerScreen(selectedLocation: $classData.location)
-            }
             .overlay(
                 Group {
                     if showingSuccessAlert {
@@ -126,31 +123,18 @@ struct ProviderClassCreationScreen: View {
                 VStack(spacing: 12) {
                     if let currentUser = APIService.shared.currentUser,
                        currentUser.userType == .provider,
-                       let profileImageUrl = currentUser.profileImage,
-                       !profileImageUrl.isEmpty,
-                       let url = URL(string: profileImageUrl) {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 80, height: 80)
-                                .clipShape(Circle())
-                        } placeholder: {
-                            Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
-                                .frame(width: 80, height: 80)
-                                .overlay(
-                                    Image(systemName: "person.fill")
-                                        .font(.system(size: 32))
-                                        .foregroundColor(Color(hex: "#BC6C5C"))
-                                )
-                        }
-                        .onAppear {
-                            print("🔍 ProviderClassCreation: AsyncImage appeared for URL: \(url)")
-                        }
-                        .onDisappear {
-                            print("🔍 ProviderClassCreation: AsyncImage disappeared")
-                        }
+                       let profileImageString = currentUser.profileImage,
+                       !profileImageString.isEmpty,
+                       let imageData = Data(base64Encoded: profileImageString),
+                       let profileImage = UIImage(data: imageData) {
+                        Image(uiImage: profileImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 80, height: 80)
+                            .clipShape(Circle())
+                            .onAppear {
+                                print("🔍 ProviderClassCreation: Profile image displayed successfully")
+                            }
                     } else {
                         Circle()
                             .fill(Color(hex: "#BC6C5C").opacity(0.1))
@@ -186,18 +170,19 @@ struct ProviderClassCreationScreen: View {
                 print("🔍 ProviderClassCreation: User type: \(APIService.shared.currentUser?.userType.rawValue ?? "nil")")
                 print("🔍 ProviderClassCreation: Profile image URL: \(APIService.shared.currentUser?.profileImage ?? "nil")")
                 
-                // Additional URL debugging
+                // Additional profile image debugging
                 if let currentUser = APIService.shared.currentUser,
-                   let profileImageUrl = currentUser.profileImage {
-                    print("🔍 ProviderClassCreation: Profile image URL exists: \(profileImageUrl)")
-                    print("🔍 ProviderClassCreation: URL is empty: \(profileImageUrl.isEmpty)")
-                    if let url = URL(string: profileImageUrl) {
-                        print("🔍 ProviderClassCreation: URL parsing successful: \(url)")
+                   let profileImageString = currentUser.profileImage {
+                    print("🔍 ProviderClassCreation: Profile image string exists: \(profileImageString.prefix(50))...")
+                    print("🔍 ProviderClassCreation: String is empty: \(profileImageString.isEmpty)")
+                    if let imageData = Data(base64Encoded: profileImageString),
+                       let _ = UIImage(data: imageData) {
+                        print("🔍 ProviderClassCreation: Base64 image parsing successful")
                     } else {
-                        print("🔍 ProviderClassCreation: URL parsing failed for: \(profileImageUrl)")
+                        print("🔍 ProviderClassCreation: Base64 image parsing failed")
                     }
                 } else {
-                    print("🔍 ProviderClassCreation: No profile image URL found")
+                    print("🔍 ProviderClassCreation: No profile image string found")
                 }
             }
             
@@ -301,9 +286,16 @@ struct ProviderClassCreationScreen: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Individual Child Spots
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Individual Children")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                        HStack {
+                            Text("Individual Children")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.yugiGray)
+                            
+                            InfoButton(
+                                title: "Individual Tickets",
+                                message: "Individual tickets are for single children. Each child needs their own ticket to attend the class. This is the standard ticket type for most bookings."
+                            )
+                        }
                         
                         Picker("Individual Children", selection: $classData.individualChildSpots) {
                             ForEach(ChildSpotsOption.allOptions, id: \.self) { option in
@@ -324,9 +316,16 @@ struct ProviderClassCreationScreen: View {
                     
                     // Sibling Pairs
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Siblings (1 ticket for 2 children)")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                        HStack {
+                            Text("Siblings")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.yugiGray)
+                            
+                            InfoButton(
+                                title: "Sibling Tickets",
+                                message: "Sibling tickets allow siblings to attend together. You can set a different price for sibling tickets - this could be a discount, the same price, or any pricing that works for your class. Perfect for families with multiple children who want to participate together."
+                            )
+                        }
                         
                         Picker("Sibling Pairs", selection: $classData.siblingPairs) {
                             ForEach(ChildSpotsOption.allOptions, id: \.self) { option in
@@ -345,17 +344,68 @@ struct ProviderClassCreationScreen: View {
                         )
                     }
                     
+                    // Twin Pairs
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Twins")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.yugiGray)
+                            
+                            InfoButton(
+                                title: "Twin Tickets",
+                                message: "Twin tickets are specifically for families with twins who want to attend together. You can set a different price for twin tickets - this could be a discount, the same price, or any pricing that works for your class. Perfect for families with twins who want to participate together."
+                            )
+                        }
+                        
+                        Picker("Twin Pairs", selection: $classData.twinPairs) {
+                            ForEach(ChildSpotsOption.allOptions, id: \.self) { option in
+                                Text(option.displayName).tag(option)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        .accentColor(Color(red: 0.3, green: 0.3, blue: 0.3))
+                        .colorScheme(.light)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    
                     // Total Spots Display
-                    HStack {
-                        Text("Total Child Spots:")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Total Child Spots:")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.yugiGray)
+                            
+                            Spacer()
+                            
+                            Text("\(classData.totalChildSpots)")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.primary)
+                        }
                         
-                        Spacer()
-                        
-                        Text("\(classData.totalChildSpots)")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.primary)
+                        HStack {
+                            HStack {
+                                Text("Expected Adults:")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.yugiGray)
+                                
+                                InfoButton(
+                                    title: "Expected Adults",
+                                    message: "We assume 1 adult will attend with each ticket sold. So 1 individual child ticket = 1 adult, 1 sibling pair ticket = 1 adult, 1 twin pair ticket = 1 adult. This helps you plan for the total number of people in your class."
+                                )
+                            }
+                            
+                            Spacer()
+                            
+                            Text("\(classData.expectedAdults)")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(Color(hex: "#BC6C5C"))
+                        }
                     }
                     .padding()
                     .background(Color.white.opacity(0.1))
@@ -407,7 +457,7 @@ struct ProviderClassCreationScreen: View {
                                     .font(.system(size: 18, weight: .medium))
                                     .foregroundColor(.yugiGray)
                                 
-                                Text("per person")
+                                Text("per ticket")
                                     .font(.system(size: 16))
                                     .foregroundColor(.yugiGray.opacity(0.7))
                                 
@@ -423,16 +473,15 @@ struct ProviderClassCreationScreen: View {
                             
                             // Adult Pricing Options
                             VStack(spacing: 12) {
-                                // Adults pay the same
+                                // Adults are free
                                 HStack {
                                     Button(action: {
-                                        classData.adultsPaySame = true
-                                        classData.adultsFree = false
+                                        classData.adultsFree = true
                                     }) {
                                         HStack {
-                                            Image(systemName: classData.adultsPaySame ? "checkmark.circle.fill" : "circle")
-                                                .foregroundColor(classData.adultsPaySame ? Color(hex: "#BC6C5C") : .gray)
-                                            Text("Adults pay the same as children")
+                                            Image(systemName: classData.adultsFree ? "checkmark.circle.fill" : "circle")
+                                                .foregroundColor(classData.adultsFree ? Color(hex: "#BC6C5C") : .gray)
+                                            Text("Adults are free")
                                                 .foregroundColor(.yugiGray)
                                             Spacer()
                                         }
@@ -443,12 +492,11 @@ struct ProviderClassCreationScreen: View {
                                 // Adults pay different price
                                 HStack {
                                     Button(action: {
-                                        classData.adultsPaySame = false
                                         classData.adultsFree = false
                                     }) {
                                         HStack {
-                                            Image(systemName: !classData.adultsPaySame && !classData.adultsFree ? "checkmark.circle.fill" : "circle")
-                                                .foregroundColor(!classData.adultsPaySame && !classData.adultsFree ? Color(hex: "#BC6C5C") : .gray)
+                                            Image(systemName: !classData.adultsFree ? "checkmark.circle.fill" : "circle")
+                                                .foregroundColor(!classData.adultsFree ? Color(hex: "#BC6C5C") : .gray)
                                             Text("Adults pay different price")
                                                 .foregroundColor(.yugiGray)
                                             Spacer()
@@ -456,7 +504,7 @@ struct ProviderClassCreationScreen: View {
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                     
-                                    if !classData.adultsPaySame && !classData.adultsFree {
+                                    if !classData.adultsFree {
                                         HStack {
                                             Text("£")
                                                 .font(.system(size: 14, weight: .medium))
@@ -478,23 +526,6 @@ struct ProviderClassCreationScreen: View {
                                         )
                                     }
                                 }
-                                
-                                // Adults are free
-                                HStack {
-                                    Button(action: {
-                                        classData.adultsPaySame = false
-                                        classData.adultsFree = true
-                                    }) {
-                                        HStack {
-                                            Image(systemName: classData.adultsFree ? "checkmark.circle.fill" : "circle")
-                                                .foregroundColor(classData.adultsFree ? Color(hex: "#BC6C5C") : .gray)
-                                            Text("Adults are free")
-                                                .foregroundColor(.yugiGray)
-                                            Spacer()
-                                        }
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                }
                             }
                             .padding()
                             .background(Color.white.opacity(0.05))
@@ -503,10 +534,18 @@ struct ProviderClassCreationScreen: View {
                             // Sibling Pricing (only show if sibling pairs > 0)
                             if classData.siblingPairs.numericValue ?? 0 > 0 {
                                 VStack(spacing: 12) {
-                                    Text("Sibling Pricing")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.yugiGray)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    HStack {
+                                        Text("Sibling Pricing")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.yugiGray)
+                                        
+                                        InfoButton(
+                                            title: "Sibling Pricing",
+                                            message: "Set the price for sibling tickets. This is the total price for both siblings together. You can choose any pricing strategy - a discount to encourage family bookings, the same price as individual tickets, or any amount that works for your class."
+                                        )
+                                        
+                                        Spacer()
+                                    }
                                     
                                     HStack {
                                         Text("£")
@@ -520,6 +559,53 @@ struct ProviderClassCreationScreen: View {
                                             .frame(width: 80)
                                         
                                         Text("for siblings (2 children)")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                        
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.white)
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                    )
+                                }
+                                .padding()
+                                .background(Color.white.opacity(0.05))
+                                .cornerRadius(12)
+                            }
+                            
+                            // Twin Pricing (only show if twin pairs > 0)
+                            if classData.twinPairs.numericValue ?? 0 > 0 {
+                                VStack(spacing: 12) {
+                                    HStack {
+                                        Text("Twin Pricing")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.yugiGray)
+                                        
+                                        InfoButton(
+                                            title: "Twin Pricing",
+                                            message: "Set the price for twin tickets. This is the total price for both twins together. You can choose any pricing strategy - a discount to encourage twin bookings, the same price as individual tickets, or any amount that works for your class."
+                                        )
+                                        
+                                        Spacer()
+                                    }
+                                    
+                                    HStack {
+                                        Text("£")
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(.yugiGray)
+                                        
+                                        TextField("0.00", value: $classData.twinPrice, format: .number)
+                                            .keyboardType(.decimalPad)
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(.yugiGray)
+                                            .frame(width: 80)
+                                        
+                                        Text("for twins (2 children)")
                                             .font(.system(size: 14))
                                             .foregroundColor(.yugiGray.opacity(0.7))
                                         
@@ -702,41 +788,103 @@ struct ProviderClassCreationScreen: View {
                         .foregroundColor(.yugiGray)
                 }
                 
-                Button(action: {
-                    showingLocationPicker = true
-                }) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(classData.location?.name ?? "Select Location")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                VStack(spacing: 16) {
+                    // Venue Name
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Venue Name")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.yugiGray)
+                        
+                        YUGITextField(
+                            text: $classData.venueName,
+                            placeholder: "e.g., Community Centre, Library, Park"
+                        )
+                    }
+                    
+                    // Street Address
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Street Address")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.yugiGray)
+                        
+                        YUGITextField(
+                            text: $classData.streetAddress,
+                            placeholder: "e.g., 123 Main Street"
+                        )
+                    }
+                    
+                    // City
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("City")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.yugiGray)
+                        
+                        YUGITextField(
+                            text: $classData.city,
+                            placeholder: "e.g., London"
+                        )
+                    }
+                    
+                    // Postal Code
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Postal Code")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.yugiGray)
+                        
+                        YUGITextField(
+                            text: $classData.postalCode,
+                            placeholder: "e.g., SW1A 1AA"
+                        )
+                    }
+                    
+                    // Coordinates (optional)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Coordinates (Optional)")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.yugiGray)
+                        
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Latitude")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                
+                                TextField("0.0", value: $classData.latitude, format: .number)
+                                    .keyboardType(.decimalPad)
+                                    .padding(8)
+                                    .background(Color.white)
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                    )
+                            }
                             
-                            if let location = classData.location {
-                                Text(location.address.formatted)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Longitude")
                                     .font(.system(size: 14))
                                     .foregroundColor(.yugiGray.opacity(0.7))
-                            } else {
-                                Text("Tap to choose where your class will be held")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                
+                                TextField("0.0", value: $classData.longitude, format: .number)
+                                    .keyboardType(.decimalPad)
+                                    .padding(8)
+                                    .background(Color.white)
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                    )
                             }
                         }
                         
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                        Text("Tip: You can find coordinates by searching your venue on Google Maps")
+                            .font(.system(size: 12))
+                            .foregroundColor(.yugiGray.opacity(0.6))
                     }
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
-                    )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
             }
             
             // What to Bring
@@ -864,9 +1012,15 @@ struct ProviderClassCreationScreen: View {
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.yugiGray)
                             }
-                            Text("Total: \(classData.totalChildSpots) spots")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("Total: \(classData.totalChildSpots) child spots")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.yugiGray)
+                                
+                                Text("Expected: \(classData.expectedAdults) adults")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                            }
                         }
                     }
                     
@@ -881,9 +1035,21 @@ struct ProviderClassCreationScreen: View {
                         
                         Spacer()
                         
-                        Text("\(classData.classDates.count) dates, \(classData.timeSlots.count) time slots")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                        VStack(alignment: .trailing, spacing: 4) {
+                            // Show actual dates
+                            if !classData.classDates.isEmpty {
+                                Text("Dates: \(classData.formatDates(classData.classDates))")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.yugiGray)
+                            }
+                            
+                            // Show actual times
+                            if !classData.timeSlots.isEmpty {
+                                Text("Times: \(classData.formatTimes(classData.timeSlots))")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.yugiGray)
+                            }
+                        }
                     }
                     
                     HStack {
@@ -903,7 +1069,7 @@ struct ProviderClassCreationScreen: View {
                                 .foregroundColor(.yugiGray)
                         } else {
                             VStack(alignment: .trailing, spacing: 2) {
-                                Text("£\(classData.price, specifier: "%.2f") per person")
+                                Text("£\(classData.price, specifier: "%.2f") per ticket")
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(.yugiGray)
                                 
@@ -913,16 +1079,57 @@ struct ProviderClassCreationScreen: View {
                                         .foregroundColor(.yugiGray.opacity(0.7))
                                 }
                                 
-                                if classData.adultsPaySame {
-                                    Text("Adults pay same as children")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.yugiGray.opacity(0.7))
-                                } else if classData.adultsFree {
+                                
+                                // Pricing breakdown with service fees
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("Total Cost Breakdown:")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(.yugiGray)
+                                    
+                                    if classData.individualChildSpots.numericValue ?? 0 > 0 {
+                                        let individualSpots = classData.individualChildSpots.numericValue ?? 0
+                                        let individualCost = Double(individualSpots) * classData.price
+                                        Text("\(individualSpots) individual: £\(individualCost, specifier: "%.2f")")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                    }
+                                    
+                                    if classData.siblingPairs.numericValue ?? 0 > 0 {
+                                        let siblingPairs = classData.siblingPairs.numericValue ?? 0
+                                        let siblingCost = Double(siblingPairs) * classData.siblingPrice
+                                        Text("\(siblingPairs) sibling pair(s): £\(siblingCost, specifier: "%.2f")")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                    }
+                                    
+                                    if classData.twinPairs.numericValue ?? 0 > 0 {
+                                        let twinPairs = classData.twinPairs.numericValue ?? 0
+                                        let twinCost = Double(twinPairs) * classData.twinPrice
+                                        Text("\(twinPairs) twin pair(s): £\(twinCost, specifier: "%.2f")")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                    }
+                                    
+                                    // Adult pricing breakdown
+                                    if !classData.adultsFree {
+                                        let totalTickets = (classData.individualChildSpots.numericValue ?? 0) + (classData.siblingPairs.numericValue ?? 0) + (classData.twinPairs.numericValue ?? 0)
+                                        let adultCost = Double(totalTickets) * classData.adultPrice
+                                        Text("\(totalTickets) adult(s): £\(adultCost, specifier: "%.2f")")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                    }
+                                    
+                                    Text("Total: £\(classData.totalCost, specifier: "%.2f")")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundColor(Color(hex: "#BC6C5C"))
+                                }
+                                
+                                if classData.adultsFree {
                                     Text("Adults are free")
                                         .font(.system(size: 12))
                                         .foregroundColor(.yugiGray.opacity(0.7))
                                 } else {
-                                    Text("Adults: £\(classData.adultPrice, specifier: "%.2f")")
+                                    Text("Adults: £\(classData.adultPrice, specifier: "%.2f") per adult")
                                         .font(.system(size: 12))
                                         .foregroundColor(.yugiGray.opacity(0.7))
                                 }
@@ -947,20 +1154,29 @@ struct ProviderClassCreationScreen: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    if let location = classData.location {
-                        Text("Location: \(location.name)")
+                    if !classData.venueName.isEmpty {
+                        Text("Venue: \(classData.venueName)")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.yugiGray)
-                        Text("Address: \(location.address.formatted)")
+                    }
+                    
+                    if !classData.streetAddress.isEmpty || !classData.city.isEmpty {
+                        let address = [classData.streetAddress, classData.city, classData.postalCode].filter { !$0.isEmpty }.joined(separator: ", ")
+                        Text("Address: \(address)")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.yugiGray)
+                    }
+                    
+                    if classData.latitude != 0.0 && classData.longitude != 0.0 {
+                        Text("Coordinates: \(classData.latitude, specifier: "%.6f"), \(classData.longitude, specifier: "%.6f")")
                             .font(.system(size: 14))
                             .foregroundColor(.yugiGray.opacity(0.7))
-                    } else {
+                    }
+                    
+                    if classData.venueName.isEmpty && classData.streetAddress.isEmpty && classData.city.isEmpty {
                         Text("Location: Not specified")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.yugiGray)
-                        Text("Address: Not specified")
-                            .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
                     }
                 }
             }
@@ -1137,37 +1353,127 @@ struct ClassCreationData {
     var individualChildSpots: ChildSpotsOption = .one
     var siblingPairs: ChildSpotsOption = .zero
     var siblingPrice: Double = 0.0
+    var twinPairs: ChildSpotsOption = .zero
+    var twinPrice: Double = 0.0
     
     var classDates: [ClassDate] = [ClassDate()]
     var timeSlots: [TimeSlot] = [TimeSlot()]
     var duration = 60
     var isFree = false
     var price: Double = 0.0
-    var adultsPaySame = true
+    var adultsPaySame = false
     var adultPrice: Double = 0.0
     var adultsFree = false
     
-    var location: Location?
+    var location: String = ""
+    var venueName: String = ""
+    var streetAddress: String = ""
+    var city: String = ""
+    var postalCode: String = ""
+    var latitude: Double = 0.0
+    var longitude: Double = 0.0
     var whatToBring = ""
     var specialRequirements = ""
     
     var maxCapacity: Int {
         let individualSpots = individualChildSpots.numericValue ?? 0
         let siblingSpots = siblingPairs.numericValue ?? 0
-        return individualSpots + siblingSpots
+        let twinSpots = twinPairs.numericValue ?? 0
+        // Each sibling pair = 2 children, each twin pair = 2 children
+        return individualSpots + (siblingSpots * 2) + (twinSpots * 2)
     }
     
     var totalChildSpots: Int {
         return maxCapacity
     }
     
+    // Calculate expected adults (1 adult per ticket)
+    var expectedAdults: Int {
+        let individualTickets = individualChildSpots.numericValue ?? 0
+        let siblingTickets = siblingPairs.numericValue ?? 0
+        let twinTickets = twinPairs.numericValue ?? 0
+        // 1 adult per ticket (individual, sibling pair, or twin pair)
+        return individualTickets + siblingTickets + twinTickets
+    }
+    
     var allowSiblings: Bool {
         return siblingPairs.numericValue ?? 0 > 0
     }
     
+    // Service fee constant
+    static let serviceFee: Double = 1.99
+    
+    // Calculate total cost for individual tickets
+    var individualTicketTotal: Double {
+        let individualSpots = individualChildSpots.numericValue ?? 0
+        return (Double(individualSpots) * price) + (Double(individualSpots) * Self.serviceFee)
+    }
+    
+    // Calculate total cost for sibling tickets
+    var siblingTicketTotal: Double {
+        let siblingPairCount = siblingPairs.numericValue ?? 0
+        return (Double(siblingPairCount) * siblingPrice) + (Double(siblingPairCount) * Self.serviceFee)
+    }
+    
+    // Calculate total cost for twin tickets
+    var twinTicketTotal: Double {
+        let twinPairCount = twinPairs.numericValue ?? 0
+        return (Double(twinPairCount) * twinPrice) + (Double(twinPairCount) * Self.serviceFee)
+    }
+    
+    // Calculate total cost for adults
+    var adultTicketTotal: Double {
+        if adultsFree {
+            return 0.0
+        } else {
+            let totalTickets = (individualChildSpots.numericValue ?? 0) + (siblingPairs.numericValue ?? 0) + (twinPairs.numericValue ?? 0)
+            return Double(totalTickets) * adultPrice
+        }
+    }
+    
+    // Calculate total cost for all tickets (provider view - no service fees)
+    var totalCost: Double {
+        let individualCost = Double(individualChildSpots.numericValue ?? 0) * price
+        let siblingCost = Double(siblingPairs.numericValue ?? 0) * siblingPrice
+        let twinCost = Double(twinPairs.numericValue ?? 0) * twinPrice
+        let adultCost = adultTicketTotal
+        return individualCost + siblingCost + twinCost + adultCost
+    }
+    
+    // Format dates for display
+    func formatDates(_ dates: [ClassDate]) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        
+        let dateStrings = dates.map { formatter.string(from: $0.date) }
+        return dateStrings.joined(separator: ", ")
+    }
+    
+    // Format times for display
+    func formatTimes(_ timeSlots: [TimeSlot]) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        
+        let timeStrings = timeSlots.map { formatter.string(from: $0.startTime) }
+        return timeStrings.joined(separator: ", ")
+    }
+    
     func publish() async throws {
-        // Simulate API call
-        try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+        // First, create the class
+        let createResponse = try await APIService.shared.createClass(classData: self)
+            .receive(on: DispatchQueue.main)
+            .async()
+        
+        print("✅ Class created successfully: \(createResponse.data.name)")
+        
+        // Then, publish the class
+        let publishResponse = try await APIService.shared.publishClass(id: createResponse.data.id)
+            .receive(on: DispatchQueue.main)
+            .async()
+        
+        print("✅ Class published successfully: \(publishResponse.data.name)")
     }
 }
 
@@ -1211,49 +1517,6 @@ struct TimeSlotRow: View {
 
 // MARK: - Placeholder Views
 
-struct LocationPickerScreen: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var selectedLocation: Location?
-    
-    var body: some View {
-        NavigationStack {
-            VStack {
-                Text("Location Picker")
-                    .font(.title)
-                    .padding()
-                
-                Button("Select Location") {
-                    // Mock location selection
-                    selectedLocation = Location(
-                        id: UUID(),
-                        name: "Community Centre",
-                        address: Address(
-                            street: "123 Main St",
-                            city: "London",
-                            state: "England",
-                            postalCode: "SW1A 1AA",
-                            country: "United Kingdom"
-                        ),
-                        coordinates: Location.Coordinates(latitude: 51.5074, longitude: -0.1278),
-                        accessibilityNotes: nil,
-                        parkingInfo: nil,
-                        babyChangingFacilities: nil
-                    )
-                    dismiss()
-                }
-                .padding()
-                .background(Color(hex: "#BC6C5C"))
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                
-                Spacer()
-            }
-            .navigationTitle("Select Location")
-            .navigationBarTitleDisplayMode(.inline)
-
-        }
-    }
-}
 
 struct LoadingOverlay: View {
     var body: some View {
@@ -1316,7 +1579,30 @@ struct SuccessPopup: View {
     }
 }
 
-
+// MARK: - Extensions
+extension Publisher {
+    func async() async throws -> Output {
+        try await withCheckedThrowingContinuation { continuation in
+            var cancellable: AnyCancellable?
+            cancellable = first()
+                .sink(
+                    receiveCompletion: { completion in
+                        switch completion {
+                        case .finished:
+                            break
+                        case .failure(let error):
+                            continuation.resume(throwing: error)
+                        }
+                        cancellable?.cancel()
+                    },
+                    receiveValue: { value in
+                        continuation.resume(returning: value)
+                        cancellable?.cancel()
+                    }
+                )
+        }
+    }
+}
 
 #Preview {
     ProviderClassCreationScreen(

@@ -243,7 +243,7 @@ struct BookingDetailCard: View {
                             .foregroundColor(Color(hex: "#BC6C5C"))
                             .frame(width: 16)
                         
-                        Text(enhancedBooking.classInfo.location.address.formatted)
+                        Text(enhancedBooking.classInfo.location?.address.formatted ?? "Location TBD")
                             .font(.system(size: 14))
                             .foregroundColor(.white)
                         
@@ -252,9 +252,9 @@ struct BookingDetailCard: View {
                     
                     // Maps button - more prominent
                     Button(action: {
-                        print("🗺️ ClassBookingsScreen: Maps button tapped for venue: \(enhancedBooking.classInfo.location.name)")
-                        print("🗺️ ClassBookingsScreen: Venue address: \(enhancedBooking.classInfo.location.address.formatted)")
-                        print("🗺️ ClassBookingsScreen: Coordinates: \(enhancedBooking.classInfo.location.coordinates.latitude), \(enhancedBooking.classInfo.location.coordinates.longitude)")
+                        print("🗺️ ClassBookingsScreen: Maps button tapped for venue: \(enhancedBooking.classInfo.location?.name ?? "Location TBD")")
+                        print("🗺️ ClassBookingsScreen: Venue address: \(enhancedBooking.classInfo.location?.address.formatted ?? "Location TBD")")
+                        print("🗺️ ClassBookingsScreen: Coordinates: \(enhancedBooking.classInfo.location?.coordinates.latitude ?? 51.5074), \(enhancedBooking.classInfo.location?.coordinates.longitude ?? -0.1278)")
                         openInAppleMaps()
                     }) {
                         HStack(spacing: 6) {
@@ -345,14 +345,14 @@ struct BookingDetailCard: View {
     }
     
     private func openInAppleMaps() {
-        let coordinates = enhancedBooking.classInfo.location.coordinates
-        let venueName = enhancedBooking.classInfo.location.name
+        let coordinates = enhancedBooking.classInfo.location?.coordinates ?? Location.Coordinates(latitude: 51.5074, longitude: -0.1278)
+        let venueName = enhancedBooking.classInfo.location?.name ?? "Location TBD"
         
         print("🗺️ Attempting to open Apple Maps for venue: \(venueName)")
         print("🗺️ Coordinates: \(coordinates.latitude), \(coordinates.longitude)")
         
         // URL encode the venue name
-        guard let encodedVenueName = venueName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+        guard let encodedVenueName = venueName.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed),
               let url = URL(string: "maps://?q=\(encodedVenueName)&ll=\(coordinates.latitude),\(coordinates.longitude)") else {
             print("❌ Error: Could not create Apple Maps URL for venue: \(venueName)")
             return

@@ -8,10 +8,10 @@ const router = express.Router();
 
 // @route   POST /api/bookings
 // @desc    Create a new booking
-// @access  Private (parents only)
+// @access  Private (parents and providers - providers can book for their own children)
 router.post('/', [
   protect,
-  requireUserType(['parent']),
+  requireUserType(['parent', 'provider']),
   body('classId').isMongoId(),
   body('children').isArray({ min: 1 }),
   body('children.*.name').trim().isLength({ min: 1 }),

@@ -193,7 +193,7 @@ const getNextOccurrenceDate = (recurringDays) => {
 };
 
 // Helper function to transform class for iOS compatibility
-const transformClassForIOS = async (classItem) => {
+const transformClassForIOS = async (classItem, classDates = null) => {
   try {
     console.log(`🔄 Transforming class: ${classItem.name || 'Unknown'}`);
     
@@ -287,10 +287,38 @@ const transformClassForIOS = async (classItem) => {
     }
   }
 
-  // Calculate the next occurrence date for this recurring class
-  const nextOccurrenceDate = getNextOccurrenceDate(classObj.recurringDays);
-  const endDate = new Date(nextOccurrenceDate);
-  endDate.setMonth(endDate.getMonth() + 6); // Set end date to 6 months from next occurrence
+  // Determine the start date: use classDates if provided (when creating a new class),
+  // otherwise calculate from recurringDays (for existing classes)
+  let startDate;
+  if (classDates && Array.isArray(classDates) && classDates.length > 0) {
+    // Use the earliest date from classDates
+    const dates = classDates
+      .map(dateStr => {
+        // Handle ISO 8601 date strings (e.g., "2025-12-01T00:00:00Z" or "2025-12-01")
+        const date = new Date(dateStr);
+        return isNaN(date.getTime()) ? null : date;
+      })
+      .filter(date => date !== null)
+      .sort((a, b) => a.getTime() - b.getTime());
+    
+    if (dates.length > 0) {
+      startDate = dates[0];
+      // Reset to start of day
+      startDate.setHours(0, 0, 0, 0);
+      console.log(`📅 Using classDates start date: ${startDate.toISOString()}`);
+    } else {
+      // Fallback to calculating from recurringDays
+      startDate = getNextOccurrenceDate(classObj.recurringDays);
+      console.log(`📅 classDates invalid, using calculated date: ${startDate.toISOString()}`);
+    }
+  } else {
+    // Calculate the next occurrence date for this recurring class
+    startDate = getNextOccurrenceDate(classObj.recurringDays);
+    console.log(`📅 Using calculated date from recurringDays: ${startDate.toISOString()}`);
+  }
+  
+  const endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + 6); // Set end date to 6 months from start date
 
   return {
     ...classObj,
@@ -319,16 +347,16 @@ const transformClassForIOS = async (classItem) => {
     },
     // Create schedule object from recurringDays and timeSlots
     schedule: {
-      startDate: nextOccurrenceDate,
+      startDate: startDate,
       endDate: endDate,
       recurringDays: classObj.recurringDays || ['monday'],
       timeSlots: (classObj.timeSlots || []).map(slot => {
-        // Parse the time string (e.g., "10:00" or "14:30") and combine with next occurrence date
+        // Parse the time string (e.g., "10:00" or "14:30") and combine with start date
         const timeParts = (slot.startTime || '').split(':');
         const hours = parseInt(timeParts[0] || '0', 10);
         const minutes = parseInt(timeParts[1] || '0', 10);
         
-        const slotDate = new Date(nextOccurrenceDate);
+        const slotDate = new Date(startDate);
         slotDate.setHours(hours, minutes, 0, 0);
         
         return {
@@ -379,22 +407,41 @@ const transformClassForIOS = async (classItem) => {
         babyChangingFacilities: 'Baby changing facilities available'
       },
       schedule: (() => {
-        // Calculate the next occurrence date for this recurring class
-        const nextOccurrenceDate = getNextOccurrenceDate(classObj.recurringDays || []);
-        const endDate = new Date(nextOccurrenceDate);
-        endDate.setMonth(endDate.getMonth() + 6); // Set end date to 6 months from next occurrence
+        // Determine the start date: use classDates if provided, otherwise calculate from recurringDays
+        let fallbackStartDate;
+        if (classDates && Array.isArray(classDates) && classDates.length > 0) {
+          const dates = classDates
+            .map(dateStr => {
+              const date = new Date(dateStr);
+              return isNaN(date.getTime()) ? null : date;
+            })
+            .filter(date => date !== null)
+            .sort((a, b) => a.getTime() - b.getTime());
+          
+          if (dates.length > 0) {
+            fallbackStartDate = dates[0];
+            fallbackStartDate.setHours(0, 0, 0, 0);
+          } else {
+            fallbackStartDate = getNextOccurrenceDate(classObj.recurringDays || []);
+          }
+        } else {
+          fallbackStartDate = getNextOccurrenceDate(classObj.recurringDays || []);
+        }
+        
+        const endDate = new Date(fallbackStartDate);
+        endDate.setMonth(endDate.getMonth() + 6); // Set end date to 6 months from start date
         
         return {
-          startDate: nextOccurrenceDate,
+          startDate: fallbackStartDate,
           endDate: endDate,
           recurringDays: classObj.recurringDays || [],
           timeSlots: (classObj.timeSlots || []).map(slot => {
-            // Parse the time string (e.g., "10:00" or "14:30") and combine with next occurrence date
+            // Parse the time string (e.g., "10:00" or "14:30") and combine with start date
             const timeParts = (slot.startTime || '').split(':');
             const hours = parseInt(timeParts[0] || '0', 10);
             const minutes = parseInt(timeParts[1] || '0', 10);
             
-            const slotDate = new Date(nextOccurrenceDate);
+            const slotDate = new Date(fallbackStartDate);
             slotDate.setHours(hours, minutes, 0, 0);
             
             return {
@@ -599,7 +646,8 @@ router.post('/', [
     console.log('✅ Class created successfully:', savedClass.name);
 
     // Transform the response for iOS compatibility
-    const transformedClass = await transformClassForIOS(savedClass);
+    // Pass classDates from request body so the start date uses the provider's selected date
+    const transformedClass = await transformClassForIOS(savedClass, req.body.classDates || null);
 
     res.status(201).json({
       success: true,

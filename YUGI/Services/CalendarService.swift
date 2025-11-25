@@ -48,12 +48,12 @@ class CalendarService: ObservableObject {
         
         let event = EKEvent(eventStore: eventStore)
         event.title = classItem.name
-        event.location = classItem.location.address.formatted
+        event.location = classItem.location?.address.formatted ?? "Location TBD"
         event.notes = """
         Class Details:
         \(classItem.description)
         
-        Provider: \(classItem.provider.name)
+        Provider: Provider \(classItem.provider)
         Booking Reference: \(booking.id)
         """
         
@@ -82,7 +82,7 @@ class CalendarService: ObservableObject {
     private func createRecurrenceRule(for schedule: Schedule) -> EKRecurrenceRule {
         let endDate = schedule.endDate
         
-        let daysOfWeek = schedule.recurringDays.map { day in
+        let daysOfWeek = schedule.weekDays.map { day in
             EKRecurrenceDayOfWeek(EKWeekday(rawValue: day.rawValue)!)
         }
         

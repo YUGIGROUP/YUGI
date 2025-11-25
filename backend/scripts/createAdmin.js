@@ -43,7 +43,7 @@ async function createAdminUser() {
 
     // Create admin user
     const adminData = {
-      email: 'admin@yugi.com',
+      email: 'info@yugiapp.ai',
       password: 'admin123456',
       fullName: 'YUGI Administrator',
       userType: 'admin'

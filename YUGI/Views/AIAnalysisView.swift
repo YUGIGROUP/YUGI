@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AIAnalysisView: View {
-    @ObservedObject var aiService: AIVenueDataService
+    @ObservedObject var aiService: HybridAIService
     let location: Location
     let onUpdateLocation: ((VenueFacilities) -> Void)?
     let onBookClass: (() -> Void)?
@@ -285,7 +285,7 @@ struct AIAnalysisView: View {
     
     private func startAnalysis() {
         Task {
-            facilities = await aiService.gatherVenueFacilities(for: location)
+            facilities = await aiService.analyzeVenue(location)
         }
     }
     
@@ -578,9 +578,9 @@ struct DetailedFacilityCard: View {
 
 #Preview {
     AIAnalysisView(
-        aiService: AIVenueDataService(),
+        aiService: HybridAIService(),
         location: Location(
-            id: UUID(),
+            id: "mock-location-id-1",
             name: "Sample Venue",
             address: Address(
                 street: "123 High Street",
@@ -594,7 +594,7 @@ struct DetailedFacilityCard: View {
             parkingInfo: nil,
             babyChangingFacilities: nil
         ),
-        onUpdateLocation: nil,
-        onBookClass: nil
+        onUpdateLocation: nil as ((VenueFacilities) -> Void)?,
+        onBookClass: nil as (() -> Void)?
     )
 } 

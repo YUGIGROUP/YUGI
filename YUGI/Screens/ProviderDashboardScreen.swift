@@ -20,7 +20,7 @@ class NewClassStorage: ObservableObject {
             currentBookings: 0,
             isPublished: true,
             status: ClassStatus.upcoming,
-            location: classData.location?.name ?? "Location TBD",
+            location: classData.location.isEmpty ? "Location TBD" : classData.location,
             nextSession: classData.classDates.first?.date,
             createdAt: Date()
         )
@@ -109,7 +109,16 @@ struct ProviderDashboardScreen: View {
     @StateObject private var providerChildrenService = ProviderChildrenService.shared
     
     private var displayBusinessName: String {
-        businessService.businessInfo.name.isEmpty ? businessName : businessService.businessInfo.name
+        // Prioritize current user's business name, then businessService, then fallback
+        if let currentUser = APIService.shared.currentUser,
+           let userBusinessName = currentUser.businessName,
+           !userBusinessName.isEmpty {
+            return userBusinessName
+        } else if !businessService.businessInfo.name.isEmpty {
+            return businessService.businessInfo.name
+        } else {
+            return businessName
+        }
     }
     
     var body: some View {
@@ -287,6 +296,8 @@ struct ProviderDashboardScreen: View {
                 TermsPrivacyScreen(onTermsAccepted: {
                     // Update the state when terms are accepted
                     hasAcceptedTerms = true
+                    // Save to UserDefaults so it persists across app launches
+                    UserDefaults.standard.set(true, forKey: "providerTermsAccepted")
                 }, userType: .provider)
             }
             .sheet(isPresented: $showingAddChild) {
@@ -365,7 +376,9 @@ struct ProviderDashboardScreen: View {
 
             .fullScreenCover(isPresented: $shouldSignOut) {
                 // This will show the welcome screen when user logs out
-                WelcomeScreen()
+                NavigationStack {
+                    WelcomeScreen()
+                }
             }
         }
         .onAppear {
@@ -389,8 +402,20 @@ struct ProviderDashboardScreen: View {
             // Load business data
             businessService.loadBusinessData()
             
-            // Load mock children data for providers
-            loadMockChildren()
+            // Handle children data based on user type
+            #if DEBUG
+            // Check if this is a test user (existing user with mock data) or a new user
+            let isTestUser = APIService.shared.currentUser?.email.contains("test") == true
+            if isTestUser && providerChildrenService.children.isEmpty {
+                loadMockChildren()
+            } else if !isTestUser {
+                // Clear mock children for new users
+                clearMockChildrenForNewUser()
+            }
+            #else
+            // In production, always clear mock children for new users
+            clearMockChildrenForNewUser()
+            #endif
         }
         .onDisappear {
             print("🏢 ProviderDashboardScreen: onDisappear called")
@@ -401,12 +426,12 @@ struct ProviderDashboardScreen: View {
     private func loadMockChildren() {
         // Mock data for demonstration - using consistent IDs for testing
         let mockChildren = [
-            Child(id: "provider_child_1", name: "Emma", age: 2, dateOfBirth: Date().addingTimeInterval(-365 * 2 * 24 * 60 * 60)), // 2 years ago
-            Child(id: "provider_child_2", name: "Liam", age: 3, dateOfBirth: Date().addingTimeInterval(-365 * 3 * 24 * 60 * 60)), // 3 years ago
-            Child(id: "provider_child_3", name: "Ava", age: 2, dateOfBirth: Date().addingTimeInterval(-365 * 2 * 24 * 60 * 60)), // 2 years ago
-            Child(id: UUID().uuidString, name: "Johnson", age: 4, dateOfBirth: Date().addingTimeInterval(-365 * 4 * 24 * 60 * 60)), // 4 years ago
-            Child(id: UUID().uuidString, name: "Smith", age: 5, dateOfBirth: Date().addingTimeInterval(-365 * 5 * 24 * 60 * 60)), // 5 years ago
-            Child(id: UUID().uuidString, name: "Wilson", age: 4, dateOfBirth: Date().addingTimeInterval(-365 * 4 * 24 * 60 * 60)), // 4 years ago
+            Child(childId: "provider_child_1", childName: "Emma", childAge: 2, childDateOfBirth: Date().addingTimeInterval(-365 * 2 * 24 * 60 * 60)), // 2 years ago
+            Child(childId: "provider_child_2", childName: "Liam", childAge: 3, childDateOfBirth: Date().addingTimeInterval(-365 * 3 * 24 * 60 * 60)), // 3 years ago
+            Child(childId: "provider_child_3", childName: "Ava", childAge: 2, childDateOfBirth: Date().addingTimeInterval(-365 * 2 * 24 * 60 * 60)), // 2 years ago
+            Child(childId: UUID().uuidString, childName: "Johnson", childAge: 4, childDateOfBirth: Date().addingTimeInterval(-365 * 4 * 24 * 60 * 60)), // 4 years ago
+            Child(childId: UUID().uuidString, childName: "Smith", childAge: 5, childDateOfBirth: Date().addingTimeInterval(-365 * 5 * 24 * 60 * 60)), // 5 years ago
+            Child(childId: UUID().uuidString, childName: "Wilson", childAge: 4, childDateOfBirth: Date().addingTimeInterval(-365 * 4 * 24 * 60 * 60)), // 4 years ago
         ]
         
         // Add to shared service
@@ -416,6 +441,13 @@ struct ProviderDashboardScreen: View {
         
         // Sync local array
         children = providerChildrenService.children
+    }
+    
+    private func clearMockChildrenForNewUser() {
+        // Clear any existing mock children for new users
+        providerChildrenService.clearChildren()
+        children = providerChildrenService.children
+        print("👶 ProviderDashboard: Cleared mock children for new user")
     }
 } 
 

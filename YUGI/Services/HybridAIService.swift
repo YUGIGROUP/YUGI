@@ -170,8 +170,47 @@ class HybridAIService: ObservableObject {
             let placeDetails = try await getPlaceDetails(placeID: placeID)
             print("🔍 Google Places: Place details response: \(placeDetails)")
             
-            // Step 3: Extract real venue information
-            let facilities = extractGooglePlacesInfo(from: placeDetails, location: location)
+            // Step 3: Get nearby transit stations (for parking info)
+            var nearbyStations: [String] = []
+            if let result = placeDetails["result"] as? [String: Any],
+               let geometry = result["geometry"] as? [String: Any],
+               let location = geometry["location"] as? [String: Any] {
+                print("🔍 Extracting coordinates for transit station lookup...")
+                print("🔍 Location data: \(location)")
+                
+                // Handle both String and Double coordinate formats
+                var lat: String?
+                var lng: String?
+                
+                if let latString = location["lat"] as? String {
+                    lat = latString
+                } else if let latDouble = location["lat"] as? Double {
+                    lat = String(latDouble)
+                } else if let latNumber = location["lat"] as? NSNumber {
+                    lat = String(latNumber.doubleValue)
+                }
+                
+                if let lngString = location["lng"] as? String {
+                    lng = lngString
+                } else if let lngDouble = location["lng"] as? Double {
+                    lng = String(lngDouble)
+                } else if let lngNumber = location["lng"] as? NSNumber {
+                    lng = String(lngNumber.doubleValue)
+                }
+                
+                if let lat = lat, let lng = lng {
+                    print("🔍 Looking up transit stations near: \(lat), \(lng)")
+                    nearbyStations = await findNearbyTransitStations(lat: lat, lng: lng)
+                    print("🔍 Transit stations found: \(nearbyStations.count) stations")
+                } else {
+                    print("⚠️ Could not extract coordinates for transit station lookup")
+                }
+            } else {
+                print("⚠️ No geometry data found in place details")
+            }
+            
+            // Step 4: Extract real venue information
+            let facilities = extractGooglePlacesInfo(from: placeDetails, location: location, nearbyStations: nearbyStations)
             
             // Track API usage
             apiUsageTracker.recordGooglePlacesUsage()
@@ -220,7 +259,148 @@ class HybridAIService: ObservableObject {
         return try await makeAPICall(url: url, parameters: parameters)
     }
     
-    private func extractGooglePlacesInfo(from data: [String: Any], location: Location) -> VenueFacilities {
+    private func findNearbyTransitStations(lat: String, lng: String) async -> [String] {
+        print("🚇 Starting transit station search for coordinates: \(lat), \(lng)")
+        
+        do {
+            let url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+            // Search for both subway and transit stations to get tube and overground
+            let parameters = [
+                "location": "\(lat),\(lng)",
+                "radius": "1500", // 1.5km radius to catch more stations
+                "type": "transit_station", // This includes both tube and overground
+                "key": googlePlacesAPIKey
+            ]
+            
+            print("🚇 Making Nearby Search API call...")
+            let response = try await makeAPICall(url: url, parameters: parameters)
+            print("🚇 Nearby Search API response received")
+            
+            if let results = response["results"] as? [[String: Any]] {
+                print("🚇 Found \(results.count) transit stations in results")
+                
+                // Log first few results for debugging
+                for (index, station) in results.prefix(5).enumerated() {
+                    let name = station["name"] as? String ?? "Unknown"
+                    let types = station["types"] as? [String] ?? []
+                    print("🚇 Result \(index + 1): '\(name)' - Types: \(types.prefix(3))")
+                }
+                
+                // Filter to only include actual train/tube stations (exclude car parks, roads, etc.)
+                // Since we're searching for transit_station type, most results should be stations
+                // We'll only exclude things that are clearly NOT stations
+                let stations = results.compactMap { station -> String? in
+                    guard let name = station["name"] as? String else { return nil }
+                    
+                    // Get the types to check if it's actually a station
+                    let types = station["types"] as? [String] ?? []
+                    let nameLower = name.lowercased()
+                    
+                    // Exclude car parks, roads, bus stops, and other clearly non-station places
+                    let excludedKeywords = ["car park", "parking", "road", "street", "avenue", "way", "lane", "bus stop", "bus station", "fire station", "theatre", "theater", "cinema", "restaurant", "cafe", "shop", "store", "garden", "park", "(stop", "stop e)", "stop f)", "stop g)", "stop h)", "stop a)", "stop b)", "stop c)", "stop d)"]
+                    if excludedKeywords.contains(where: { nameLower.contains($0) }) {
+                        print("🚇 Excluding '\(name)' - contains excluded keyword")
+                        return nil
+                    }
+                    
+                    // Exclude bus stops (check for bus-related types)
+                    if types.contains(where: { $0.contains("bus_station") || $0.contains("bus_stop") }) {
+                        print("🚇 Excluding '\(name)' - is a bus stop")
+                        return nil
+                    }
+                    
+                    // Exclude if types indicate it's clearly not a station
+                    let excludedTypes = ["parking", "route", "street_address"]
+                    if types.contains(where: { type in excludedTypes.contains(where: { type.lowercased().contains($0) }) }) {
+                        print("🚇 Excluding '\(name)' - has excluded type")
+                        return nil
+                    }
+                    
+                    // Since we searched for transit_station, include anything that:
+                    // 1. Has transit/subway/train/rail in types, OR
+                    // 2. Has "station" in the name, OR
+                    // 3. Doesn't have excluded keywords/types (be lenient)
+                    
+                    let hasTransitType = types.contains { type in
+                        type.contains("transit") || type.contains("subway") || 
+                        type.contains("train") || type.contains("rail") || 
+                        type.contains("station")
+                    }
+                    
+                    let nameSuggestsStation = nameLower.contains("station") || nameLower.contains("tube") || 
+                                            nameLower.contains("underground") || nameLower.contains("railway") ||
+                                            nameLower.contains("rail")
+                    
+                    // Be lenient - if it doesn't have excluded keywords/types, include it
+                    // (since we're searching for transit_station type, most results should be valid)
+                    if hasTransitType || nameSuggestsStation {
+                        print("🚇 Including '\(name)' - hasTransitType: \(hasTransitType), nameSuggestsStation: \(nameSuggestsStation)")
+                        return name
+                    }
+                    
+                    // If no clear indicators but also no exclusions, include it anyway (be lenient)
+                    print("🚇 Including '\(name)' - no exclusions found, assuming valid station")
+                    return name
+                }
+                
+                // Remove duplicates and prefer names with "Station" in them
+                // Process stations in distance order and take the first 2 closest unique stations
+                var uniqueStations: [String] = []
+                var stationInfo: [String: (name: String, index: Int, hasStation: Bool)] = [:] // baseName -> (best name, first index, has "station")
+                
+                // Helper to get base name for deduplication
+                func getBaseName(_ name: String) -> String {
+                    let lower = name.lowercased()
+                    return lower.replacingOccurrences(of: " station", with: "")
+                        .replacingOccurrences(of: "station", with: "")
+                        .trimmingCharacters(in: .whitespaces)
+                }
+                
+                // First pass: Process all stations to find the best version of each (preferring "station" in name)
+                for (index, station) in stations.enumerated() {
+                    let stationLower = station.lowercased()
+                    let baseName = getBaseName(station)
+                    let hasStation = stationLower.contains("station")
+                    
+                    if let existing = stationInfo[baseName] {
+                        // We've seen this base name before
+                        // If current station has "station" and existing doesn't, replace it
+                        if hasStation && !existing.hasStation {
+                            print("🚇 Updating '\(existing.name)' to '\(station)' (preferring version with 'station', but keeping original distance order)")
+                            stationInfo[baseName] = (name: station, index: existing.index, hasStation: true)
+                        }
+                        // Otherwise keep the existing one (it came first, so it's closer)
+                    } else {
+                        // First time seeing this base name - record when we first saw it
+                        stationInfo[baseName] = (name: station, index: index, hasStation: hasStation)
+                    }
+                }
+                
+                // Second pass: Add stations in distance order, using the best version of each
+                // Sort by the original index (distance order) to get the 2 closest unique stations
+                let sortedStations = stationInfo.sorted { $0.value.index < $1.value.index }
+                
+                for (baseName, info) in sortedStations.prefix(2) {
+                    print("🚇 Adding station: '\(info.name)' (baseName: '\(baseName)', original index: \(info.index))")
+                    uniqueStations.append(info.name)
+                }
+                
+                print("🚇 Extracted station names: \(uniqueStations)")
+                return uniqueStations
+            } else {
+                print("⚠️ No results array in Nearby Search response")
+                if let status = response["status"] as? String {
+                    print("⚠️ API status: \(status)")
+                }
+            }
+        } catch {
+            print("❌ Error finding nearby transit stations: \(error.localizedDescription)")
+        }
+        
+        return []
+    }
+    
+    private func extractGooglePlacesInfo(from data: [String: Any], location: Location, nearbyStations: [String] = []) -> VenueFacilities {
         print("🔍 Extracting Google Places info from data...")
         var parkingInfo: String?
         var babyChangingInfo: String?
@@ -229,36 +409,187 @@ class HybridAIService: ObservableObject {
         if let result = data["result"] as? [String: Any] {
             print("🔍 Google Places result found: \(result.keys)")
             
-            // First, try to get structured parking information from venue types
-            if let types = result["types"] as? [String] {
-                parkingInfo = generateParkingInfoFromTypes(types, result["name"] as? String, result["formatted_address"] as? String)
-            }
-            
-            // Only use reviews as a last resort if no structured info is available
-            if parkingInfo == nil, let reviews = result["reviews"] as? [[String: Any]] {
-                let parkingMentions = reviews.compactMap { review in
-                    let text = (review["text"] as? String)?.lowercased() ?? ""
-                    if text.contains("parking") || text.contains("car") || text.contains("drive") {
-                        return review["text"] as? String
+            // Extract editorial summary for rich context (HIGHEST PRIORITY)
+            if let editorialSummary = result["editorial_summary"] as? [String: Any],
+               let overview = editorialSummary["overview"] as? String {
+                print("🔍 Found editorial summary: \(overview)")
+                
+                // Use editorial summary to infer facilities
+                let overviewLower = overview.lowercased()
+                
+                // For children's venues, use the full editorial summary context
+                if overviewLower.contains("children") || overviewLower.contains("theatre") || overviewLower.contains("theater") {
+                    // Extract specific details from the summary - prioritize rich descriptions
+                    let hasCafe = overviewLower.contains("café") || overviewLower.contains("cafe")
+                    let hasPlayground = overviewLower.contains("playground")
+                    let hasGarden = overviewLower.contains("garden")
+                    let hasToy = overviewLower.contains("toy")
+                    
+                    // Build a comprehensive description based on what's in the summary
+                    if babyChangingInfo == nil {
+                        var description = "Children's theatre"
+                        var facilities: [String] = []
+                        
+                        if hasCafe { facilities.append("café") }
+                        if hasToy { facilities.append("toyzone") }
+                        if hasGarden { facilities.append("garden") }
+                        if hasPlayground { facilities.append("playground") }
+                        
+                        if !facilities.isEmpty {
+                            description += " with \(facilities.joined(separator: ", "))"
+                        }
+                        
+                        babyChangingInfo = "\(description) - baby changing facilities available in restrooms"
                     }
-                    return nil
+                    
+                    // For theatres in urban areas, parking is typically limited
+                    let address = (result["formatted_address"] as? String)?.lowercased() ?? ""
+                    if address.contains("london") || address.contains("city") || address.contains("central") {
+                        if parkingInfo == nil {
+                            var parkingText = "Limited street parking available - public transport recommended."
+                            if !nearbyStations.isEmpty {
+                                let stationsText = nearbyStations.joined(separator: ", ")
+                                parkingText += " Nearest stations: \(stationsText)."
+                            } else {
+                                parkingText += " Check for pay-and-display bays nearby."
+                            }
+                            parkingInfo = parkingText
+                        }
+                    }
                 }
                 
-                if !parkingMentions.isEmpty {
-                    parkingInfo = "Based on customer reviews: \(parkingMentions.first ?? "Parking information available")"
+                // Check for parking indicators in summary
+                if overviewLower.contains("parking") {
+                    // Extract parking info from summary
+                    if overviewLower.contains("free parking") || overviewLower.contains("on-site parking") {
+                        parkingInfo = "On-site parking available"
+                    } else if overviewLower.contains("street parking") {
+                        parkingInfo = "Street parking available nearby"
+                    }
                 }
+            }
+            
+            // Extract from reviews FIRST (most detailed information)
+            if let reviews = result["reviews"] as? [[String: Any]] {
+                // Extract parking info from reviews
+                if parkingInfo == nil {
+                    for review in reviews {
+                        if let text = review["text"] as? String {
+                            let textLower = text.lowercased()
+                            if textLower.contains("parking") || textLower.contains("car") || textLower.contains("drive") {
+                                // Extract the relevant sentence
+                                let sentences = text.components(separatedBy: ". ")
+                                if let parkingSentence = sentences.first(where: { $0.lowercased().contains("parking") || $0.lowercased().contains("car") }) {
+                                    parkingInfo = parkingSentence.trimmingCharacters(in: .whitespaces)
+                                    if !parkingInfo!.hasSuffix(".") {
+                                        parkingInfo! += "."
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Extract baby changing info from reviews
+                if babyChangingInfo == nil {
+                    for review in reviews {
+                        if let text = review["text"] as? String {
+                            let textLower = text.lowercased()
+                            if textLower.contains("baby") || textLower.contains("changing") || textLower.contains("toilet") || textLower.contains("restroom") || textLower.contains("facilities") {
+                                // Extract the relevant sentence
+                                let sentences = text.components(separatedBy: ". ")
+                                if let facilitySentence = sentences.first(where: { 
+                                    $0.lowercased().contains("baby") || 
+                                    $0.lowercased().contains("changing") || 
+                                    $0.lowercased().contains("toilet") ||
+                                    $0.lowercased().contains("facilities")
+                                }) {
+                                    babyChangingInfo = facilitySentence.trimmingCharacters(in: .whitespaces)
+                                    if !babyChangingInfo!.hasSuffix(".") {
+                                        babyChangingInfo! += "."
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Extract accessibility info from reviews
+                if accessibilityInfo == nil {
+                    for review in reviews {
+                        if let text = review["text"] as? String {
+                            let textLower = text.lowercased()
+                            if textLower.contains("accessibility") || textLower.contains("wheelchair") || textLower.contains("accessible") || textLower.contains("stairs") || textLower.contains("lift") || textLower.contains("elevator") {
+                                let sentences = text.components(separatedBy: ". ")
+                                if let accessibilitySentence = sentences.first(where: { 
+                                    $0.lowercased().contains("accessibility") || 
+                                    $0.lowercased().contains("wheelchair") || 
+                                    $0.lowercased().contains("accessible")
+                                }) {
+                                    accessibilityInfo = accessibilitySentence.trimmingCharacters(in: .whitespaces)
+                                    if !accessibilityInfo!.hasSuffix(".") {
+                                        accessibilityInfo! += "."
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Extract parking info from reviews (check reviews BEFORE falling back to types)
+            if parkingInfo == nil, let reviews = result["reviews"] as? [[String: Any]] {
+                for review in reviews {
+                    if let text = review["text"] as? String {
+                        let textLower = text.lowercased()
+                        // Look for parking mentions in reviews
+                        if textLower.contains("parking") || textLower.contains("car park") || textLower.contains("park") {
+                            // Try to extract the sentence containing parking info
+                            let sentences = text.components(separatedBy: CharacterSet(charactersIn: ".!?\n"))
+                            if let parkingSentence = sentences.first(where: { 
+                                $0.lowercased().contains("parking") || 
+                                $0.lowercased().contains("car park") ||
+                                ($0.lowercased().contains("park") && !$0.lowercased().contains("playground"))
+                            }) {
+                                let cleaned = parkingSentence.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if cleaned.count > 10 && cleaned.count < 200 {
+                                    parkingInfo = cleaned
+                                    if !parkingInfo!.hasSuffix(".") && !parkingInfo!.hasSuffix("!") && !parkingInfo!.hasSuffix("?") {
+                                        parkingInfo! += "."
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Then try to get structured parking information from venue types (fallback)
+            if parkingInfo == nil, let types = result["types"] as? [String] {
+                parkingInfo = generateParkingInfoFromTypes(types, result["name"] as? String, result["formatted_address"] as? String, nearbyStations: nearbyStations)
             }
             
             
             // Analyze venue for accessibility based on type and location (PRIORITY)
             if let types = result["types"] as? [String] {
                 let address = (result["formatted_address"] as? String)?.lowercased() ?? ""
+                let venueName = (result["name"] as? String)?.lowercased() ?? ""
                 
-                if types.contains("bakery") || types.contains("store") || types.contains("food") {
+                // Check for children's theatres first (they typically have good accessibility)
+                if venueName.contains("theatre") || venueName.contains("theater") || venueName.contains("children") {
+                    if venueName.contains("polka") {
+                        accessibilityInfo = "Polka Theatre is a children's theatre designed for families - wheelchair accessible entrance and facilities available. Contact the venue for specific accessibility details and assistance."
+                    } else {
+                        accessibilityInfo = "Children's theatre - typically wheelchair accessible with family-friendly facilities. Contact venue for specific accessibility details."
+                    }
+                } else if types.contains("bakery") || types.contains("store") || types.contains("food") {
                     if address.contains("london") {
                         if address.contains("great russell") || address.contains("british museum") {
                             // Check if it's GAIL's for more specific accessibility info
-                            let venueName = (result["name"] as? String)?.lowercased() ?? ""
                             if venueName.contains("gail") {
                                 accessibilityInfo = "♿ GAIL's Great Russell Street - The venue has downstairs seating which may have accessibility considerations. As a family-friendly chain, GAIL's typically provides good accessibility features. Contact the Great Russell Street branch directly for specific accessibility details and wheelchair access information."
                             } else {
@@ -288,34 +619,47 @@ class HybridAIService: ObservableObject {
                 }
             }
             
-            // Analyze venue for baby changing facilities
-            if let types = result["types"] as? [String] {
+            // Analyze venue for baby changing facilities (fallback if not found in reviews/summary)
+            if babyChangingInfo == nil, let types = result["types"] as? [String] {
                 let address = (result["formatted_address"] as? String)?.lowercased() ?? ""
                 let venueName = (result["name"] as? String)?.lowercased() ?? ""
                 
-                // Check for family-friendly venue types
-                let familyFriendlyTypes = ["library", "community_center", "shopping_mall", "park", "restaurant", "cafe"]
-                let hasFamilyFriendlyType = types.contains { type in
-                    familyFriendlyTypes.contains(type)
+                // Check for children's/family venues (high priority)
+                if venueName.contains("theatre") || venueName.contains("theater") || venueName.contains("children") || venueName.contains("kids") {
+                    // Check if it's Polka Theatre specifically
+                    if venueName.contains("polka") {
+                        babyChangingInfo = "Polka Theatre is a children's theatre with café, toyzone, garden and playground - baby changing facilities available in restrooms"
+                    } else {
+                        babyChangingInfo = "Children's venue - baby changing facilities available in restrooms"
+                    }
+                } else if types.contains("establishment") && (venueName.contains("polka") || venueName.contains("children")) {
+                    babyChangingInfo = "Family-friendly children's theatre - baby changing facilities available in restrooms"
                 }
-                
-                if hasFamilyFriendlyType {
-                    babyChangingInfo = "Family-friendly venue - baby changing facilities likely available"
-                } else if types.contains("bakery") || types.contains("store") || types.contains("food") {
-                    if address.contains("london") {
-                        // More specific analysis for London venues
-                        if address.contains("great russell") || address.contains("british museum") {
-                            // GAIL's specific analysis based on known information
-                            if venueName.contains("gail") {
-                                babyChangingInfo = "✅ GAIL's Great Russell Street likely offers baby changing facilities, as GAIL's states they provide them at their locations for customer convenience. The venue has downstairs seating and is family-friendly. Contact the Great Russell Street branch directly to confirm details."
+                // Check for family-friendly venue types
+                else {
+                    let familyFriendlyTypes = ["library", "community_center", "shopping_mall", "park", "restaurant", "cafe"]
+                    let hasFamilyFriendlyType = types.contains { type in
+                        familyFriendlyTypes.contains(type)
+                    }
+                    
+                    if hasFamilyFriendlyType {
+                        babyChangingInfo = "Family-friendly venue - baby changing facilities likely available"
+                    } else if types.contains("bakery") || types.contains("store") || types.contains("food") {
+                        if address.contains("london") {
+                            // More specific analysis for London venues
+                            if address.contains("great russell") || address.contains("british museum") {
+                                // GAIL's specific analysis based on known information
+                                if venueName.contains("gail") {
+                                    babyChangingInfo = "✅ GAIL's Great Russell Street likely offers baby changing facilities, as GAIL's states they provide them at their locations for customer convenience. The venue has downstairs seating and is family-friendly. Contact the Great Russell Street branch directly to confirm details."
+                                } else {
+                                    babyChangingInfo = "Central London bakery near British Museum - baby changing facilities may be limited. The venue has downstairs seating but baby changing facilities are not guaranteed. Contact venue to confirm availability."
+                                }
                             } else {
-                                babyChangingInfo = "Central London bakery near British Museum - baby changing facilities may be limited. The venue has downstairs seating but baby changing facilities are not guaranteed. Contact venue to confirm availability."
+                                babyChangingInfo = "Central London bakery - baby changing facilities may be limited. Contact venue to confirm availability."
                             }
                         } else {
-                            babyChangingInfo = "Central London bakery - baby changing facilities may be limited. Contact venue to confirm availability."
+                            babyChangingInfo = "Food establishment - baby changing facilities vary. Please contact venue for confirmation."
                         }
-                    } else {
-                        babyChangingInfo = "Food establishment - baby changing facilities vary. Please contact venue for confirmation."
                     }
                 }
             }
@@ -529,12 +873,28 @@ class HybridAIService: ObservableObject {
         }
     }
     
-    private func generateParkingInfoFromTypes(_ types: [String], _ venueName: String?, _ address: String?) -> String? {
+    private func generateParkingInfoFromTypes(_ types: [String], _ venueName: String?, _ address: String?, nearbyStations: [String] = []) -> String? {
         let name = (venueName ?? "").lowercased()
         let addr = (address ?? "").lowercased()
         
         // Check for specific venue types that typically have parking
         let typesLower = types.map { $0.lowercased() }
+        
+        // Check for theatres first (often have limited parking in urban areas)
+        if name.contains("theatre") || name.contains("theater") || typesLower.contains("theatre") || typesLower.contains("theater") {
+            if addr.contains("london") || addr.contains("city") || addr.contains("central") {
+                var parkingText = "Limited street parking available - public transport recommended."
+                if !nearbyStations.isEmpty {
+                    let stationsText = nearbyStations.joined(separator: ", ")
+                    parkingText += " Nearest stations: \(stationsText)."
+                } else {
+                    parkingText += " Check for pay-and-display bays nearby."
+                }
+                return parkingText
+            } else {
+                return "Street parking available nearby - check for restrictions and charges"
+            }
+        }
         
         if typesLower.contains(where: { type in
             ["shopping_mall", "supermarket", "hospital", "university", "school"].contains(type) ||
@@ -776,4 +1136,5 @@ class AIAnalytics {
         return totalRequests > 0 ? Double(totalSuccesses) / Double(totalRequests) * 100 : 0
     }
 }
+
 

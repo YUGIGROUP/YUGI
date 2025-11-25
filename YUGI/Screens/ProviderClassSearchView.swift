@@ -12,22 +12,13 @@ struct ProviderClassSearchView: View {
     // Mock data - in a real app this would come from an API
     @State private var classes: [Class] = [
         Class(
-            id: UUID(),
+            id: "mock-class-id-1",
             name: "Baby Sensory Adventure",
             description: "A journey of discovery through light, sound, and touch.",
             category: .baby,
-            provider: Provider(
-                id: UUID(),
-                name: "Sensory World Studio",
-                description: "Specialized in early childhood development",
-                qualifications: ["Early Years Teacher", "Sensory Integration Specialist"],
-                contactEmail: "hello@sensoryworld.com",
-                contactPhone: "+44 20 1234 5678",
-                website: "www.sensoryworld.com",
-                rating: 4.8
-            ),
+            provider: "mock-location-id-1", providerName: "Sensory World Studio",
             location: Location(
-                id: UUID(),
+                id: "mock-location-id-1",
                 name: "Sensory World Studio",
                 address: Address(
                     street: "123 Sensory Street",
@@ -44,7 +35,7 @@ struct ProviderClassSearchView: View {
             schedule: Schedule(
                 startDate: Date().addingTimeInterval(86400),
                 endDate: Date().addingTimeInterval(86400 + 3600),
-                recurringDays: [.monday, .wednesday, .friday],
+                recurringDays: ["monday", "wednesday", "friday"],
                 timeSlots: [
                     Schedule.TimeSlot(startTime: Date().addingTimeInterval(86400), duration: 3600)
                 ],
@@ -55,25 +46,17 @@ struct ProviderClassSearchView: View {
             currentEnrollment: 8,
             averageRating: 4.8,
             ageRange: "0-12 months",
-            isFavorite: false
+            isFavorite: false,
+            isActive: true
         ),
         Class(
-            id: UUID(),
+            id: "mock-class-id-2",
             name: "Toddler Music Time",
             description: "Interactive music and movement for active toddlers.",
             category: .toddler,
-            provider: Provider(
-                id: UUID(),
-                name: "Music Studio London",
-                description: "Music education for young children",
-                qualifications: ["Music Teacher", "Early Childhood Specialist"],
-                contactEmail: "info@musicstudio.com",
-                contactPhone: "+44 20 2345 6789",
-                website: "www.musicstudio.com",
-                rating: 4.6
-            ),
+            provider: "mock-location-id-1", providerName: "Sensory World Studio",
             location: Location(
-                id: UUID(),
+                id: "mock-location-id-1",
                 name: "Music Studio London",
                 address: Address(
                     street: "456 Music Lane",
@@ -90,7 +73,7 @@ struct ProviderClassSearchView: View {
             schedule: Schedule(
                 startDate: Date().addingTimeInterval(172800),
                 endDate: Date().addingTimeInterval(172800 + 3600),
-                recurringDays: [.tuesday, .thursday],
+                recurringDays: ["tuesday", "thursday"],
                 timeSlots: [
                     Schedule.TimeSlot(startTime: Date().addingTimeInterval(172800), duration: 3600)
                 ],
@@ -101,25 +84,17 @@ struct ProviderClassSearchView: View {
             currentEnrollment: 6,
             averageRating: 4.6,
             ageRange: "1-3 years",
-            isFavorite: false
+            isFavorite: false,
+            isActive: true
         ),
         Class(
-            id: UUID(),
+            id: "mock-class-id-3",
             name: "Parent & Baby Yoga",
             description: "Gentle yoga poses and breathing exercises for babies and parents.",
             category: .wellness,
-            provider: Provider(
-                id: UUID(),
-                name: "Wellness Studio",
-                description: "Holistic wellness for families",
-                qualifications: ["Yoga Teacher", "Prenatal Specialist"],
-                contactEmail: "hello@wellnessstudio.com",
-                contactPhone: "+44 20 3456 7890",
-                website: "www.wellnessstudio.com",
-                rating: 4.9
-            ),
+            provider: "mock-location-id-1", providerName: "Sensory World Studio",
             location: Location(
-                id: UUID(),
+                id: "mock-location-id-1",
                 name: "Wellness Studio",
                 address: Address(
                     street: "789 Wellness Way",
@@ -136,7 +111,7 @@ struct ProviderClassSearchView: View {
             schedule: Schedule(
                 startDate: Date().addingTimeInterval(259200),
                 endDate: Date().addingTimeInterval(259200 + 3600),
-                recurringDays: [.saturday],
+                recurringDays: ["saturday"],
                 timeSlots: [
                     Schedule.TimeSlot(startTime: Date().addingTimeInterval(259200), duration: 3600)
                 ],
@@ -147,7 +122,8 @@ struct ProviderClassSearchView: View {
             currentEnrollment: 4,
             averageRating: 4.9,
             ageRange: "0-18 months",
-            isFavorite: false
+            isFavorite: false,
+            isActive: true
         )
     ]
     
@@ -155,13 +131,13 @@ struct ProviderClassSearchView: View {
         classes.filter { classItem in
             let matchesSearch = searchText.isEmpty || 
                 classItem.name.localizedCaseInsensitiveContains(searchText) ||
-                classItem.provider.name.localizedCaseInsensitiveContains(searchText)
+                "Provider \(classItem.provider)".localizedCaseInsensitiveContains(searchText)
             
             let matchesCategory = selectedCategory == nil || classItem.category == selectedCategory
             
             let matchesLocation = selectedLocation.isEmpty || 
-                classItem.location.name.localizedCaseInsensitiveContains(selectedLocation) ||
-                classItem.location.address.city.localizedCaseInsensitiveContains(selectedLocation)
+                classItem.location?.name.localizedCaseInsensitiveContains(selectedLocation) == true ||
+                classItem.location?.address.city.localizedCaseInsensitiveContains(selectedLocation) == true
             
             return matchesSearch && matchesCategory && matchesLocation
         }
@@ -353,11 +329,11 @@ struct ProviderSearchClassCard: View {
             // Provider Info
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("by \(classItem.provider.name)")
+                    Text("by \(classItem.providerName ?? "Provider \(classItem.provider)")")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.yugiGray)
                     
-                    Text(classItem.location.name)
+                    Text(classItem.location?.name ?? "Location TBD")
                         .font(.system(size: 12))
                         .foregroundColor(.yugiGray.opacity(0.7))
                 }
@@ -559,7 +535,7 @@ struct ProviderBookingSheet: View {
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.yugiGray)
                     
-                    Text("by \(classItem.provider.name)")
+                    Text("by \(classItem.providerName ?? "Provider \(classItem.provider)")")
                         .font(.system(size: 16))
                         .foregroundColor(.yugiGray.opacity(0.8))
                     

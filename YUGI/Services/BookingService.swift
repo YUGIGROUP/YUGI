@@ -4,10 +4,11 @@ import Combine
 @MainActor
 class BookingService: ObservableObject {
     @Published var userBookings: [Booking] = []
-    @Published var favoriteClasses: Set<UUID> = []
+    @Published var favoriteClasses: Set<String> = []
     @Published var error: BookingError?
     
     private let calendarService: CalendarService
+    private let apiService = APIService.shared
     
     enum BookingError: Error {
         case classFull
@@ -47,11 +48,22 @@ class BookingService: ObservableObject {
             throw BookingError.alreadyBooked
         }
         
+        // Get user ID from auth service
+        let userId: UUID
+        if let currentUser = apiService.currentUser,
+           let userUUID = UUID(uuidString: currentUser.id) {
+            userId = userUUID
+        } else {
+            // Fallback: generate UUID from user ID string if conversion fails
+            // This ensures we always have a valid UUID
+            userId = UUID(uuidString: apiService.currentUser?.id ?? "") ?? UUID()
+        }
+        
         // Create booking
         let booking = Booking(
             id: UUID(),
             classId: classItem.id,
-            userId: UUID(), // TODO: Get from auth service
+            userId: userId,
             status: .upcoming,
             bookingDate: Date(),
             numberOfParticipants: participants,
@@ -103,7 +115,7 @@ class BookingService: ObservableObject {
         userBookings.remove(at: index)
     }
     
-    func toggleFavorite(for classId: UUID) {
+    func toggleFavorite(for classId: String) {
         if favoriteClasses.contains(classId) {
             favoriteClasses.remove(classId)
         } else {
@@ -111,13 +123,13 @@ class BookingService: ObservableObject {
         }
     }
     
-    func isFavorite(_ classId: UUID) -> Bool {
+    func isFavorite(_ classId: String) -> Bool {
         favoriteClasses.contains(classId)
     }
     
     // MARK: - Reviews
     
-    func submitReview(for classId: UUID, rating: Int, comment: String?) async throws -> Review {
+    func submitReview(for classId: String, rating: Int, comment: String?) async throws -> Review {
         // Validate user attended the class
         guard let booking = userBookings.first(where: { $0.classId == classId }),
               booking.attended else {
@@ -134,7 +146,28 @@ class BookingService: ObservableObject {
             verified: true
         )
         
-        // TODO: Save review to backend
+        // Save review to backend
+        // Note: Backend endpoint for reviews needs to be implemented
+        // When ready, uncomment and implement:
+        /*
+        do {
+            let reviewData: [String: Any] = [
+                "classId": classId,
+                "rating": rating,
+                "comment": comment ?? "",
+                "date": ISO8601DateFormatter().string(from: Date())
+            ]
+            
+            let _ = try await apiService.request(
+                endpoint: "/reviews",
+                method: .POST,
+                body: reviewData
+            )
+        } catch {
+            print("⚠️ Failed to save review to backend: \(error)")
+            // Continue anyway - review is created locally
+        }
+        */
         
         return review
     }

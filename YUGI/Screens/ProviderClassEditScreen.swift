@@ -5,12 +5,13 @@ struct ProviderClassEditScreen: View {
     @Environment(\.dismiss) private var dismiss
     @State private var editedClass: ProviderClass
     @State private var isSaving = false
-    @State private var showingLocationPicker = false
     @State private var showingSuccessAlert = false
+    @State private var locationText: String = ""
     
     init(classItem: ProviderClass) {
         self.classItem = classItem
         self._editedClass = State(initialValue: classItem)
+        self._locationText = State(initialValue: classItem.location)
     }
     
     var body: some View {
@@ -48,46 +49,6 @@ struct ProviderClassEditScreen: View {
                     .foregroundColor(Color(hex: "#BC6C5C"))
                     .disabled(isSaving)
                 }
-            }
-            .sheet(isPresented: $showingLocationPicker) {
-                LocationPickerScreen(selectedLocation: Binding(
-                    get: { 
-                        // Convert string to Location object for the picker
-                        Location(
-                            id: UUID(),
-                            name: editedClass.location,
-                            address: Address(
-                                street: "",
-                                city: "",
-                                state: "",
-                                postalCode: "",
-                                country: ""
-                            ),
-                            coordinates: Location.Coordinates(latitude: 0, longitude: 0),
-                            accessibilityNotes: nil,
-                            parkingInfo: nil,
-                            babyChangingFacilities: nil
-                        )
-                    },
-                    set: { newLocation in
-                        // Update the location string from the Location object
-                        editedClass = ProviderClass(
-                            id: editedClass.id,
-                            name: editedClass.name,
-                            description: editedClass.description,
-                            category: editedClass.category,
-                            price: editedClass.price,
-                            isFree: editedClass.isFree,
-                            maxCapacity: editedClass.maxCapacity,
-                            currentBookings: editedClass.currentBookings,
-                            isPublished: editedClass.isPublished,
-                            status: editedClass.status,
-                            location: newLocation?.name ?? editedClass.location,
-                            nextSession: editedClass.nextSession,
-                            createdAt: editedClass.createdAt
-                        )
-                    }
-                ))
             }
             .alert("Changes Saved", isPresented: $showingSuccessAlert) {
                 Button("OK") {
@@ -320,31 +281,28 @@ struct ProviderClassEditScreen: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.yugiGray)
                 
-                Button {
-                    showingLocationPicker = true
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(editedClass.location)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
-                    }
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                YUGITextField(
+                    text: $locationText,
+                    placeholder: "Enter venue location"
+                )
+                .onChange(of: locationText) { oldValue, newValue in
+                    // Update the editedClass with new location
+                    editedClass = ProviderClass(
+                        id: editedClass.id,
+                        name: editedClass.name,
+                        description: editedClass.description,
+                        category: editedClass.category,
+                        price: editedClass.price,
+                        isFree: editedClass.isFree,
+                        maxCapacity: editedClass.maxCapacity,
+                        currentBookings: editedClass.currentBookings,
+                        isPublished: editedClass.isPublished,
+                        status: editedClass.status,
+                        location: newValue,
+                        nextSession: editedClass.nextSession,
+                        createdAt: editedClass.createdAt
                     )
                 }
-                .buttonStyle(.plain)
             }
         }
     }

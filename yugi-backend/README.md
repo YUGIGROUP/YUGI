@@ -191,7 +191,7 @@ This project is licensed under the ISC License.
 
 ## 🆘 Support
 
-For support, email support@yugi-app.com or create an issue in the repository.
+For support, email info@yugiapp.ai or create an issue in the repository.
 
 ---
 

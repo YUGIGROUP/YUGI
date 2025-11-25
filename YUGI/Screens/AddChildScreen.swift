@@ -246,10 +246,10 @@ struct AddChildScreen: View {
         
         // Create or update child with a unique ID
         let child = Child(
-            id: childToEdit?.id ?? UUID().uuidString,
-            name: childName.trimmingCharacters(in: .whitespacesAndNewlines),
-            age: age,
-            dateOfBirth: dateOfBirth
+            childId: childToEdit?.id ?? UUID().uuidString,
+            childName: childName.trimmingCharacters(in: .whitespacesAndNewlines),
+            childAge: age,
+            childDateOfBirth: dateOfBirth
         )
         
         // Save and dismiss

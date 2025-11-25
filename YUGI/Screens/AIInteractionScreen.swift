@@ -93,14 +93,14 @@ class AIViewModel: ObservableObject {
         
         do {
             // Create system message
-            let systemMessage = OpenAIService.Message(
+            let systemMessage = OpenAIService.OpenAIMessage(
                 role: "system",
                 content: AppConfig.aiSystemPrompt
             )
             
             // Convert conversation history to OpenAI format
             let historyMessages = messages.map { message in
-                OpenAIService.Message(
+                OpenAIService.OpenAIMessage(
                     role: message.isUser ? "user" : "assistant",
                     content: message.content
                 )

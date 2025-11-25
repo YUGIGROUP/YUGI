@@ -26,9 +26,32 @@ enum ClassCategory: String, Codable, CaseIterable {
     
     var iconName: String {
         switch self {
-        case .baby: return "baby"
+        case .baby: return "figure.child.circle"
         case .toddler: return "figure.child"
         case .wellness: return "heart.fill"
         }
+    }
+}
+
+// MARK: - Codable (case-insensitive decode, capitalized encode)
+extension ClassCategory {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let raw = try container.decode(String.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        switch raw.lowercased() {
+        case "baby":
+            self = .baby
+        case "toddler":
+            self = .toddler
+        case "wellness":
+            self = .wellness
+        default:
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid ClassCategory value: \(raw)")
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.rawValue) // Always capitalized first letter per rawValue
     }
 } 

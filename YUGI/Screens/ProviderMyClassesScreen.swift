@@ -10,6 +10,9 @@ struct ProviderMyClassesScreen: View {
     @State private var showingCancelClass = false
     @State private var showingDeleteClass = false
     @State private var selectedClass: ProviderClass?
+    @State private var showingCancelSuccess = false
+    @State private var showingCancelError = false
+    @State private var cancelErrorMessage = ""
     
     enum ClassFilter: String, CaseIterable {
         case all = "All"
@@ -48,7 +51,13 @@ struct ProviderMyClassesScreen: View {
                 Button("Yes, Cancel Class", role: .destructive) {
                     if let selectedClass = selectedClass {
                         Task {
-                            await viewModel.cancelClass(selectedClass)
+                            let success = await viewModel.cancelClass(selectedClass)
+                            if success {
+                                showingCancelSuccess = true
+                            } else {
+                                cancelErrorMessage = viewModel.lastCancelError ?? "Failed to cancel class. Please try again."
+                                showingCancelError = true
+                            }
                         }
                     }
                 }
@@ -70,6 +79,18 @@ struct ProviderMyClassesScreen: View {
                 if let selectedClass = selectedClass {
                     Text("Are you sure you want to delete '\(selectedClass.name)'? This action cannot be undone.")
                 }
+            }
+            .alert("Class Cancelled", isPresented: $showingCancelSuccess) {
+                Button("OK") { }
+            } message: {
+                if let selectedClass = selectedClass {
+                    Text("'\(selectedClass.name)' has been cancelled successfully.")
+                }
+            }
+            .alert("Cancellation Failed", isPresented: $showingCancelError) {
+                Button("OK") { }
+            } message: {
+                Text(cancelErrorMessage.isEmpty ? "Failed to cancel class. Please try again." : cancelErrorMessage)
             }
             .onAppear {
                 print("📱 ProviderMyClassesScreen: Screen appeared")
@@ -364,6 +385,7 @@ class ProviderMyClassesViewModel: ObservableObject {
     @Published var classes: [ProviderClass] = []
     @Published var isLoading = false
     var cancellables = Set<AnyCancellable>()
+    var lastCancelError: String?
     
     private let apiService = APIService.shared
     private let newClassStorage = NewClassStorage.shared
@@ -398,7 +420,16 @@ class ProviderMyClassesViewModel: ObservableObject {
             
             // Convert API classes to ProviderClass format
             let apiClasses = response.data.map { classData in
-                ProviderClass(
+                // Determine status based on isActive field
+                let status: ClassStatus
+                if let isActive = classData.isActive, !isActive {
+                    status = .cancelled
+                } else {
+                    // Default to upcoming for active classes
+                    status = .upcoming
+                }
+                
+                return ProviderClass(
                     id: classData.id,
                     name: classData.name,
                     description: classData.description,
@@ -408,7 +439,7 @@ class ProviderMyClassesViewModel: ObservableObject {
                     maxCapacity: classData.maxCapacity,
                     currentBookings: classData.currentEnrollment,
                     isPublished: true, // Assuming published if it's in the API response
-                    status: ClassStatus.upcoming, // Default status
+                    status: status,
                     location: classData.location?.name ?? "Location TBD",
                     nextSession: classData.schedule.startDate,
                     createdAt: Date() // Default to current date since it's not in the model
@@ -518,6 +549,7 @@ class ProviderMyClassesViewModel: ObservableObject {
     func filteredClasses(_ filter: ProviderMyClassesScreen.ClassFilter) -> [ProviderClass] {
         switch filter {
         case .all:
+            // Include all classes including cancelled ones
             return classes
         case .upcoming:
             return classes.filter { $0.status == ClassStatus.upcoming }
@@ -526,8 +558,9 @@ class ProviderMyClassesViewModel: ObservableObject {
         }
     }
     
-    func cancelClass(_ classItem: ProviderClass) async {
+    func cancelClass(_ classItem: ProviderClass) async -> Bool {
         print("Cancelling class: \(classItem.name)")
+        lastCancelError = nil
         
         let apiService = APIService.shared
         
@@ -553,48 +586,38 @@ class ProviderMyClassesViewModel: ObservableObject {
                     .store(in: &cancellables)
             }
             
-            // Reload classes to get updated data from backend
-            await loadClasses()
-        } catch {
-            print("❌ Failed to cancel class: \(error)")
-            // Update local state even if API call fails
-            if let index = classes.firstIndex(where: { $0.id == classItem.id }) {
-                classes[index].status = ClassStatus.cancelled
-            }
-        }
+            // Find all bookings for this class and cancel them
+            let bookingsToCancel = SharedBookingService.shared.bookings.filter { $0.classId == classItem.id && $0.status == .upcoming }
+            print("Found \(bookingsToCancel.count) bookings to cancel for class \(classItem.name)")
 
-        // Find all bookings for this class
-        let bookingsToCancel = SharedBookingService.shared.bookings.filter { $0.classId == classItem.id && $0.status == .upcoming }
-        print("Found \(bookingsToCancel.count) bookings to cancel for class \(classItem.name)")
+            for booking in bookingsToCancel {
+                // Update booking status
+                if let idx = SharedBookingService.shared.bookings.firstIndex(where: { $0.id == booking.id }) {
+                    SharedBookingService.shared.bookings[idx].status = .cancelled
+                }
+                if let enhanced = SharedBookingService.shared.enhancedBookings[booking.id] {
+                    var updatedBooking = enhanced.booking
+                    updatedBooking.status = .cancelled
+                    SharedBookingService.shared.enhancedBookings[booking.id] = EnhancedBooking(booking: updatedBooking, classInfo: enhanced.classInfo)
+                }
 
-        for booking in bookingsToCancel {
-            // Update booking status
-            if let idx = SharedBookingService.shared.bookings.firstIndex(where: { $0.id == booking.id }) {
-                SharedBookingService.shared.bookings[idx].status = .cancelled
-            }
-            if let enhanced = SharedBookingService.shared.enhancedBookings[booking.id] {
-                var updatedBooking = enhanced.booking
-                updatedBooking.status = .cancelled
-                SharedBookingService.shared.enhancedBookings[booking.id] = EnhancedBooking(booking: updatedBooking, classInfo: enhanced.classInfo)
-            }
+                // Process refund immediately
+                await processRefund(for: booking, classItem: classItem)
 
-            // Process refund immediately
-            await processRefund(for: booking, classItem: classItem)
+                // Send in-app notification to parent
+                let notification = UserNotification(
+                    title: "Class Cancelled",
+                    message: "Your booking for '\(classItem.name)' has been cancelled by the provider. You will receive a full refund.",
+                    type: .booking,
+                    actionType: .viewBooking,
+                    actionData: ["bookingId": booking.id.uuidString]
+                )
+                NotificationService.shared.addNotification(notification)
 
-            // Send in-app notification to parent
-            let notification = UserNotification(
-                title: "Class Cancelled",
-                message: "Your booking for '\(classItem.name)' has been cancelled by the provider. You will receive a full refund.",
-                type: .booking,
-                actionType: .viewBooking,
-                actionData: ["bookingId": booking.id.uuidString]
-            )
-            NotificationService.shared.addNotification(notification)
-
-            // Simulate sending email to parent (since we don't have email lookup)
-            print("📧 Simulated sending cancellation email to userId: \(booking.userId)")
-            let subject = "Class Cancellation Notice - \(classItem.name)"
-            let body = """
+                // Simulate sending email to parent (since we don't have email lookup)
+                print("📧 Simulated sending cancellation email to userId: \(booking.userId)")
+                let subject = "Class Cancellation Notice - \(classItem.name)"
+                let body = """
 Dear Parent,
 
 We regret to inform you that your upcoming class '\(classItem.name)' has been cancelled.
@@ -622,9 +645,24 @@ If you have any questions, please contact us.
 Best regards,
 YUGI Team
 """
-            print("Subject: \(subject)\nBody:\n\(body)")
+                print("Subject: \(subject)\nBody:\n\(body)")
+            }
+            SharedBookingService.shared.saveBookings()
+            
+            // Reload classes to get updated data from backend
+            await loadClasses()
+            return true
+        } catch {
+            print("❌ Failed to cancel class: \(error)")
+            lastCancelError = error.localizedDescription
+            // Update local state even if API call fails
+            if let index = classes.firstIndex(where: { $0.id == classItem.id }) {
+                var updatedClass = classes[index]
+                updatedClass.status = ClassStatus.cancelled
+                classes[index] = updatedClass
+            }
+            return false
         }
-        SharedBookingService.shared.saveBookings()
     }
     
     private func processRefund(for booking: Booking, classItem: ProviderClass) async {
@@ -799,7 +837,8 @@ YUGI Team
                 currentEnrollment: 1,
                 averageRating: 4.5,
                 ageRange: "0-2 years",
-                isFavorite: false
+                isFavorite: false,
+                isActive: true
             )
             
             let enhancedBooking = EnhancedBooking(booking: booking, classInfo: mockClass)

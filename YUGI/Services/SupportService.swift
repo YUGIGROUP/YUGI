@@ -67,13 +67,13 @@ class SupportService: ObservableObject {
                     SupportMessage(
                         category: .booking,
                         message: "I'm having trouble booking a class for my child",
-                        userEmail: "user@example.com",
+                        userEmail: "info@yugiapp.ai",
                         userName: "John Doe"
                     ),
                     SupportMessage(
                         category: .payment,
                         message: "My payment was declined, can you help?",
-                        userEmail: "user@example.com",
+                        userEmail: "info@yugiapp.ai",
                         userName: "John Doe"
                     )
                 ]
@@ -93,25 +93,25 @@ class SupportService: ObservableObject {
                     SupportMessage(
                         category: .general,
                         message: "I can't find the class I'm looking for",
-                        userEmail: "parent1@example.com",
+                        userEmail: "info@yugiapp.ai",
                         userName: "Sarah Johnson"
                     ),
                     SupportMessage(
                         category: .technical,
                         message: "The app keeps crashing when I try to book",
-                        userEmail: "parent2@example.com",
+                        userEmail: "info@yugiapp.ai",
                         userName: "Mike Smith"
                     ),
                     SupportMessage(
                         category: .booking,
                         message: "I need to cancel my booking for tomorrow",
-                        userEmail: "parent3@example.com",
+                        userEmail: "info@yugiapp.ai",
                         userName: "Emma Wilson"
                     ),
                     SupportMessage(
                         category: .payment,
                         message: "I was charged twice for the same class",
-                        userEmail: "parent4@example.com",
+                        userEmail: "info@yugiapp.ai",
                         userName: "David Brown"
                     )
                 ]

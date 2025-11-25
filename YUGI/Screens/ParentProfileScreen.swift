@@ -4,7 +4,7 @@ struct ParentProfileScreen: View {
     let parentName: String
     @Environment(\.dismiss) private var dismiss
     @State private var fullName = "Sarah Johnson"
-    @State private var email = "sarah.johnson@email.com"
+    @State private var email = "info@yugiapp.ai"
     @State private var phoneNumber = "+44 7123 456789"
     @State private var showingEditProfile = false
     @State private var showingNotifications = false

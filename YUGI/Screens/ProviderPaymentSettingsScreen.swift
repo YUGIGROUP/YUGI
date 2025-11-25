@@ -5,6 +5,7 @@ struct ProviderPaymentSettingsScreen: View {
     @State private var showingAddBankAccount = false
     @State private var showingAddPaymentMethod = false
     @State private var showingPayoutHistory = false
+    @State private var showingPaymentMethods = false
     @State private var bankAccounts: [BankAccount] = []
     
     var body: some View {
@@ -47,6 +48,7 @@ struct ProviderPaymentSettingsScreen: View {
                 PayoutsTab(
                     showingAddBankAccount: $showingAddBankAccount,
                     showingPayoutHistory: $showingPayoutHistory,
+                    showingPaymentMethods: $showingPaymentMethods,
                     bankAccounts: $bankAccounts
                 )
             }
@@ -59,6 +61,9 @@ struct ProviderPaymentSettingsScreen: View {
             .sheet(isPresented: $showingPayoutHistory) {
                 PayoutHistoryScreen()
             }
+            .sheet(isPresented: $showingPaymentMethods) {
+                PaymentMethodsScreen()
+            }
         }
     }
 }
@@ -68,6 +73,7 @@ struct ProviderPaymentSettingsScreen: View {
 struct PayoutsTab: View {
     @Binding var showingAddBankAccount: Bool
     @Binding var showingPayoutHistory: Bool
+    @Binding var showingPaymentMethods: Bool
     @Binding var bankAccounts: [BankAccount]
     @State private var availableBalance: Double = 0.0
     @State private var pendingPayouts: Double = 0.0
@@ -325,6 +331,15 @@ struct PayoutsTab: View {
                             isEnabled: true
                         ) {
                             showingPayoutHistory = true
+                        }
+                        
+                        QuickActionRow(
+                            title: "Manage Payment Methods",
+                            subtitle: "Add, edit, or remove payment cards",
+                            icon: "creditcard.fill",
+                            isEnabled: true
+                        ) {
+                            showingPaymentMethods = true
                         }
                     }
                 }

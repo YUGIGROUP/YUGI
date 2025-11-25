@@ -868,17 +868,24 @@ struct BookingDetailRow: View {
     let icon: String
     let text: String
     
+    // Check if this is an address row (icon is mappin.circle)
+    private var isAddress: Bool {
+        icon == "mappin.circle"
+    }
+    
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(Color(hex: "#BC6C5C"))
                 .frame(width: 20)
+                .padding(.top, 2) // Align icon with first line of text
             
             Text(text)
                 .font(.system(size: 14, weight: .regular))
                 .foregroundColor(Color(hex: "#BC6C5C").opacity(0.8))
-                .lineLimit(2)
+                .lineLimit(isAddress ? nil : 2) // No limit for addresses, 2 lines for others
+                .fixedSize(horizontal: false, vertical: true)
             
             Spacer()
         }

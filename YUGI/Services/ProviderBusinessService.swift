@@ -33,20 +33,39 @@ class ProviderBusinessService: ObservableObject {
         self.businessInfo = BusinessInfo()
         self.contactInfo = ContactInfo()
         
+        print("🔍 ProviderBusinessService - Initializing...")
+        
         // Load saved data
         loadBusinessData()
+        
+        print("🔍 ProviderBusinessService - Initialized with bio: '\(businessInfo.description)', services: '\(businessInfo.services)'")
     }
     
     // MARK: - Data Management
     
     func loadBusinessData() {
-        // Load from UserDefaults or other storage
+        // First, check if we should use current user data instead of cached data
+        if let currentUser = apiService.currentUser {
+            // If we have a current user, prioritize their data
+            updateFromUserData(currentUser)
+            saveBusinessData()
+            return
+        }
+        
+        // Load from UserDefaults or other storage (fallback)
         if let savedBusinessName = UserDefaults.standard.string(forKey: "providerBusinessName") {
             businessInfo.name = savedBusinessName
         }
         
         if let savedDescription = UserDefaults.standard.string(forKey: "providerBusinessDescription") {
             businessInfo.description = savedDescription
+        }
+        
+        if let savedServices = UserDefaults.standard.string(forKey: "providerBusinessServices") {
+            businessInfo.services = savedServices
+            print("🔍 ProviderBusinessService - Loaded services from UserDefaults: '\(savedServices)'")
+        } else {
+            print("🔍 ProviderBusinessService - No services found in UserDefaults")
         }
         
         if let savedEmail = UserDefaults.standard.string(forKey: "providerContactEmail") {
@@ -84,6 +103,7 @@ class ProviderBusinessService: ObservableObject {
     func saveBusinessData() {
         UserDefaults.standard.set(businessInfo.name, forKey: "providerBusinessName")
         UserDefaults.standard.set(businessInfo.description, forKey: "providerBusinessDescription")
+        UserDefaults.standard.set(businessInfo.services, forKey: "providerBusinessServices")
         UserDefaults.standard.set(contactInfo.email, forKey: "providerContactEmail")
         UserDefaults.standard.set(contactInfo.phone, forKey: "providerContactPhone")
         UserDefaults.standard.set(contactInfo.website, forKey: "providerWebsite")
@@ -112,15 +132,28 @@ class ProviderBusinessService: ObservableObject {
     // MARK: - API Integration
     
     func updateBusinessInfoOnServer() {
-        guard apiService.isAuthenticated else { return }
+        print("🔍 ProviderBusinessService - updateBusinessInfoOnServer called")
+        print("🔍 ProviderBusinessService - isAuthenticated: \(apiService.isAuthenticated)")
+        
+        guard apiService.isAuthenticated else { 
+            print("🔍 ProviderBusinessService - Not authenticated, returning")
+            return 
+        }
         
         isLoading = true
         errorMessage = nil
         
+        // Debug: Print what we're sending
+        print("🔍 ProviderBusinessService - bio: '\(businessInfo.description)'")
+        print("🔍 ProviderBusinessService - services: '\(businessInfo.services)'")
+        print("🔍 ProviderBusinessService - businessName: '\(businessInfo.name)'")
+        
         apiService.updateBusinessInfo(
             businessName: businessInfo.name.isEmpty ? nil : businessInfo.name,
             businessAddress: contactInfo.address.isEmpty ? nil : contactInfo.address,
-            phoneNumber: contactInfo.phone.isEmpty ? nil : contactInfo.phone
+            phoneNumber: contactInfo.phone.isEmpty ? nil : contactInfo.phone,
+            bio: businessInfo.description.isEmpty ? nil : businessInfo.description,
+            services: businessInfo.services.isEmpty ? nil : businessInfo.services
         )
         .receive(on: DispatchQueue.main)
         .sink(
@@ -180,8 +213,14 @@ class ProviderBusinessService: ObservableObject {
         
         contactInfo.email = user.email
         
-        // Note: servicesDescription is not part of the User model,
-        // so we keep the local description
+        // Update bio and services from user data
+        if let bio = user.bio {
+            businessInfo.description = bio
+        }
+        
+        if let services = user.services {
+            businessInfo.services = services
+        }
     }
     
     // MARK: - Validation
@@ -194,7 +233,11 @@ class ProviderBusinessService: ObservableObject {
         }
         
         if businessInfo.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            errors.append("Business description is required")
+            errors.append("Bio is required")
+        }
+        
+        if businessInfo.services.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            errors.append("Services description is required")
         }
         
         if contactInfo.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -229,6 +272,7 @@ class ProviderBusinessService: ObservableObject {
         // Clear UserDefaults
         UserDefaults.standard.removeObject(forKey: "providerBusinessName")
         UserDefaults.standard.removeObject(forKey: "providerBusinessDescription")
+        UserDefaults.standard.removeObject(forKey: "providerBusinessServices")
         UserDefaults.standard.removeObject(forKey: "providerContactEmail")
         UserDefaults.standard.removeObject(forKey: "providerContactPhone")
         UserDefaults.standard.removeObject(forKey: "providerWebsite")

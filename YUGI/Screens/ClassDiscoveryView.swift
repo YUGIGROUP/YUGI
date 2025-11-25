@@ -54,7 +54,7 @@ struct YUGISearchBar: View {
 
 struct ClassDiscoveryView: View {
     @StateObject private var viewModel: ClassDiscoveryViewModel
-    @StateObject private var aiService = AIVenueDataService()
+    @StateObject private var aiService = HybridAIService()
     @State private var selectedClassForBooking: Class?
     @State private var showingBookingSheet = false
     @State private var showingAIAnalysis = false
@@ -80,29 +80,50 @@ struct ClassDiscoveryView: View {
                 classListSection
             }
         }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .sheet(isPresented: $showingBookingSheet) {
-                if let class_ = selectedClassForBooking {
-                    BookingView(classItem: class_, viewModel: viewModel)
-                } else {
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .sheet(isPresented: $showingBookingSheet) {
+            if let class_ = selectedClassForBooking {
+                BookingView(classItem: class_, viewModel: viewModel)
+                    .onAppear {
+                        print("🔍 ClassDiscoveryView: Presenting BookingView for class: \(class_.name)")
+                    }
+            } else {
+                VStack {
                     Text("Error: No class selected")
                         .foregroundColor(.red)
+                        .font(.headline)
+                    Text("Please try again")
+                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                    Button("Dismiss") {
+                        showingBookingSheet = false
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                }
+                .padding()
+                .onAppear {
+                    print("❌ ClassDiscoveryView: selectedClassForBooking is nil when presenting sheet!")
                 }
             }
-            .sheet(isPresented: $showingAIAnalysis) {
-                if let class_ = selectedClassForAnalysis {
-                    VStack {
-                        Text("AI Venue Check for: \(class_.name)")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                            .padding()
-                        
+        }
+        .sheet(isPresented: $showingAIAnalysis) {
+            if let class_ = selectedClassForAnalysis {
+                VStack {
+                    Text("AI Venue Check for: \(class_.name)")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                        .padding()
+                    
+                    if let location = class_.location {
                         AIAnalysisView(
                             aiService: aiService, 
-                            location: class_.location,
+                            location: location,
                             onUpdateLocation: { facilities in
                                 // Update the class with AI data
                                 updateClassWithAIData(class_, facilities: facilities)
@@ -129,14 +150,19 @@ struct ClassDiscoveryView: View {
                                 }
                             }
                         )
+                    } else {
+                        Text("Location information not available for AI analysis")
+                            .foregroundColor(.orange)
+                            .padding()
                     }
-                } else {
-                    Text("Error: No class selected for analysis")
-                        .foregroundColor(.red)
-                        .padding()
                 }
+            } else {
+                Text("Error: No class selected for analysis")
+                    .foregroundColor(.red)
+                    .padding()
             }
-            .onAppear {
+        }
+        .onAppear {
                 print("ClassDiscoveryView appeared")
                 viewModel.startLocationUpdates()
                 
@@ -178,10 +204,10 @@ struct ClassDiscoveryView: View {
         if let index = viewModel.classes.firstIndex(where: { $0.id == class_.id }) {
             // Create updated location with AI data
             let updatedLocation = Location(
-                id: class_.location.id,
-                name: class_.location.name,
-                address: class_.location.address,
-                coordinates: class_.location.coordinates,
+                id: class_.location?.id ?? "unknown-location",
+                name: class_.location?.name ?? "Location TBD",
+                address: class_.location?.address ?? Address(street: "TBD", city: "TBD", state: "TBD", postalCode: "TBD", country: "TBD"),
+                coordinates: class_.location?.coordinates ?? Location.Coordinates(latitude: 51.5074, longitude: -0.1278),
                 accessibilityNotes: facilities.accessibilityNotes,
                 parkingInfo: facilities.parkingInfo,
                 babyChangingFacilities: facilities.babyChangingFacilities
@@ -193,7 +219,7 @@ struct ClassDiscoveryView: View {
                 name: class_.name,
                 description: class_.description,
                 category: class_.category,
-                provider: class_.provider,
+                provider: class_.provider, providerName: class_.providerName,
                 location: updatedLocation,
                 schedule: class_.schedule,
                 pricing: class_.pricing,
@@ -201,7 +227,8 @@ struct ClassDiscoveryView: View {
                 currentEnrollment: class_.currentEnrollment,
                 averageRating: class_.averageRating,
                 ageRange: class_.ageRange,
-                isFavorite: class_.isFavorite
+                isFavorite: class_.isFavorite,
+                isActive: class_.isActive
             )
             
             // Update the class in the view model using the index
@@ -246,13 +273,12 @@ struct ClassDiscoveryView: View {
                 ForEach(Array(viewModel.filteredClasses.enumerated()), id: \.element.id) { index, classItem in
                     ClassCard(
                         classItem: classItem,
-                        onFavorite: { selectedClass in
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                viewModel.toggleFavorite(for: selectedClass.id)
-                            }
-                        },
                         onBook: { selectedClass in
                             print("Book Now button pressed for class: \(selectedClass.name)")
+                            
+                            // Set the selected class first
+                            selectedClassForBooking = selectedClass
+                            print("🔍 ClassDiscoveryView: selectedClassForBooking set to: \(selectedClass.name)")
                             
                             // FIX: Ensure user is authenticated before showing booking sheet
                             if !apiService.isAuthenticated {
@@ -262,12 +288,12 @@ struct ClassDiscoveryView: View {
                                 // Wait for authentication to complete before showing booking sheet
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     print("🔐 ClassDiscoveryView: Authentication complete, showing booking sheet...")
-                                    selectedClassForBooking = selectedClass
+                                    print("🔍 ClassDiscoveryView: selectedClassForBooking before showing sheet: \(selectedClassForBooking?.name ?? "nil")")
                                     showingBookingSheet = true
                                 }
                             } else {
                                 print("🔐 ClassDiscoveryView: User already authenticated, showing booking sheet...")
-                                selectedClassForBooking = selectedClass
+                                print("🔍 ClassDiscoveryView: selectedClassForBooking before showing sheet: \(selectedClassForBooking?.name ?? "nil")")
                                 showingBookingSheet = true
                             }
                         },
@@ -299,7 +325,6 @@ struct ClassDiscoveryView: View {
 
 struct ClassList: View {
     let classes: [Class]
-    let onFavorite: (Class) -> Void
     let onBook: (Class) -> Void
     let onAnalyze: (Class) -> Void
     
@@ -309,7 +334,6 @@ struct ClassList: View {
                 ForEach(classes) { classItem in
                     ClassCard(
                         classItem: classItem,
-                        onFavorite: onFavorite,
                         onBook: onBook,
                         onAnalyze: onAnalyze
                     )
@@ -322,7 +346,6 @@ struct ClassList: View {
 
 struct ClassCard: View {
     let classItem: Class
-    let onFavorite: (Class) -> Void
     let onBook: (Class) -> Void
     let onAnalyze: (Class) -> Void
     @State private var showingProviderProfile = false
@@ -336,7 +359,7 @@ struct ClassCard: View {
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         .sheet(isPresented: $showingProviderProfile) {
-            ProviderProfilePopup(provider: classItem.provider)
+            ProviderProfilePopup(providerId: classItem.provider)
         }
     }
     
@@ -363,17 +386,6 @@ struct ClassCard: View {
                     }
                 )
             
-            Button(action: {
-                onFavorite(classItem)
-            }) {
-                Image(systemName: classItem.isFavorite ? "heart.fill" : "heart")
-                    .font(.system(size: 18))
-                    .foregroundColor(classItem.isFavorite ? .red : .white)
-                    .padding(8)
-                    .background(Color.black.opacity(0.3))
-                    .clipShape(Circle())
-            }
-            .padding(12)
         }
     }
     
@@ -389,7 +401,7 @@ struct ClassCard: View {
     private var providerAndRatingSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text(classItem.provider.name)
+                Text(classItem.providerName ?? "Provider \(classItem.provider)")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.yugiGray)
                 
@@ -492,8 +504,8 @@ struct ClassCard: View {
     }
     
     private func openInAppleMaps() {
-        let coordinates = classItem.location.coordinates
-        let venueName = classItem.location.name
+        let coordinates = classItem.location?.coordinates ?? Location.Coordinates(latitude: 51.5074, longitude: -0.1278)
+        let venueName = classItem.location?.name ?? "Location TBD"
         
         print("🗺️ Attempting to open Apple Maps for venue: \(venueName)")
         print("🗺️ Coordinates: \(coordinates.latitude), \(coordinates.longitude)")
@@ -538,95 +550,22 @@ struct ClassCard: View {
     }
 }
 
-struct ClassCardHeader: View {
-    let classItem: Class
-    let onFavorite: (Class) -> Void
-    
-    private var favoriteIconName: String {
-        classItem.isFavorite ? "heart.fill" : "heart"
-    }
-    
-    private var favoriteIconColor: Color {
-        classItem.isFavorite ? .red : .yugiGray.opacity(0.6)
-    }
-    
-    private var priceText: String {
-        let number = NSDecimalNumber(decimal: classItem.pricing.amount)
-        return "£\(number.intValue)"
-    }
-    
-
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Title and Favorite Button
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(classItem.name)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.yugiGray)
-                        .lineLimit(2)
-                    
-                    Text(classItem.provider.name)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.7))
-                }
-                
-                Spacer()
-                
-                Button {
-                    onFavorite(classItem)
-                } label: {
-                    Image(systemName: favoriteIconName)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(favoriteIconColor)
-                        .frame(width: 32, height: 32)
-                        .background(
-                            Circle()
-                                .fill(Color.white.opacity(0.1))
-                        )
-                }
-            }
-            
-            // Price Row
-            HStack {
-                Spacer()
-                
-                // Price
-                Text(priceText)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
-                Text("/session")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.yugiGray.opacity(0.7))
-            }
-        }
-        .padding(20)
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [Color.white, Color.white.opacity(0.95)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-    }
-}
 
 struct ClassCardDetails: View {
     let classItem: Class
     
     private var parkingText: String {
-        classItem.location.parkingInfo ?? "No parking info"
+        classItem.location?.parkingInfo ?? "No parking info"
     }
     
     private var babyChangingText: String {
-        classItem.location.babyChangingFacilities ?? "No changing facilities"
+        classItem.location?.babyChangingFacilities ?? "No changing facilities"
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             ClassDetailRow(icon: "calendar", text: formatSchedule(classItem.schedule))
-            ClassDetailRow(icon: "mappin.circle", text: classItem.location.address.formatted)
+            ClassDetailRow(icon: "mappin.circle", text: classItem.location?.address.formatted ?? "Location TBD")
             
 
             
@@ -639,13 +578,14 @@ struct ClassCardDetails: View {
     }
     
     private func formatSchedule(_ schedule: Schedule) -> String {
-        let days = schedule.recurringDays.map { $0.shortName }.joined(separator: ", ")
+        let days = schedule.formattedDays
         guard let timeSlot = schedule.timeSlots.first else {
             return days.isEmpty ? "" : days
         }
         let formatter = DateFormatter()
+        formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        return "\(days) at \(formatter.string(from: timeSlot.startTime))"
+        return "\(days) \(formatter.string(from: timeSlot.startTime))"
     }
 }
 
@@ -701,17 +641,24 @@ struct ClassDetailRow: View {
     let icon: String
     let text: String
     
+    // Check if this is an address row (icon is mappin.circle)
+    private var isAddress: Bool {
+        icon == "mappin.circle"
+    }
+    
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(Color(hex: "#BC6C5C"))
                 .frame(width: 20)
+                .padding(.top, 2) // Align icon with first line of text
             
             Text(text)
                 .font(.system(size: 14, weight: .regular))
                 .foregroundColor(.yugiGray.opacity(0.8))
-                .lineLimit(1)
+                .lineLimit(isAddress ? nil : 2) // No limit for addresses, 2 lines for others
+                .fixedSize(horizontal: false, vertical: true)
             
             Spacer()
         }

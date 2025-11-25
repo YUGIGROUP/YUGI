@@ -10,7 +10,7 @@ struct ViewHistoryScreen: View {
     @State private var bookings: [Booking] = [
         Booking(
             id: UUID(),
-            classId: UUID(),
+            classId: "mock-class-id-1",
             userId: UUID(),
             status: ClassStatus.completed,
             bookingDate: Date().addingTimeInterval(-86400 * 30), // 30 days ago
@@ -21,7 +21,7 @@ struct ViewHistoryScreen: View {
         ),
         Booking(
             id: UUID(),
-            classId: UUID(),
+            classId: "mock-class-id-1",
             userId: UUID(),
             status: ClassStatus.completed,
             bookingDate: Date().addingTimeInterval(-86400 * 60), // 60 days ago
@@ -32,7 +32,7 @@ struct ViewHistoryScreen: View {
         ),
         Booking(
             id: UUID(),
-            classId: UUID(),
+            classId: "mock-class-id-1",
             userId: UUID(),
             status: ClassStatus.completed,
             bookingDate: Date().addingTimeInterval(-86400 * 90), // 90 days ago
@@ -43,7 +43,7 @@ struct ViewHistoryScreen: View {
         ),
         Booking(
             id: UUID(),
-            classId: UUID(),
+            classId: "mock-class-id-1",
             userId: UUID(),
             status: ClassStatus.cancelled,
             bookingDate: Date().addingTimeInterval(-86400 * 45), // 45 days ago
@@ -54,7 +54,7 @@ struct ViewHistoryScreen: View {
         ),
         Booking(
             id: UUID(),
-            classId: UUID(),
+            classId: "mock-class-id-1",
             userId: UUID(),
             status: ClassStatus.completed,
             bookingDate: Date().addingTimeInterval(-86400 * 120), // 120 days ago
@@ -65,7 +65,7 @@ struct ViewHistoryScreen: View {
         ),
         Booking(
             id: UUID(),
-            classId: UUID(),
+            classId: "mock-class-id-1",
             userId: UUID(),
             status: ClassStatus.completed,
             bookingDate: Date().addingTimeInterval(-86400 * 150), // 150 days ago
@@ -212,7 +212,7 @@ struct ViewHistoryScreen: View {
         // Simulate a booking being completed
         let completedBooking = Booking(
             id: UUID(),
-            classId: UUID(),
+            classId: "mock-class-id-1",
             userId: UUID(),
             status: .completed,
             bookingDate: Date(),

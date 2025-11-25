@@ -151,7 +151,7 @@ struct RefundPolicyScreen: View {
                                 ContactRow(
                                     icon: "envelope",
                                     title: "Email Support",
-                                    subtitle: "support@yugi.com",
+                                    subtitle: "info@yugiapp.ai",
                                     action: {
                                         // Open email
                                     }
