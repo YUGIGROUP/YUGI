@@ -555,9 +555,9 @@ class VenueDataService {
                 return false;
               }
               
-              // Exclude if name suggests it's NOT a station (restaurant, hotel, cafe, etc.)
-              // These should be excluded even if they have transit_station type
-              const nonStationKeywords = ['restaurant', 'hotel', 'cafe', 'café', 'shop', 'store', 'bar', 'pub', 'theatre', 'theater', 'cinema', 'gallery', 'museum', 'library', 'school', 'hospital', 'clinic', 'office', 'building', 'apartment', 'residential'];
+              // Exclude if name suggests it's NOT a station (restaurant, hotel, cafe, fire station, etc.)
+              // These should be excluded even if they have transit_station type and contain "station" in name
+              const nonStationKeywords = ['restaurant', 'hotel', 'cafe', 'café', 'shop', 'store', 'bar', 'pub', 'theatre', 'theater', 'cinema', 'gallery', 'museum', 'library', 'school', 'hospital', 'clinic', 'office', 'building', 'apartment', 'residential', 'fire station'];
               if (nonStationKeywords.some(keyword => nameLower.includes(keyword))) {
                 console.log(`🚇 Excluding '${name}' - has transit_station type but name suggests it's not a station`);
                 return false;

@@ -324,8 +324,8 @@ class HybridAIService: ObservableObject {
                             return nil
                         }
                         
-                        // Exclude if name suggests it's NOT a station (restaurant, hotel, cafe, etc.)
-                        let nonStationKeywords = ["restaurant", "hotel", "cafe", "café", "shop", "store", "bar", "pub", "theatre", "theater", "cinema", "gallery", "museum", "library", "school", "hospital", "clinic", "office", "building", "apartment", "residential"]
+                        // Exclude if name suggests it's NOT a station (restaurant, hotel, cafe, fire station, etc.)
+                        let nonStationKeywords = ["restaurant", "hotel", "cafe", "café", "shop", "store", "bar", "pub", "theatre", "theater", "cinema", "gallery", "museum", "library", "school", "hospital", "clinic", "office", "building", "apartment", "residential", "fire station"]
                         if nonStationKeywords.contains(where: { nameLower.contains($0) }) {
                             print("🚇 Excluding '\(name)' - has transit_station type but name suggests it's not a station")
                             return nil
