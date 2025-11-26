@@ -624,7 +624,7 @@ struct ClassCardDetails: View {
                 ClassDetailRow(icon: "calendar", text: formatSchedule(classItem.schedule))
                 ClassDetailRow(icon: "mappin.circle", text: classItem.location?.address.formatted ?? "Location TBD")
                 ClassDetailRow(icon: "car.fill", text: parkingText)
-                ClassDetailRow(icon: "baby", text: babyChangingText)
+                ClassDetailRow(icon: "person.2.fill", text: babyChangingText)
             }
         }
         .padding(.horizontal, 20)
