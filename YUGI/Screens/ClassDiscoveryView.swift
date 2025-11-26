@@ -553,6 +553,7 @@ struct ClassCard: View {
 
 struct ClassCardDetails: View {
     let classItem: Class
+    @State private var isDescriptionExpanded = false
     
     private var parkingText: String {
         classItem.location?.parkingInfo ?? "No parking info"
@@ -563,14 +564,62 @@ struct ClassCardDetails: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ClassDetailRow(icon: "calendar", text: formatSchedule(classItem.schedule))
-            ClassDetailRow(icon: "mappin.circle", text: classItem.location?.address.formatted ?? "Location TBD")
+        VStack(alignment: .leading, spacing: 16) {
+            // Age Range Badge
+            if !classItem.ageRange.isEmpty && classItem.ageRange != "All ages" {
+                HStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.2.fill")
+                            .font(.system(size: 12))
+                        Text(classItem.ageRange)
+                            .font(.system(size: 13, weight: .medium))
+                    }
+                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(hex: "#BC6C5C").opacity(0.1))
+                    .cornerRadius(8)
+                    
+                    Spacer()
+                }
+            }
             
-
+            // Description with expand/collapse
+            if !classItem.description.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(classItem.description)
+                        .font(.system(size: 14))
+                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .lineLimit(isDescriptionExpanded ? nil : 2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    if classItem.description.count > 100 {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isDescriptionExpanded.toggle()
+                            }
+                        }) {
+                            Text(isDescriptionExpanded ? "Read less" : "Read more")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(Color(hex: "#BC6C5C"))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.bottom, 4)
+            }
             
-            ClassDetailRow(icon: "car.fill", text: parkingText)
-            ClassDetailRow(icon: "baby", text: babyChangingText)
+            // Divider
+            Divider()
+                .background(Color.yugiGray.opacity(0.2))
+            
+            // Class Details
+            VStack(alignment: .leading, spacing: 12) {
+                ClassDetailRow(icon: "calendar", text: formatSchedule(classItem.schedule))
+                ClassDetailRow(icon: "mappin.circle", text: classItem.location?.address.formatted ?? "Location TBD")
+                ClassDetailRow(icon: "car.fill", text: parkingText)
+                ClassDetailRow(icon: "baby", text: babyChangingText)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
