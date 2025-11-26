@@ -555,6 +555,13 @@ class HybridAIService: ObservableObject {
                                     if !parkingInfo!.hasSuffix(".") {
                                         parkingInfo! += "."
                                     }
+                                    // Append nearby stations if available
+                                    if !nearbyStations.isEmpty {
+                                        let stationsText = nearbyStations.joined(separator: ", ")
+                                        if !parkingInfo!.contains("Nearest stations:") {
+                                            parkingInfo! += " Nearest stations: \(stationsText)."
+                                        }
+                                    }
                                     break
                                 }
                             }
@@ -685,13 +692,18 @@ class HybridAIService: ObservableObject {
                 }
                 // Check for family-friendly venue types
                 else {
-                    let familyFriendlyTypes = ["library", "community_center", "shopping_mall", "park", "restaurant", "cafe"]
+                    let familyFriendlyTypes = ["library", "community_center", "shopping_mall", "park", "restaurant", "cafe", "gym", "health"]
                     let hasFamilyFriendlyType = types.contains { type in
                         familyFriendlyTypes.contains(type)
                     }
                     
                     if hasFamilyFriendlyType {
-                        babyChangingInfo = "Family-friendly venue - baby changing facilities likely available"
+                        // For gyms/health venues, check if it's family-friendly
+                        if types.contains("gym") || types.contains("health") {
+                            babyChangingInfo = "Family-friendly venue - baby changing facilities available in restrooms"
+                        } else {
+                            babyChangingInfo = "Family-friendly venue - baby changing facilities likely available"
+                        }
                     } else if types.contains("bakery") || types.contains("store") || types.contains("food") {
                         if address.contains("london") {
                             // More specific analysis for London venues

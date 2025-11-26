@@ -523,52 +523,87 @@ class VenueDataService {
               return false;
             }
             
-            const name = station.name.toLowerCase();
+            const name = station.name;
+            const nameLower = name.toLowerCase();
             const types = station.types || [];
             
-            // FIRST: Check if it's a valid transit/subway/train station type (PRIORITY)
-            // If it has these types, include it even if name contains excluded keywords
-            const stationTypes = ['subway_station', 'train_station', 'transit_station', 'light_rail_station'];
-            const isStationType = types.some(type => stationTypes.some(stType => type.includes(stType)));
+            // FIRST: Check if it's a valid specific transit station type (PRIORITY)
+            // These are the most reliable indicators of actual stations
+            const specificStationTypes = ['subway_station', 'train_station', 'light_rail_station'];
+            const isSpecificStationType = types.some(type => 
+              specificStationTypes.some(stType => type.includes(stType))
+            );
             
-            // If it's a valid station type, include it (only exclude if it's clearly a bus stop)
-            if (isStationType) {
-              // Only exclude if it's a bus stop
+            if (isSpecificStationType) {
+              // It's definitely a station - only exclude if it's clearly a bus stop
               if (types.some(type => type.includes('bus_station') || type.includes('bus_stop'))) {
+                console.log(`🚇 Excluding '${name}' - is a bus stop despite specific station type`);
                 return false;
               }
+              console.log(`🚇 Including '${name}' - has specific station type (subway/train/light_rail)`);
               return true;
+            }
+            
+            // SECOND: Check for generic transit_station type, but be stricter
+            // Exclude places that are clearly not stations (restaurants, hotels, etc.)
+            const isGenericTransitStation = types.some(type => type.includes('transit_station'));
+            
+            if (isGenericTransitStation) {
+              // Exclude if it's a bus stop
+              if (types.some(type => type.includes('bus_station') || type.includes('bus_stop'))) {
+                console.log(`🚇 Excluding '${name}' - is a bus stop`);
+                return false;
+              }
+              
+              // Exclude if name suggests it's NOT a station (restaurant, hotel, cafe, etc.)
+              // These should be excluded even if they have transit_station type
+              const nonStationKeywords = ['restaurant', 'hotel', 'cafe', 'café', 'shop', 'store', 'bar', 'pub', 'theatre', 'theater', 'cinema', 'gallery', 'museum', 'library', 'school', 'hospital', 'clinic', 'office', 'building', 'apartment', 'residential'];
+              if (nonStationKeywords.some(keyword => nameLower.includes(keyword))) {
+                console.log(`🚇 Excluding '${name}' - has transit_station type but name suggests it's not a station`);
+                return false;
+              }
+              
+              // Only include if name also suggests it's a station
+              const nameSuggestsStation = nameLower.includes('station') || nameLower.includes('tube') || 
+                                        nameLower.includes('underground') || nameLower.includes('railway') ||
+                                        nameLower.includes('rail');
+              
+              if (nameSuggestsStation) {
+                console.log(`🚇 Including '${name}' - has transit_station type and name suggests station`);
+                return true;
+              }
+              
+              // If no station indicators in name, exclude it (too risky)
+              console.log(`🚇 Excluding '${name}' - has transit_station type but no station indicators in name`);
+              return false;
             }
             
             // THIRD: Exclude bus stops (check for bus-related types)
             if (types.some(type => type.includes('bus_station') || type.includes('bus_stop'))) {
+              console.log(`🚇 Excluding '${name}' - is a bus stop`);
               return false;
             }
             
-            // FOURTH: Exclude car parks, roads, and other non-station places
+            // FOURTH: Exclude other clearly non-station places
             // Don't exclude "street" because many stations have "Street" in their name (e.g., "High Street Kensington")
-            // Note: restaurant, hotel, cafe already handled above for transit_station type
-            const excludedKeywords = ['car park', 'parking', 'road', 'avenue', 'way', 'lane', 'bus stop', 'bus station', 'fire station', 'theatre', 'theater', 'cinema', 'shop', 'store', 'garden', 'park', '(stop', 'stop e)', 'stop f)', 'stop g)', 'stop h)', 'stop a)', 'stop b)', 'stop c)', 'stop d)'];
-            if (excludedKeywords.some(keyword => name.includes(keyword))) {
+            const excludedKeywords = ['car park', 'parking', 'road', 'avenue', 'way', 'lane', 'fire station', '(stop', 'stop e)', 'stop f)', 'stop g)', 'stop h)', 'stop a)', 'stop b)', 'stop c)', 'stop d)'];
+            if (excludedKeywords.some(keyword => nameLower.includes(keyword))) {
+              console.log(`🚇 Excluding '${name}' - contains excluded keyword`);
               return false;
             }
             
-            // Exclude if types indicate it's not a train/tube station (only if it's NOT already a station type)
-            const excludedTypes = ['parking', 'route', 'street_address'];
-            // Don't exclude 'premise' or 'establishment' as stations can have these types too
-            if (types.some(type => excludedTypes.some(excluded => type.toLowerCase().includes(excluded)))) {
-              return false;
-            }
+            // FIFTH: Include if name strongly suggests it's a station (fallback)
+            const nameSuggestsStationStrong = nameLower.includes('station') || nameLower.includes('tube') ||
+                                             nameLower.includes('underground') || nameLower.includes('railway') ||
+                                             nameLower.includes('rail');
             
-            // Also include if name suggests it's a station
-            const nameSuggestsStation = name.includes('station') || name.includes('tube') || 
-                                       name.includes('underground') || name.includes('railway');
-            
-            // Include if name suggests station
-            if (nameSuggestsStation) {
+            if (nameSuggestsStationStrong) {
+              console.log(`🚇 Including '${name}' - name strongly suggests station (fallback)`);
               return true;
             }
             
+            // Don't include if we can't be sure it's a station
+            console.log(`🚇 Excluding '${name}' - not clearly a station`);
             return false;
           })
           .map(station => station.name)
