@@ -593,7 +593,13 @@ struct ClassCardDetails: View {
                         .lineLimit(isDescriptionExpanded ? nil : 2)
                         .fixedSize(horizontal: false, vertical: true)
                     
-                    if classItem.description.count > 100 {
+                    // Show "Read more" if description is longer than ~60 characters (likely to span 2+ lines)
+                    // or if it contains newlines
+                    let shouldShowExpandButton = classItem.description.count > 60 || 
+                                                 classItem.description.contains("\n") ||
+                                                 classItem.description.contains("\r")
+                    
+                    if shouldShowExpandButton {
                         Button(action: {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 isDescriptionExpanded.toggle()
