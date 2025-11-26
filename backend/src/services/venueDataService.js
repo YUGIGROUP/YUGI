@@ -540,20 +540,16 @@ class VenueDataService {
               return true;
             }
             
-            // SECOND: Exclude bus stops (check for bus-related types)
+            // THIRD: Exclude bus stops (check for bus-related types)
             if (types.some(type => type.includes('bus_station') || type.includes('bus_stop'))) {
               return false;
             }
             
-            // THIRD: Exclude car parks, roads, bus stops, and other non-station places
+            // FOURTH: Exclude car parks, roads, and other non-station places
             // Don't exclude "street" because many stations have "Street" in their name (e.g., "High Street Kensington")
-            const excludedKeywords = ['car park', 'parking', 'road', 'avenue', 'way', 'lane', 'bus stop', 'bus station', 'fire station', 'theatre', 'theater', 'cinema', 'restaurant', 'cafe', 'shop', 'store', 'garden', 'park', '(stop', 'stop e)', 'stop f)', 'stop g)', 'stop h)', 'stop a)', 'stop b)', 'stop c)', 'stop d)'];
+            // Note: restaurant, hotel, cafe already handled above for transit_station type
+            const excludedKeywords = ['car park', 'parking', 'road', 'avenue', 'way', 'lane', 'bus stop', 'bus station', 'fire station', 'theatre', 'theater', 'cinema', 'shop', 'store', 'garden', 'park', '(stop', 'stop e)', 'stop f)', 'stop g)', 'stop h)', 'stop a)', 'stop b)', 'stop c)', 'stop d)'];
             if (excludedKeywords.some(keyword => name.includes(keyword))) {
-              return false;
-            }
-            
-            // Exclude bus stops (check for bus-related types)
-            if (types.some(type => type.includes('bus_station') || type.includes('bus_stop'))) {
               return false;
             }
             
