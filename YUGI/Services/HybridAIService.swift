@@ -296,45 +296,55 @@ class HybridAIService: ObservableObject {
                     let types = station["types"] as? [String] ?? []
                     let nameLower = name.lowercased()
                     
-                    // Exclude car parks, roads, bus stops, and other clearly non-station places
-                    let excludedKeywords = ["car park", "parking", "road", "street", "avenue", "way", "lane", "bus stop", "bus station", "fire station", "theatre", "theater", "cinema", "restaurant", "cafe", "shop", "store", "garden", "park", "(stop", "stop e)", "stop f)", "stop g)", "stop h)", "stop a)", "stop b)", "stop c)", "stop d)"]
-                    if excludedKeywords.contains(where: { nameLower.contains($0) }) {
-                        print("🚇 Excluding '\(name)' - contains excluded keyword")
-                        return nil
+                    // FIRST: Check if it's a valid transit/subway/train station type (PRIORITY)
+                    // If it has these types, include it even if name contains excluded keywords
+                    let hasTransitType = types.contains { type in
+                        type.contains("subway_station") || type.contains("train_station") || 
+                        type.contains("transit_station") || type.contains("light_rail_station")
                     }
                     
-                    // Exclude bus stops (check for bus-related types)
+                    if hasTransitType {
+                        // It's a valid station type - only exclude if it's clearly a bus stop
+                        if types.contains(where: { $0.contains("bus_station") || $0.contains("bus_stop") }) {
+                            print("🚇 Excluding '\(name)' - is a bus stop despite transit type")
+                            return nil
+                        }
+                        print("🚇 Including '\(name)' - has valid transit station type")
+                        return name
+                    }
+                    
+                    // SECOND: Exclude bus stops (check for bus-related types)
                     if types.contains(where: { $0.contains("bus_station") || $0.contains("bus_stop") }) {
                         print("🚇 Excluding '\(name)' - is a bus stop")
                         return nil
                     }
                     
-                    // Exclude if types indicate it's clearly not a station
-                    let excludedTypes = ["parking", "route", "street_address"]
-                    if types.contains(where: { type in excludedTypes.contains(where: { type.lowercased().contains($0) }) }) {
-                        print("🚇 Excluding '\(name)' - has excluded type")
+                    // THIRD: Exclude clearly non-station places (but be careful with station names that contain these words)
+                    // Don't exclude "street" because many stations have "Street" in their name (e.g., "High Street Kensington")
+                    let excludedKeywords = ["car park", "parking", "road", "avenue", "way", "lane", "bus stop", "bus station", "fire station", "theatre", "theater", "cinema", "restaurant", "cafe", "shop", "store", "garden", "park", "(stop", "stop e)", "stop f)", "stop g)", "stop h)", "stop a)", "stop b)", "stop c)", "stop d)"]
+                    if excludedKeywords.contains(where: { nameLower.contains($0) }) {
+                        print("🚇 Excluding '\(name)' - contains excluded keyword")
                         return nil
                     }
                     
-                    // Since we searched for transit_station, include anything that:
-                    // 1. Has transit/subway/train/rail in types, OR
-                    // 2. Has "station" in the name, OR
-                    // 3. Doesn't have excluded keywords/types (be lenient)
-                    
-                    let hasTransitType = types.contains { type in
-                        type.contains("transit") || type.contains("subway") || 
-                        type.contains("train") || type.contains("rail") || 
-                        type.contains("station")
-                    }
-                    
+                    // FOURTH: Check if name suggests it's a station
                     let nameSuggestsStation = nameLower.contains("station") || nameLower.contains("tube") || 
                                             nameLower.contains("underground") || nameLower.contains("railway") ||
                                             nameLower.contains("rail")
                     
-                    // Be lenient - if it doesn't have excluded keywords/types, include it
-                    // (since we're searching for transit_station type, most results should be valid)
-                    if hasTransitType || nameSuggestsStation {
-                        print("🚇 Including '\(name)' - hasTransitType: \(hasTransitType), nameSuggestsStation: \(nameSuggestsStation)")
+                    if nameSuggestsStation {
+                        print("🚇 Including '\(name)' - name suggests station")
+                        return name
+                    }
+                    
+                    // FIFTH: Check for other transit-related types (less specific)
+                    let hasOtherTransitType = types.contains { type in
+                        type.contains("transit") || type.contains("subway") || 
+                        type.contains("train") || type.contains("rail")
+                    }
+                    
+                    if hasOtherTransitType {
+                        print("🚇 Including '\(name)' - has transit-related type")
                         return name
                     }
                     
