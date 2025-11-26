@@ -1037,8 +1037,8 @@ router.post('/venues/analyze', protect, async (req, res) => {
 
     console.log(`🔍 Analyzing venue: ${venueName} at ${address.street}, ${address.city}`);
 
-    // Get real venue data from external APIs
-    const venueData = await venueDataService.getRealVenueData(venueName, address);
+    // Get real venue data from external APIs (force refresh to get latest data including transit stations)
+    const venueData = await venueDataService.getRealVenueData(venueName, address, true);
 
     // Get coordinates if not already available
     let coordinates = venueData.coordinates;

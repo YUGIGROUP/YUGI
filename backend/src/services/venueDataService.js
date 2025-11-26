@@ -12,20 +12,21 @@ class VenueDataService {
    * Get real venue information from online sources
    * @param {string} venueName - Name of the venue
    * @param {Object} address - Address object with street, city, postalCode
+   * @param {boolean} forceRefresh - If true, bypass cache and fetch fresh data
    * @returns {Object} Real venue data including parking and changing facilities
    */
-  async getRealVenueData(venueName, address) {
-    console.log(`🔍 getRealVenueData called with:`, { venueName, address });
+  async getRealVenueData(venueName, address, forceRefresh = false) {
+    console.log(`🔍 getRealVenueData called with:`, { venueName, address, forceRefresh });
     
     if (!venueName || !address || !address.street) {
       console.log(`⚠️ Insufficient venue data, using defaults for: ${venueName}`);
       return this.getDefaultVenueData(venueName);
     }
 
-    // Check cache first (but skip if it's default data - we want to retry APIs)
+    // Check cache first (but skip if forceRefresh is true or if it's default data - we want to retry APIs)
     const cacheKey = `${venueName}-${address.street}-${address.city}`.toLowerCase().trim();
     const cached = this.cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+    if (!forceRefresh && cached && Date.now() - cached.timestamp < this.cacheExpiry) {
       // Don't use cached default data - always retry APIs for better data
       // Also clear old cache entries that don't have a source field (from before the fix)
       if (!cached.data || !cached.data.source || cached.data.source === 'default') {
@@ -36,6 +37,8 @@ class VenueDataService {
         console.log(`📦 Using cached venue data for: ${venueName} (source: ${cached.data.source})`);
         return cached.data;
       }
+    } else if (forceRefresh) {
+      console.log(`🔄 Force refresh requested - bypassing cache for: ${venueName}`);
     }
 
     try {
