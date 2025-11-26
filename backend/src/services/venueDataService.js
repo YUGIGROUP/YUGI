@@ -215,6 +215,7 @@ class VenueDataService {
         
         // Get detailed place information including parking and accessibility data
         // Note: parking_lot is not a valid field - parking info comes from reviews/editorial_summary
+        // IMPORTANT: Include 'geometry' in fields to get coordinates for transit station lookup
         console.log(`🔍 Google Places: Fetching details for place_id: ${placeId}`);
         const detailsResponse = await axios.get(
           `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,place_id,types,opening_hours,photos,reviews,wheelchair_accessible_entrance,editorial_summary&key=${this.googlePlacesApiKey}`
@@ -809,7 +810,11 @@ class VenueDataService {
       ['restaurant', 'cafe', 'food', 'bar'].includes(type) ||
       type.includes('restaurant') || type.includes('cafe')
     )) {
-      return "Street parking available nearby";
+      let parkingText = "Street parking available nearby";
+      if (nearbyStations.length > 0) {
+        parkingText += ` Nearest stations: ${nearbyStations.join(', ')}.`;
+      }
+      return parkingText;
     }
     
     // Check venue name for clues
@@ -830,7 +835,11 @@ class VenueDataService {
     }
     
     if (venueName.includes('cafe') || venueName.includes('restaurant')) {
-      return "Street parking available nearby";
+      let parkingText = "Street parking available nearby";
+      if (nearbyStations.length > 0) {
+        parkingText += ` Nearest stations: ${nearbyStations.join(', ')}.`;
+      }
+      return parkingText;
     }
     
     // Special handling for theatres in London (often have limited parking)
