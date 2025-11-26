@@ -539,16 +539,24 @@ class HybridAIService: ObservableObject {
                                 // Look for sentences that mention parking in a positive/neutral context
                                 if let parkingSentence = sentences.first(where: { sentence in
                                     let sentenceLower = sentence.lowercased()
-                                    // Must contain "parking" and mention availability/options
+                                    
+                                    // Exclude negative parking mentions
+                                    let negativeKeywords = ["nightmare", "difficult", "problem", "issue", "hard", "bad", "terrible", "awful", "horrible", "impossible", "challenging", "trouble", "struggle", "limited", "scarce", "none", "no parking"]
+                                    if negativeKeywords.contains(where: { sentenceLower.contains($0) }) {
+                                        return false
+                                    }
+                                    
+                                    // Must contain "parking" and mention availability/options (positive/neutral)
                                     return sentenceLower.contains("parking") && (
                                         sentenceLower.contains("available") ||
-                                        sentenceLower.contains("parking is") ||
                                         sentenceLower.contains("parking available") ||
                                         sentenceLower.contains("street parking") ||
                                         sentenceLower.contains("on-site parking") ||
                                         sentenceLower.contains("free parking") ||
                                         sentenceLower.contains("car park") ||
-                                        sentenceLower.contains("park nearby")
+                                        sentenceLower.contains("park nearby") ||
+                                        (sentenceLower.contains("parking") && sentenceLower.contains("nearby")) ||
+                                        (sentenceLower.contains("parking") && sentenceLower.contains("close"))
                                     )
                                 }) {
                                     parkingInfo = parkingSentence.trimmingCharacters(in: .whitespaces)
@@ -992,6 +1000,21 @@ class HybridAIService: ObservableObject {
             if !nearbyStations.isEmpty {
                 let stationsText = nearbyStations.joined(separator: ", ")
                 parkingText += " Nearest stations: \(stationsText)."
+            }
+            return parkingText
+        }
+        
+        // Check for gyms/health venues (often have limited parking, public transport recommended)
+        if typesLower.contains(where: { type in
+            ["gym", "health", "fitness"].contains(type) ||
+            type.contains("gym") || type.contains("health") || type.contains("fitness")
+        }) {
+            var parkingText = "Street parking available nearby"
+            if !nearbyStations.isEmpty {
+                let stationsText = nearbyStations.joined(separator: ", ")
+                parkingText += " Nearest stations: \(stationsText)."
+            } else {
+                parkingText += " - public transport recommended"
             }
             return parkingText
         }
