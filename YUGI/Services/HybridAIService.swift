@@ -464,7 +464,12 @@ class HybridAIService: ObservableObject {
                     if overviewLower.contains("free parking") || overviewLower.contains("on-site parking") {
                         parkingInfo = "On-site parking available"
                     } else if overviewLower.contains("street parking") {
-                        parkingInfo = "Street parking available nearby"
+                        var parkingText = "Street parking available nearby"
+                        if !nearbyStations.isEmpty {
+                            let stationsText = nearbyStations.joined(separator: ", ")
+                            parkingText += " Nearest stations: \(stationsText)."
+                        }
+                        parkingInfo = parkingText
                     }
                 }
             }
@@ -928,7 +933,12 @@ class HybridAIService: ObservableObject {
             ["restaurant", "cafe", "food", "bar"].contains(type) ||
             type.contains("restaurant") || type.contains("cafe")
         }) {
-            return "Street parking available nearby"
+            var parkingText = "Street parking available nearby"
+            if !nearbyStations.isEmpty {
+                let stationsText = nearbyStations.joined(separator: ", ")
+                parkingText += " Nearest stations: \(stationsText)."
+            }
+            return parkingText
         }
         
         // Check venue name for clues
@@ -949,7 +959,12 @@ class HybridAIService: ObservableObject {
         }
         
         if name.contains("cafe") || name.contains("restaurant") {
-            return "Street parking available nearby"
+            var parkingText = "Street parking available nearby"
+            if !nearbyStations.isEmpty {
+                let stationsText = nearbyStations.joined(separator: ", ")
+                parkingText += " Nearest stations: \(stationsText)."
+            }
+            return parkingText
         }
         
         // Special case for London locations
