@@ -86,6 +86,9 @@ const classSchema = new mongoose.Schema({
     type: String,
     enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
   }],
+  classDates: [{
+    type: Date
+  }],
   timeSlots: [{
     startTime: {
       type: String,

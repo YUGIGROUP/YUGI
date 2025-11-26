@@ -287,15 +287,28 @@ const transformClassForIOS = async (classItem, classDates = null) => {
     }
   }
 
-  // Determine the start date: use classDates if provided (when creating a new class),
+  // Determine the start date: prioritize stored classDates from database,
+  // then use classDates parameter (when creating a new class),
   // otherwise calculate from recurringDays (for existing classes)
   let startDate;
-  if (classDates && Array.isArray(classDates) && classDates.length > 0) {
-    // Use the earliest date from classDates
-    const dates = classDates
-      .map(dateStr => {
-        // Handle ISO 8601 date strings (e.g., "2025-12-01T00:00:00Z" or "2025-12-01")
-        const date = new Date(dateStr);
+  
+  // First, check if classDates are stored in the database
+  let datesToUse = null;
+  if (classObj.classDates && Array.isArray(classObj.classDates) && classObj.classDates.length > 0) {
+    datesToUse = classObj.classDates;
+    console.log(`📅 Found ${datesToUse.length} stored classDates in database`);
+  } else if (classDates && Array.isArray(classDates) && classDates.length > 0) {
+    // Fallback to classDates parameter (for new classes being created)
+    datesToUse = classDates;
+    console.log(`📅 Using classDates from parameter`);
+  }
+  
+  if (datesToUse && datesToUse.length > 0) {
+    // Process dates - handle both Date objects and date strings
+    const dates = datesToUse
+      .map(dateInput => {
+        // Handle both Date objects and date strings
+        const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
         return isNaN(date.getTime()) ? null : date;
       })
       .filter(date => date !== null)
@@ -305,16 +318,17 @@ const transformClassForIOS = async (classItem, classDates = null) => {
       startDate = dates[0];
       // Reset to start of day
       startDate.setHours(0, 0, 0, 0);
-      console.log(`📅 Using classDates start date: ${startDate.toISOString()}`);
+      console.log(`📅 Using classDates start date: ${startDate.toISOString()} (${startDate.toISOString().split('T')[0]})`);
     } else {
       // Fallback to calculating from recurringDays
       startDate = getNextOccurrenceDate(classObj.recurringDays);
-      console.log(`📅 classDates invalid, using calculated date: ${startDate.toISOString()}`);
+      console.log(`📅 classDates invalid, using calculated date: ${startDate.toISOString()} (${startDate.toISOString().split('T')[0]})`);
     }
   } else {
     // Calculate the next occurrence date for this recurring class
     startDate = getNextOccurrenceDate(classObj.recurringDays);
-    console.log(`📅 Using calculated date from recurringDays: ${startDate.toISOString()}`);
+    console.log(`📅 No classDates found, using calculated date from recurringDays: ${startDate.toISOString()} (${startDate.toISOString().split('T')[0]})`);
+    console.log(`📅 Class recurringDays:`, classObj.recurringDays || 'none');
   }
   
   const endDate = new Date(startDate);
@@ -407,12 +421,23 @@ const transformClassForIOS = async (classItem, classDates = null) => {
         babyChangingFacilities: 'Baby changing facilities available'
       },
       schedule: (() => {
-        // Determine the start date: use classDates if provided, otherwise calculate from recurringDays
+        // Determine the start date: prioritize stored classDates from database,
+        // then use classDates parameter, otherwise calculate from recurringDays
         let fallbackStartDate;
-        if (classDates && Array.isArray(classDates) && classDates.length > 0) {
-          const dates = classDates
-            .map(dateStr => {
-              const date = new Date(dateStr);
+        
+        // First, check if classDates are stored in the database
+        let datesToUse = null;
+        if (classObj.classDates && Array.isArray(classObj.classDates) && classObj.classDates.length > 0) {
+          datesToUse = classObj.classDates;
+        } else if (classDates && Array.isArray(classDates) && classDates.length > 0) {
+          datesToUse = classDates;
+        }
+        
+        if (datesToUse && datesToUse.length > 0) {
+          // Process dates - handle both Date objects and date strings
+          const dates = datesToUse
+            .map(dateInput => {
+              const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
               return isNaN(date.getTime()) ? null : date;
             })
             .filter(date => date !== null)
@@ -637,13 +662,50 @@ router.post('/', [
       provider: req.user.id
     };
 
-    console.log('🔍 Class data to save:', JSON.stringify(classData, null, 2));
+    // Convert classDates strings to Date objects if provided
+    if (req.body.classDates && Array.isArray(req.body.classDates) && req.body.classDates.length > 0) {
+      classData.classDates = req.body.classDates.map(dateStr => {
+        // Handle "yyyy-MM-dd" format strings (from iOS)
+        // Ensure we parse as UTC to avoid timezone issues
+        let date;
+        if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // Parse as UTC date to avoid timezone shifts
+          const [year, month, day] = dateStr.split('-').map(Number);
+          date = new Date(Date.UTC(year, month - 1, day));
+        } else {
+          date = new Date(dateStr);
+        }
+        return isNaN(date.getTime()) ? null : date;
+      }).filter(date => date !== null);
+      
+      console.log(`📅 Parsed ${classData.classDates.length} classDates:`, classData.classDates.map(d => d.toISOString().split('T')[0]));
+    } else {
+      console.log('⚠️ No classDates provided or empty array');
+    }
+
+    // Ensure classDates are Date objects before saving (double-check)
+    if (classData.classDates && Array.isArray(classData.classDates)) {
+      classData.classDates = classData.classDates.map(d => {
+        if (d instanceof Date) return d;
+        if (typeof d === 'string') {
+          const [year, month, day] = d.split('-').map(Number);
+          return new Date(Date.UTC(year, month - 1, day));
+        }
+        return new Date(d);
+      }).filter(d => !isNaN(d.getTime()));
+    }
+
+    console.log('🔍 Class data to save:', JSON.stringify({
+      ...classData,
+      classDates: classData.classDates?.map(d => d instanceof Date ? d.toISOString().split('T')[0] : d) || []
+    }, null, 2));
 
     // Create the class
     const newClass = new Class(classData);
     const savedClass = await newClass.save();
 
     console.log('✅ Class created successfully:', savedClass.name);
+    console.log('📅 Saved classDates in database:', savedClass.classDates?.map(d => d.toISOString().split('T')[0]).join(', ') || 'None');
 
     // Transform the response for iOS compatibility
     // Pass classDates from request body so the start date uses the provider's selected date
@@ -683,10 +745,35 @@ router.put('/:id', [
       return res.status(403).json({ message: 'Not authorized to update this class' });
     }
 
+    // Prepare update data
+    const updateData = {
+      ...req.body,
+      updatedAt: new Date()
+    };
+
+    // Convert classDates strings to Date objects if provided
+    if (req.body.classDates && Array.isArray(req.body.classDates) && req.body.classDates.length > 0) {
+      updateData.classDates = req.body.classDates.map(dateStr => {
+        // Handle "yyyy-MM-dd" format strings (from iOS)
+        // Ensure we parse as UTC to avoid timezone issues
+        let date;
+        if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // Parse as UTC date to avoid timezone shifts
+          const [year, month, day] = dateStr.split('-').map(Number);
+          date = new Date(Date.UTC(year, month - 1, day));
+        } else {
+          date = new Date(dateStr);
+        }
+        return isNaN(date.getTime()) ? null : date;
+      }).filter(date => date !== null);
+      
+      console.log(`📅 Parsed ${updateData.classDates.length} classDates for update:`, updateData.classDates.map(d => d.toISOString().split('T')[0]));
+    }
+
     // Update the class
     const updatedClass = await Class.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, updatedAt: new Date() },
+      updateData,
       { new: true, runValidators: true }
     );
 
