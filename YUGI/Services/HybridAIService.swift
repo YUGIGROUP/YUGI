@@ -528,15 +528,29 @@ class HybridAIService: ObservableObject {
             
             // Extract from reviews FIRST (most detailed information)
             if let reviews = result["reviews"] as? [[String: Any]] {
-                // Extract parking info from reviews
+                // Extract parking info from reviews - be specific about parking availability
                 if parkingInfo == nil {
                     for review in reviews {
                         if let text = review["text"] as? String {
                             let textLower = text.lowercased()
-                            if textLower.contains("parking") || textLower.contains("car") || textLower.contains("drive") {
-                                // Extract the relevant sentence
+                            // Only look for sentences that actually mention parking availability/options
+                            if textLower.contains("parking") {
                                 let sentences = text.components(separatedBy: ". ")
-                                if let parkingSentence = sentences.first(where: { $0.lowercased().contains("parking") || $0.lowercased().contains("car") }) {
+                                // Look for sentences that mention parking in a positive/neutral context
+                                if let parkingSentence = sentences.first(where: { sentence in
+                                    let sentenceLower = sentence.lowercased()
+                                    // Must contain "parking" and mention availability/options
+                                    return sentenceLower.contains("parking") && (
+                                        sentenceLower.contains("available") ||
+                                        sentenceLower.contains("parking is") ||
+                                        sentenceLower.contains("parking available") ||
+                                        sentenceLower.contains("street parking") ||
+                                        sentenceLower.contains("on-site parking") ||
+                                        sentenceLower.contains("free parking") ||
+                                        sentenceLower.contains("car park") ||
+                                        sentenceLower.contains("park nearby")
+                                    )
+                                }) {
                                     parkingInfo = parkingSentence.trimmingCharacters(in: .whitespaces)
                                     if !parkingInfo!.hasSuffix(".") {
                                         parkingInfo! += "."
@@ -548,19 +562,24 @@ class HybridAIService: ObservableObject {
                     }
                 }
                 
-                // Extract baby changing info from reviews
+                // Extract baby changing info from reviews - be specific about baby changing facilities
                 if babyChangingInfo == nil {
                     for review in reviews {
                         if let text = review["text"] as? String {
                             let textLower = text.lowercased()
-                            if textLower.contains("baby") || textLower.contains("changing") || textLower.contains("toilet") || textLower.contains("restroom") || textLower.contains("facilities") {
-                                // Extract the relevant sentence
+                            // Only look for sentences that specifically mention baby changing facilities
+                            if textLower.contains("baby") && (textLower.contains("changing") || textLower.contains("facilities")) {
                                 let sentences = text.components(separatedBy: ". ")
-                                if let facilitySentence = sentences.first(where: { 
-                                    $0.lowercased().contains("baby") || 
-                                    $0.lowercased().contains("changing") || 
-                                    $0.lowercased().contains("toilet") ||
-                                    $0.lowercased().contains("facilities")
+                                // Look for sentences that specifically mention baby changing facilities
+                                if let facilitySentence = sentences.first(where: { sentence in
+                                    let sentenceLower = sentence.lowercased()
+                                    // Must contain "baby" AND ("changing" or "facilities") in context
+                                    return sentenceLower.contains("baby") && (
+                                        sentenceLower.contains("baby changing") ||
+                                        sentenceLower.contains("changing facilities") ||
+                                        sentenceLower.contains("changing room") ||
+                                        (sentenceLower.contains("changing") && sentenceLower.contains("facilities"))
+                                    )
                                 }) {
                                     babyChangingInfo = facilitySentence.trimmingCharacters(in: .whitespaces)
                                     if !babyChangingInfo!.hasSuffix(".") {
@@ -588,34 +607,6 @@ class HybridAIService: ObservableObject {
                                     accessibilityInfo = accessibilitySentence.trimmingCharacters(in: .whitespaces)
                                     if !accessibilityInfo!.hasSuffix(".") {
                                         accessibilityInfo! += "."
-                                    }
-                                    break
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Extract parking info from reviews (check reviews BEFORE falling back to types)
-            if parkingInfo == nil, let reviews = result["reviews"] as? [[String: Any]] {
-                for review in reviews {
-                    if let text = review["text"] as? String {
-                        let textLower = text.lowercased()
-                        // Look for parking mentions in reviews
-                        if textLower.contains("parking") || textLower.contains("car park") || textLower.contains("park") {
-                            // Try to extract the sentence containing parking info
-                            let sentences = text.components(separatedBy: CharacterSet(charactersIn: ".!?\n"))
-                            if let parkingSentence = sentences.first(where: { 
-                                $0.lowercased().contains("parking") || 
-                                $0.lowercased().contains("car park") ||
-                                ($0.lowercased().contains("park") && !$0.lowercased().contains("playground"))
-                            }) {
-                                let cleaned = parkingSentence.trimmingCharacters(in: .whitespacesAndNewlines)
-                                if cleaned.count > 10 && cleaned.count < 200 {
-                                    parkingInfo = cleaned
-                                    if !parkingInfo!.hasSuffix(".") && !parkingInfo!.hasSuffix("!") && !parkingInfo!.hasSuffix("?") {
-                                        parkingInfo! += "."
                                     }
                                     break
                                 }
