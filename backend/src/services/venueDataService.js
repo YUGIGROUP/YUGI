@@ -52,10 +52,15 @@ class VenueDataService {
         // Find nearby transit stations if we have coordinates
         let nearbyStations = [];
         if (googleData.coordinates && googleData.coordinates.lat && googleData.coordinates.lng) {
+          console.log(`🚇 Looking up transit stations for ${venueName} at coordinates: ${googleData.coordinates.lat}, ${googleData.coordinates.lng}`);
           nearbyStations = await this.findNearbyTransitStations(
             googleData.coordinates.lat,
             googleData.coordinates.lng
           );
+          console.log(`🚇 Found ${nearbyStations.length} transit stations: ${nearbyStations.join(', ') || 'none'}`);
+        } else {
+          console.log(`⚠️ No coordinates available for ${venueName} - cannot lookup transit stations`);
+          console.log(`   Coordinates object:`, googleData.coordinates);
         }
         
         const result = this.formatVenueData(googleData, 'google', nearbyStations);
@@ -282,7 +287,12 @@ class VenueDataService {
               lat: typeof loc.lat === 'number' ? loc.lat : (loc.lat ? parseFloat(loc.lat) : null),
               lng: typeof loc.lng === 'number' ? loc.lng : (loc.lng ? parseFloat(loc.lng) : null)
             };
+            console.log(`📍 Extracted coordinates for ${resultName}: ${coordinates.lat}, ${coordinates.lng}`);
+          } else {
+            console.log(`⚠️ Location object is invalid for ${resultName}`);
           }
+        } else {
+          console.log(`⚠️ No geometry/location found in Google Places result for ${resultName}`);
         }
         
         // Safely access place properties (place is from search results, result is from details)
@@ -496,10 +506,13 @@ class VenueDataService {
     }
 
     try {
+      console.log(`🚇 Searching for transit stations near ${lat}, ${lng}`);
       // Search for transit_station to get both tube and overground stations
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=1500&type=transit_station&key=${this.googlePlacesApiKey}`
       );
+      
+      console.log(`🚇 Transit station API response status: ${response?.data?.status || 'unknown'}`);
 
       if (response.data.results && response.data.results.length > 0) {
         // Filter to only include actual train/tube stations (exclude car parks, roads, etc.)
