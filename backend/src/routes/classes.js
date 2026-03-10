@@ -3,6 +3,7 @@ const { body, validationResult, query } = require('express-validator');
 const Class = require('../models/Class');
 const { protect, optionalAuth, requireProviderVerification } = require('../middleware/auth');
 const venueDataService = require('../services/venueDataService');
+const { scoreClasses } = require('../services/doabilityService');
 
 const router = express.Router();
 
@@ -334,6 +335,9 @@ const transformClassForIOS = async (classItem, classDates = null) => {
   const endDate = new Date(startDate);
   endDate.setMonth(endDate.getMonth() + 6); // Set end date to 6 months from start date
 
+  // Preserve _doability field if it exists (from recommendation scoring)
+  const doabilityData = classObj._doability || null;
+
   return {
     ...classObj,
     // Convert provider to string ID for iOS compatibility
@@ -390,7 +394,9 @@ const transformClassForIOS = async (classItem, classDates = null) => {
     // Map currentBookings to currentEnrollment
     currentEnrollment: classObj.currentBookings || 0,
     // Add isFavorite field
-    isFavorite: false
+    isFavorite: false,
+    // Preserve _doability metadata if it exists (from recommendation scoring)
+    ...(doabilityData && { _doability: doabilityData })
   };
   } catch (error) {
     console.error('❌ Error transforming class:', error.message);
@@ -398,6 +404,9 @@ const transformClassForIOS = async (classItem, classDates = null) => {
     const classObj = classItem.toObject();
     classObj.id = classObj._id;
     delete classObj._id;
+    
+    // Preserve _doability field if it exists (from recommendation scoring)
+    const doabilityData = classObj._doability || null;
     
     // Correct city name in error fallback case too
     const fallbackCity = correctCityName((classObj.location?.address?.city || '').trim());
@@ -478,7 +487,9 @@ const transformClassForIOS = async (classItem, classDates = null) => {
         };
       })(),
       currentEnrollment: classObj.currentBookings || 0,
-      isFavorite: false
+      isFavorite: false,
+      // Preserve _doability metadata if it exists (from recommendation scoring)
+      ...(doabilityData && { _doability: doabilityData })
     };
   }
 };
@@ -498,7 +509,13 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
       ageRange,
       location,
       page = 1,
-      limit = 20
+      limit = 20,
+      recommend,
+      latitude,
+      longitude,
+      childAge,
+      preferredDays,
+      preferredTimes
     } = req.query;
 
     // Build filter object
@@ -540,9 +557,10 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
     console.log('🔍 Filter:', JSON.stringify(filter, null, 2));
 
     // Execute query with provider population
-    const classes = await Class.find(filter)
+    // Use lean() for better performance when scoring
+    let classes = await Class.find(filter)
       .populate('provider', 'fullName businessName')
-      .sort({ createdAt: -1 })
+      .lean()
       .skip(skip)
       .limit(parseInt(limit));
 
@@ -551,8 +569,117 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
 
     console.log(`✅ Found ${classes.length} published classes (total: ${total})`);
 
+    // Check if recommendation scoring is requested
+    const shouldRecommend = recommend === 'true' && req.user && req.user.userType === 'parent';
+    
+    if (shouldRecommend) {
+      console.log('🎯 Recommendation scoring enabled for user:', req.user.id);
+      
+      // Build parentContext from user data and query parameter overrides
+      const parentContext = {
+        userId: req.user._id.toString(),
+        latitude: latitude ? parseFloat(latitude) : (req.user.location?.lat || null),
+        longitude: longitude ? parseFloat(longitude) : (req.user.location?.lng || null),
+        childrenAges: [],
+        preferredDays: null,
+        preferredTimes: null
+      };
+
+      // Extract children ages from user's children array
+      if (req.user.children && Array.isArray(req.user.children)) {
+        parentContext.childrenAges = req.user.children
+          .map(child => {
+            if (child.age !== undefined && child.age !== null) {
+              return child.age;
+            }
+            // Calculate age from dateOfBirth if age not available
+            if (child.dateOfBirth) {
+              const birthDate = new Date(child.dateOfBirth);
+              const today = new Date();
+              const ageInYears = today.getFullYear() - birthDate.getFullYear();
+              const monthDiff = today.getMonth() - birthDate.getMonth();
+              if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                return ageInYears - 1;
+              }
+              return ageInYears;
+            }
+            return null;
+          })
+          .filter(age => age !== null && age >= 0);
+      }
+
+      // Override with query parameter if provided (comma-separated)
+      if (childAge) {
+        parentContext.childrenAges = childAge
+          .split(',')
+          .map(age => parseFloat(age.trim()))
+          .filter(age => !isNaN(age) && age >= 0);
+      }
+
+      // Parse preferredDays (comma-separated, e.g. "monday,wednesday")
+      if (preferredDays) {
+        parentContext.preferredDays = preferredDays
+          .split(',')
+          .map(day => day.trim().toLowerCase())
+          .filter(day => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].includes(day));
+      }
+
+      // Parse preferredTimes (comma-separated, e.g. "morning,afternoon")
+      if (preferredTimes) {
+        parentContext.preferredTimes = preferredTimes
+          .split(',')
+          .map(time => time.trim().toLowerCase())
+          .filter(time => ['morning', 'afternoon', 'evening'].includes(time));
+      }
+
+      console.log('📊 Parent context:', JSON.stringify(parentContext, null, 2));
+
+      // Score and rank classes using doabilityService
+      const scoredClasses = await scoreClasses(classes, parentContext);
+
+      // Attach doability data to each class and maintain original class structure
+      classes = scoredClasses.map(scored => {
+        const doabilityData = {
+          score: scored.doabilityScore,
+          reasons: scored.reasons,
+          frictionWarnings: scored.frictionWarnings
+        };
+        
+        // Include sub-scores if available (for debugging/transparency)
+        if (scored.scores !== undefined) {
+          doabilityData.scores = scored.scores;
+        }
+        
+        return {
+          ...scored.class,
+          _doability: doabilityData
+        };
+      });
+
+      console.log(`🎯 Scored ${classes.length} classes with doability rankings`);
+    } else {
+      // Default sorting when not using recommendations
+      classes = classes.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0);
+        const dateB = new Date(b.createdAt || 0);
+        return dateB - dateA; // newest first
+      });
+    }
+
     // Transform classes to match iOS model expectations
-    const transformedClasses = await Promise.all(classes.map(transformClassForIOS));
+    // transformClassForIOS expects Mongoose documents with toObject() method
+    // Since we're using lean(), we need to wrap plain objects in a document-like structure
+    // FIXED: _doability is preserved in transformClassForIOS (already fixed earlier)
+    const transformedClasses = await Promise.all(classes.map(classItem => {
+      // Create a mock document-like object for transformClassForIOS
+      const mockDoc = {
+        ...classItem,
+        toObject: () => classItem,
+        _id: classItem._id,
+        id: classItem._id
+      };
+      return transformClassForIOS(mockDoc);
+    }));
 
     res.json({
       success: true,
@@ -562,7 +689,8 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
         limit: parseInt(limit),
         total,
         pages: Math.ceil(total / parseInt(limit))
-      }
+      },
+      ...(shouldRecommend && { recommendationEnabled: true })
     });
 
   } catch (error) {
@@ -1025,6 +1153,12 @@ router.get('/provider/my-classes', protect, /* requireProviderVerification, */ n
 // @route   POST /api/classes/venues/analyze
 // @desc    Analyze a venue and get detailed information
 // @access  Private
+// 
+// IMPORTANT: This endpoint ALWAYS uses forceRefresh=true to bypass cache.
+// This ensures that transit stations are always included in the response,
+// preventing issues where cached data might be missing transit station information.
+// This is critical for newly created/published classes where providers expect
+// complete venue information including nearest tube/train stations.
 router.post('/venues/analyze', protect, async (req, res) => {
   try {
     const { venueName, address } = req.body;
@@ -1039,13 +1173,24 @@ router.post('/venues/analyze', protect, async (req, res) => {
     console.log(`🔄 Venue analysis: Force refresh enabled - will fetch fresh data including transit stations`);
 
     // Get real venue data from external APIs (force refresh to get latest data including transit stations)
+    // forceRefresh=true ensures we bypass cache and always fetch fresh data with transit stations
     const venueData = await venueDataService.getRealVenueData(venueName, address, true);
+    
+    // Validate that transit stations are included (for monitoring/debugging)
+    const hasTransitStations = venueData.parkingInfo?.toLowerCase().includes('station') || 
+                               venueData.parkingInfo?.toLowerCase().includes('tube') ||
+                               venueData.parkingInfo?.toLowerCase().includes('nearest stations:');
     
     console.log(`📊 Venue analysis result for ${venueName}:`, {
       parkingInfo: venueData.parkingInfo,
-      hasTransitStations: venueData.parkingInfo?.includes('stations:') || venueData.parkingInfo?.includes('station'),
+      hasTransitStations: hasTransitStations,
       source: venueData.source
     });
+    
+    // Log warning if transit stations are missing (shouldn't happen with forceRefresh, but good to monitor)
+    if (!hasTransitStations && venueData.source !== 'default') {
+      console.log(`⚠️ WARNING: Transit stations not found in parking info for ${venueName} - this may indicate an issue`);
+    }
 
     // Get coordinates if not already available
     let coordinates = venueData.coordinates;
