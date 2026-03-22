@@ -160,6 +160,23 @@ const classSchema = new mongoose.Schema({
     }
   },
   
+  // Structured venue accessibility (populated by new Places API)
+  venueAccessibility: {
+    pramAccessibleEntrance: { type: Boolean, default: null },
+    accessibleRestroom:     { type: Boolean, default: null },
+    accessibleSeating:      { type: Boolean, default: null },
+    accessibleParking:      { type: Boolean, default: null },
+    hasBabyChanging:        { type: Boolean, default: null },
+    parkingType:            { type: String,  default: null },
+    nearestStations: [{
+      name:     { type: String },
+      distance: { type: Number }, // metres (approximate straight-line)
+      type:     { type: String }  // 'tube' | 'rail' | 'bus'
+    }],
+    weatherForecast: { type: String, default: null },
+    lastVerified:    { type: Date,   default: null }
+  },
+
   // Class Details
   ageRange: {
     type: String,

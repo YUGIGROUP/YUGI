@@ -108,58 +108,88 @@ async function scoreClasses(classes, parentContext = {}, options = {}) {
  */
 function scoreLogistics(classDoc) {
   const location = classDoc.location || {};
+  const va       = classDoc.venueAccessibility || null;
+
+  // ── Path A: Structured data from new Places API ──────────────────────────
+  // Structured booleans are much more reliable than inferred text.
+  // Scores are higher to reward venues with verified data.
+  if (va) {
+    let score = 0;
+
+    // Pram/buggy accessible entrance — critical for parents with pushchairs
+    if (va.pramAccessibleEntrance === true)       score += 0.22;
+    else if (va.pramAccessibleEntrance === false)  score += 0.00; // confirmed inaccessible
+    else                                           score += 0.04; // unknown
+
+    // Baby changing
+    if (va.hasBabyChanging === true)               score += 0.25;
+    else if (va.hasBabyChanging === false)          score += 0.00;
+    else                                           score += 0.04; // unknown
+
+    // Parking type
+    if (va.parkingType === 'free_lot' || va.parkingType === 'free_street') score += 0.20;
+    else if (va.parkingType)                       score += 0.15; // paid/valet still useful
+    else                                           score += 0.04; // unknown
+
+    // Nearby transit stations with real distances
+    if ((va.nearestStations?.length ?? 0) >= 2)   score += 0.15;
+    else if ((va.nearestStations?.length ?? 0) === 1) score += 0.10;
+    else                                           score += 0.02;
+
+    // Accessible parking bay
+    if (va.accessibleParking === true)             score += 0.05;
+
+    // Coordinates (venue is mappable)
+    const coords = location.coordinates || {};
+    if (coords.latitude && coords.latitude !== 0)  score += 0.08;
+
+    // Bonus: all three critical fields confirmed (data completeness)
+    if (va.pramAccessibleEntrance !== null && va.hasBabyChanging !== null && va.parkingType !== null) {
+      score += 0.05;
+    }
+
+    return Math.min(score, 1.0);
+  }
+
+  // ── Path B: Text-based scoring (legacy / Foursquare / default data) ──────
+  // Capped at 0.75 to incentivise venues with structured data from the new API.
   let score = 0;
 
-  // Parking info — check existence and quality
   const parkingInfo = (location.parkingInfo || '').trim();
   if (parkingInfo.length > 0) {
-    // Longer, more detailed parking info scores higher
-    const parkingQuality = Math.min(parkingInfo.length / 100, 1); // caps at 100 chars
+    const parkingQuality = Math.min(parkingInfo.length / 100, 0.75);
     score += 0.30 * parkingQuality;
-
-    // Bonus: mentions specific useful terms
     const parkingKeywords = ['free', 'on-site', 'nearby', 'spaces', 'street parking', 'car park', 'meter'];
-    const hasSpecifics = parkingKeywords.some(kw => parkingInfo.toLowerCase().includes(kw));
-    if (hasSpecifics) {
-      score += 0.30 * 0.2; // small bonus for specificity
+    if (parkingKeywords.some(kw => parkingInfo.toLowerCase().includes(kw))) {
+      score += 0.30 * 0.15;
     }
   }
 
-  // Baby changing facilities
   const babyChanging = (location.babyChangingFacilities || '').trim();
   if (babyChanging.length > 0) {
-    score += 0.25;
-    // Positive signals
+    score += 0.20; // Lower than structured-data path's 0.25
     const positiveTerms = ['available', 'yes', 'provided', 'dedicated', 'clean'];
     if (positiveTerms.some(t => babyChanging.toLowerCase().includes(t))) {
-      score += 0.25 * 0.2;
+      score += 0.20 * 0.15;
     }
   }
 
-  // Accessibility notes
   const accessNotes = (location.accessibilityNotes || classDoc.accessibilityNotes || '').trim();
   if (accessNotes.length > 0) {
-    score += 0.20;
-    // Check for positive accessibility signals (pram/wheelchair friendly)
+    score += 0.15;
     const positiveAccess = ['pram', 'buggy', 'pushchair', 'wheelchair', 'step-free', 'lift', 'ramp', 'accessible'];
     if (positiveAccess.some(t => accessNotes.toLowerCase().includes(t))) {
-      score += 0.20 * 0.3;
+      score += 0.15 * 0.25;
     }
   }
 
-  // Transit info (often embedded in parkingInfo)
   const hasTransit = /station|bus stop|tube|underground|metro|train|tram/i.test(parkingInfo);
-  if (hasTransit) {
-    score += 0.15;
-  }
+  if (hasTransit) score += 0.10;
 
-  // Coordinates present (basic but important — means the venue is mappable)
   const coords = location.coordinates || {};
-  if (coords.latitude && coords.longitude && coords.latitude !== 0 && coords.longitude !== 0) {
-    score += 0.10;
-  }
+  if (coords.latitude && coords.longitude && coords.latitude !== 0) score += 0.10;
 
-  return Math.min(score, 1.0);
+  return Math.min(score, 0.75); // cap — structured data scores higher
 }
 
 /**
@@ -365,13 +395,26 @@ function buildReasons(scores, classDoc, parentContext) {
     reasons.push({ factor: 'logistics', text: 'Venue logistics partially verified', priority: 3 });
   }
 
-  // Baby changing
-  const babyChanging = (classDoc.location?.babyChangingFacilities || '').trim();
-  if (babyChanging.length > 0) {
+  // Baby changing — prefer structured data
+  const va = classDoc.venueAccessibility;
+  if (va?.hasBabyChanging === true) {
+    reasons.push({ factor: 'logistics', text: 'Baby changing facilities available', priority: 2 });
+  } else if (!va) {
+    const babyChanging = (classDoc.location?.babyChangingFacilities || '').trim();
     const positiveTerms = ['available', 'yes', 'provided', 'dedicated'];
-    if (positiveTerms.some(t => babyChanging.toLowerCase().includes(t))) {
+    if (babyChanging.length > 0 && positiveTerms.some(t => babyChanging.toLowerCase().includes(t))) {
       reasons.push({ factor: 'logistics', text: 'Baby changing facilities available', priority: 2 });
     }
+  }
+
+  // Pram-accessible entrance (structured data only)
+  if (va?.pramAccessibleEntrance === true) {
+    reasons.push({ factor: 'logistics', text: 'Pram/buggy accessible entrance confirmed', priority: 2 });
+  }
+
+  // Weather forecast
+  if (va?.weatherForecast) {
+    reasons.push({ factor: 'logistics', text: `Weather: ${va.weatherForecast}`, priority: 3 });
   }
 
   // Rating reason
@@ -405,19 +448,29 @@ function buildFrictionWarnings(classDoc, parentContext) {
   const warnings = [];
   const location = classDoc.location || {};
 
-  // No parking info
-  if (!(location.parkingInfo || '').trim()) {
+  const va2 = classDoc.venueAccessibility;
+  const hasYoungChild = (parentContext.childrenAges || []).some(age => age < 3);
+
+  // Parking
+  if (!va2 && !(location.parkingInfo || '').trim()) {
     warnings.push({ type: 'parking', text: 'No parking information available', severity: 'medium' });
   }
 
-  // No baby changing (only warn if parent has young children)
-  const hasYoungChild = (parentContext.childrenAges || []).some(age => age < 3);
-  if (hasYoungChild && !(location.babyChangingFacilities || '').trim()) {
+  // Baby changing
+  if (va2) {
+    if (va2.hasBabyChanging === false && hasYoungChild) {
+      warnings.push({ type: 'babyChanging', text: 'No baby changing facilities at this venue', severity: 'high' });
+    }
+  } else if (hasYoungChild && !(location.babyChangingFacilities || '').trim()) {
     warnings.push({ type: 'babyChanging', text: 'No baby changing facilities listed', severity: 'high' });
   }
 
-  // No accessibility info
-  if (!(location.accessibilityNotes || '').trim() && !(classDoc.accessibilityNotes || '').trim()) {
+  // Accessibility / pram access
+  if (va2) {
+    if (va2.pramAccessibleEntrance === false) {
+      warnings.push({ type: 'accessibility', text: 'Steps at entrance — not pram/buggy accessible', severity: 'high' });
+    }
+  } else if (!(location.accessibilityNotes || '').trim() && !(classDoc.accessibilityNotes || '').trim()) {
     warnings.push({ type: 'accessibility', text: 'No accessibility information — check pram access', severity: 'medium' });
   }
 
