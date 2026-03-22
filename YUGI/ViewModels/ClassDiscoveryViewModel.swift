@@ -47,8 +47,8 @@ class ClassDiscoveryViewModel: ObservableObject {
         isLoading = true
         
         // Fetch recommended classes first (with doability scoring), fall back to regular fetch if it fails
-        let latitude = 51.5074  // Default London - can be enhanced with user location
-        let longitude = -0.1278
+        let latitude = LocationService.shared.latitude
+        let longitude = LocationService.shared.longitude
         let categoryParam = selectedCategory?.rawValue
         
         APIService.shared.fetchRecommendedClasses(latitude: latitude, longitude: longitude, category: categoryParam)

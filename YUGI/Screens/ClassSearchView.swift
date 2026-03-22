@@ -443,7 +443,7 @@ struct ClassSearchView: View {
         isLoading = true
         error = nil
         
-        APIService.shared.fetchRecommendedClasses(latitude: 51.5074, longitude: -0.1278, category: selectedCategory?.rawValue)
+        APIService.shared.fetchRecommendedClasses(latitude: LocationService.shared.latitude, longitude: LocationService.shared.longitude, category: selectedCategory?.rawValue)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { completion in

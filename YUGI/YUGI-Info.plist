@@ -20,6 +20,8 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>YUGI uses your location to find classes near you and score how doable they are.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>YUGI uses Face ID to securely sign you in to your account.</string>
 	<key>LSApplicationQueriesSchemes</key>
