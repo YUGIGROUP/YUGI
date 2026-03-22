@@ -1176,12 +1176,29 @@ router.post('/venues/analyze', /* protect - temporarily public for testing */ as
       });
     }
 
-    console.log(`🔍 Analyzing venue: ${venueName} at ${address.street}, ${address.city}`);
+    // Normalise address — accept either a plain string or a { street, city, postalCode } object
+    let addressObj;
+    if (typeof address === 'string') {
+      const parts = address.split(',').map(p => p.trim()).filter(Boolean);
+      const ukPostcode = /^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$/i;
+      const lastPart   = parts[parts.length - 1] || '';
+      const hasPostcode = ukPostcode.test(lastPart);
+      addressObj = {
+        street:     parts[0] || '',
+        city:       hasPostcode ? (parts[parts.length - 2] || parts[1] || '') : (parts[1] || ''),
+        postalCode: hasPostcode ? lastPart : '',
+        country:    'United Kingdom',
+      };
+    } else {
+      addressObj = address;
+    }
+
+    console.log(`🔍 Analyzing venue: ${venueName} at ${addressObj.street}, ${addressObj.city}`);
     console.log(`🔄 Venue analysis: Force refresh enabled - will fetch fresh data including transit stations`);
 
     // Get real venue data from external APIs (force refresh to get latest data including transit stations)
     // forceRefresh=true ensures we bypass cache and always fetch fresh data with transit stations
-    const venueData = await venueDataService.getRealVenueData(venueName, address, true);
+    const venueData = await venueDataService.getRealVenueData(venueName, addressObj, true);
     
     // Validate that transit stations are included (for monitoring/debugging)
     const hasTransitStations = venueData.parkingInfo?.toLowerCase().includes('station') || 
@@ -1201,8 +1218,8 @@ router.post('/venues/analyze', /* protect - temporarily public for testing */ as
 
     // Get coordinates if not already available
     let coordinates = venueData.coordinates;
-    if (!coordinates && address.street) {
-      coordinates = await venueDataService.getCoordinatesForAddress(address);
+    if (!coordinates && addressObj.street) {
+      coordinates = await venueDataService.getCoordinatesForAddress(addressObj);
     }
 
     res.json({
@@ -1214,6 +1231,7 @@ router.post('/venues/analyze', /* protect - temporarily public for testing */ as
         parkingInfo: venueData.parkingInfo,
         babyChangingFacilities: venueData.babyChangingFacilities,
         accessibilityNotes: venueData.accessibilityNotes,
+        venueAccessibility: venueData.venueAccessibility || null,
         source: venueData.source,
         lastUpdated: venueData.lastUpdated || new Date().toISOString()
       }
