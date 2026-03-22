@@ -12,6 +12,7 @@ import Firebase
 struct YUGIApp: App {
     init() {
         FirebaseApp.configure()
+        _ = LocationService.shared // trigger location permission request at app start
     }
     
     var body: some Scene {
