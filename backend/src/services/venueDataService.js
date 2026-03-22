@@ -9,11 +9,33 @@ class VenueDataService {
   }
 
   /**
+   * Helper function to check if parking info includes transit stations
+   * This ensures we don't use cached data that's missing transit station information
+   * @param {Object} venueData - Venue data object
+   * @returns {boolean} True if transit stations are present
+   */
+  hasTransitStations(venueData) {
+    if (!venueData || !venueData.parkingInfo) {
+      return false;
+    }
+    const parkingInfo = venueData.parkingInfo.toLowerCase();
+    // Check for common transit station indicators
+    return parkingInfo.includes('station') || 
+           parkingInfo.includes('tube') || 
+           parkingInfo.includes('nearest stations:') ||
+           parkingInfo.includes('public transport');
+  }
+
+  /**
    * Get real venue information from online sources
    * @param {string} venueName - Name of the venue
    * @param {Object} address - Address object with street, city, postalCode
    * @param {boolean} forceRefresh - If true, bypass cache and fetch fresh data
    * @returns {Object} Real venue data including parking and changing facilities
+   * 
+   * IMPORTANT: When forceRefresh is true (e.g., from /venues/analyze endpoint),
+   * we always fetch fresh data to ensure transit stations are included.
+   * This prevents issues where cached data might be missing transit station information.
    */
   async getRealVenueData(venueName, address, forceRefresh = false) {
     console.log(`🔍 getRealVenueData called with:`, { venueName, address, forceRefresh });
@@ -34,11 +56,19 @@ class VenueDataService {
         // Clear the default/old cache entry
         this.cache.delete(cacheKey);
       } else {
-        console.log(`📦 Using cached venue data for: ${venueName} (source: ${cached.data.source})`);
-        return cached.data;
+        // SAFEGUARD: Check if cached data includes transit stations
+        // If not, invalidate cache to ensure we fetch fresh data with transit stations
+        if (!this.hasTransitStations(cached.data)) {
+          console.log(`⚠️ Cached data for ${venueName} is missing transit stations - invalidating cache to fetch fresh data`);
+          this.cache.delete(cacheKey);
+        } else {
+          console.log(`📦 Using cached venue data for: ${venueName} (source: ${cached.data.source})`);
+          return cached.data;
+        }
       }
     } else if (forceRefresh) {
       console.log(`🔄 Force refresh requested - bypassing cache for: ${venueName}`);
+      console.log(`🔄 This ensures fresh data including transit stations will be fetched`);
     }
 
     try {

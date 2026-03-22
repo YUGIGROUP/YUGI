@@ -215,7 +215,8 @@ class SharedBookingService: ObservableObject {
             averageRating: 4.8,
             ageRange: "0-2 years",
             isFavorite: false,
-            isActive: true
+            isActive: true,
+            doability: nil
         )
         
         bookings = [
@@ -1264,7 +1265,8 @@ struct ParentDashboardScreen: View {
                         averageRating: 4.5,
                         ageRange: "0-5 years",
                         isFavorite: false,
-                        isActive: true
+                        isActive: true,
+                        doability: nil
                     )
                     let enhancedBooking = EnhancedBooking(booking: booking, classInfo: genericClass)
                     sharedBookingService.enhancedBookings[booking.id] = enhancedBooking

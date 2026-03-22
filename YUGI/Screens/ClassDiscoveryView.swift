@@ -228,7 +228,8 @@ struct ClassDiscoveryView: View {
                 averageRating: class_.averageRating,
                 ageRange: class_.ageRange,
                 isFavorite: class_.isFavorite,
-                isActive: class_.isActive
+                isActive: class_.isActive,
+                doability: class_.doability
             )
             
             // Update the class in the view model using the index
@@ -321,6 +322,111 @@ struct ClassDiscoveryView: View {
     }
 }
 
+// MARK: - Doability Components
+
+struct DoabilityBadge: View {
+    let score: Int
+    
+    private var label: String {
+        switch score {
+        case 80...100: return "Easy outing"
+        case 60..<80: return "Doable"
+        default: return "Plan ahead"
+        }
+    }
+    
+    private var backgroundColor: Color {
+        switch score {
+        case 80...100: return Color.green
+        case 60..<80: return Color.orange
+        default: return Color.red
+        }
+    }
+    
+    var body: some View {
+        Text(label)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(backgroundColor)
+            .clipShape(Capsule())
+    }
+}
+
+struct DoabilityReasonsView: View {
+    let doability: DoabilityInfo
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Score header
+            HStack(spacing: 8) {
+                Text("Doability Score")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
+                DoabilityBadge(score: doability.score)
+            }
+            
+            // Reasons with checkmarks
+            if !doability.reasons.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Why this works")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                    ForEach(doability.reasons, id: \.self) { reason in
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.green)
+                            Text(reason)
+                                .font(.system(size: 14))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+            }
+            
+            // Friction warnings with icons
+            if !doability.frictionWarnings.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Things to consider")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                    ForEach(doability.frictionWarnings, id: \.text) { warning in
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: iconForSeverity(warning.severity))
+                                .font(.system(size: 14))
+                                .foregroundColor(colorForSeverity(warning.severity))
+                            Text(warning.text)
+                                .font(.system(size: 14))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+    
+    private func iconForSeverity(_ severity: String) -> String {
+        switch severity.lowercased() {
+        case "high": return "exclamationmark.triangle.fill"
+        case "medium": return "exclamationmark.circle.fill"
+        default: return "info.circle.fill"
+        }
+    }
+    
+    private func colorForSeverity(_ severity: String) -> Color {
+        switch severity.lowercased() {
+        case "high": return .red
+        case "medium": return .orange
+        default: return .blue
+        }
+    }
+}
+
 // MARK: - Supporting Views
 
 struct ClassList: View {
@@ -365,6 +471,11 @@ struct ClassCard: View {
     
     private var cardHeader: some View {
         ZStack(alignment: .topTrailing) {
+            if let doability = classItem.doability {
+                DoabilityBadge(score: doability.score)
+                    .padding(12)
+                    .zIndex(1)
+            }
             Rectangle()
                 .fill(
                     LinearGradient(
@@ -565,6 +676,11 @@ struct ClassCardDetails: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            // Doability section (for class detail)
+            if let doability = classItem.doability {
+                DoabilityReasonsView(doability: doability)
+            }
+            
             // Age Range Badge
             if !classItem.ageRange.isEmpty && classItem.ageRange != "All ages" {
                 HStack {

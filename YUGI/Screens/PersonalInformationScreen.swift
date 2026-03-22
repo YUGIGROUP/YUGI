@@ -32,13 +32,13 @@ struct PersonalInformationScreen: View {
             VStack(spacing: 0) {
                 // Header
                 HStack {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Personal Information")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.white)
                         
                         Text("Manage your account details")
-                            .font(.system(size: 16))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.9))
                     }
                     
@@ -56,7 +56,7 @@ struct PersonalInformationScreen: View {
                         }
                     }
                 }
-                .padding(.top, 20)
+                .padding(.top, 32)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity)
                 .background(

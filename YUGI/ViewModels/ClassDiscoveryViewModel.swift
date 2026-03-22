@@ -46,8 +46,34 @@ class ClassDiscoveryViewModel: ObservableObject {
     private func loadClasses() {
         isLoading = true
         
-        // Fetch real classes from the backend API
-        APIService.shared.fetchClasses()
+        // Fetch recommended classes first (with doability scoring), fall back to regular fetch if it fails
+        let latitude = 51.5074  // Default London - can be enhanced with user location
+        let longitude = -0.1278
+        let categoryParam = selectedCategory?.rawValue
+        
+        APIService.shared.fetchRecommendedClasses(latitude: latitude, longitude: longitude, category: categoryParam)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    if case let .failure(error) = completion {
+                        print("⚠️ ClassDiscoveryViewModel: Recommended classes failed, falling back to fetchClasses: \(error)")
+                        print("DEBUG VM: Recommendation failed, falling back to normal fetch")
+                        self?.fetchClassesFallback()
+                    }
+                },
+                receiveValue: { [weak self] response in
+                    self?.isLoading = false
+                    self?.error = nil
+                    print("✅ ClassDiscoveryViewModel: Successfully fetched \(response.data.count) recommended classes from API")
+                    self?.mergeClassesWithResponse(response)
+                    print("DEBUG VM: Got \(response.data.count) classes, first doability: \(String(describing: response.data.first?.doability))")
+                }
+            )
+            .store(in: &cancellables)
+    }
+    
+    private func fetchClassesFallback() {
+        APIService.shared.fetchClasses(category: selectedCategory?.rawValue)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -60,66 +86,71 @@ class ClassDiscoveryViewModel: ObservableObject {
                 receiveValue: { [weak self] response in
                     self?.isLoading = false
                     self?.error = nil
-                    print("✅ ClassDiscoveryViewModel: Successfully fetched \(response.data.count) classes from API")
-                    
-                    // Convert newly created classes from shared storage to Class format
-                    let newClasses = self?.newClassStorage.newClasses.map { providerClass in
-                        Class(
-                            id: "new-class-\(providerClass.id)", // Use provider class ID for the Class model
-                            name: providerClass.name,
-                            description: providerClass.description,
-                            category: providerClass.category,
-                            provider: "new-provider-\(providerClass.id)", providerName: "Provider \(providerClass.id)",
-                            location: Location(
-                                id: "new-location-\(providerClass.id)",
-                                name: providerClass.location,
-                                address: Address(
-                                    street: providerClass.location,
-                                    city: "London",
-                                    state: "England",
-                                    postalCode: "SW1A 1AA",
-                                    country: "United Kingdom"
-                                ),
-                                coordinates: Location.Coordinates(latitude: 51.5074, longitude: -0.1278),
-                                accessibilityNotes: nil,
-                                parkingInfo: nil,
-                                babyChangingFacilities: nil
-                            ),
-                            schedule: Schedule(
-                                startDate: providerClass.nextSession ?? Date(),
-                                endDate: Date().addingTimeInterval(7776000),
-                                recurringDays: ["monday"], // Default to Monday
-                                timeSlots: [
-                                    Schedule.TimeSlot(
-                                        startTime: Calendar.current.date(from: DateComponents(hour: 10))!,
-                                        duration: 3600
-                                    )
-                                ],
-                                totalSessions: 1
-                            ),
-                            pricing: Pricing(
-                                amount: Decimal(providerClass.price),
-                                currency: "GBP",
-                                type: .perSession,
-                                description: providerClass.isFree ? "Free" : "Pay as you go"
-                            ),
-                            maxCapacity: providerClass.maxCapacity,
-                            currentEnrollment: providerClass.currentBookings,
-                            averageRating: 5.0, // New classes get 5-star rating
-                            ageRange: "0-3 years", // Default age range
-                            isFavorite: false,
-                            isActive: true
-                        )
-                    } ?? []
-                    
-                    // Combine API classes with newly created classes
-                    // Put new classes first so they appear at the top
-                    self?.classes = newClasses + response.data
-                    
-                    print("🔍 ClassDiscoveryViewModel: Loaded \(newClasses.count) new classes + \(response.data.count) API classes = \(newClasses.count + response.data.count) total")
+                    print("✅ ClassDiscoveryViewModel: Successfully fetched \(response.data.count) classes from API (fallback)")
+                    self?.mergeClassesWithResponse(response)
                 }
             )
             .store(in: &cancellables)
+    }
+    
+    private func mergeClassesWithResponse(_ response: ClassesResponse) {
+        // Convert newly created classes from shared storage to Class format
+        let newClasses = newClassStorage.newClasses.map { providerClass in
+            Class(
+                id: "new-class-\(providerClass.id)", // Use provider class ID for the Class model
+                name: providerClass.name,
+                description: providerClass.description,
+                category: providerClass.category,
+                provider: "new-provider-\(providerClass.id)", providerName: "Provider \(providerClass.id)",
+                location: Location(
+                    id: "new-location-\(providerClass.id)",
+                    name: providerClass.location,
+                    address: Address(
+                        street: providerClass.location,
+                        city: "London",
+                        state: "England",
+                        postalCode: "SW1A 1AA",
+                        country: "United Kingdom"
+                    ),
+                    coordinates: Location.Coordinates(latitude: 51.5074, longitude: -0.1278),
+                    accessibilityNotes: nil,
+                    parkingInfo: nil,
+                    babyChangingFacilities: nil
+                ),
+                schedule: Schedule(
+                    startDate: providerClass.nextSession ?? Date(),
+                    endDate: Date().addingTimeInterval(7776000),
+                    recurringDays: ["monday"], // Default to Monday
+                    timeSlots: [
+                        Schedule.TimeSlot(
+                            startTime: Calendar.current.date(from: DateComponents(hour: 10))!,
+                            duration: 3600
+                        )
+                    ],
+                    totalSessions: 1
+                ),
+                pricing: Pricing(
+                    amount: Decimal(providerClass.price),
+                    currency: "GBP",
+                    type: .perSession,
+                    description: providerClass.isFree ? "Free" : "Pay as you go"
+                ),
+                maxCapacity: providerClass.maxCapacity,
+                currentEnrollment: providerClass.currentBookings,
+                averageRating: 5.0, // New classes get 5-star rating
+                ageRange: "0-3 years", // Default age range
+                isFavorite: false,
+                isActive: true,
+                doability: nil
+            )
+        }
+        
+        // Combine API classes with newly created classes
+        // Put new classes first so they appear at the top
+        classes = newClasses + response.data
+        
+        print("🔍 ClassDiscoveryViewModel: Loaded \(newClasses.count) new classes + \(response.data.count) API classes = \(newClasses.count + response.data.count) total")
+        print("DEBUG VM: Got \(classes.count) classes, first doability: \(String(describing: classes.first?.doability))")
     }
     
 

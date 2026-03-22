@@ -36,6 +36,28 @@ enum ClassStatus: String, Codable {
 
 // MARK: - Models
 
+struct SubScores: Codable {
+    let logistics: Double
+    let distance: Double
+    let ageFit: Double
+    let availability: Double
+    let rating: Double
+    let scheduleFit: Double
+}
+
+struct FrictionWarning: Codable {
+    let type: String
+    let text: String
+    let severity: String
+}
+
+struct DoabilityInfo: Codable {
+    let score: Int
+    let reasons: [String]
+    let frictionWarnings: [FrictionWarning]
+    let scores: SubScores?
+}
+
 struct Class: Identifiable, Codable {
     let id: String
     let name: String
@@ -52,11 +74,13 @@ struct Class: Identifiable, Codable {
     let ageRange: String
     var isFavorite: Bool
     let isActive: Bool?  // Whether the class is active (not cancelled)
+    let doability: DoabilityInfo?
     
     enum CodingKeys: String, CodingKey {
         case id, name, description, category, provider, providerName, location
         case schedule, pricing, maxCapacity, currentEnrollment
         case averageRating, ageRange, isFavorite, isActive
+        case doability = "_doability"
     }
     
     var isAvailable: Bool {

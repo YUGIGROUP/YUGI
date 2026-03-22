@@ -4,6 +4,7 @@ const Class = require('../models/Class');
 const { protect, optionalAuth, requireProviderVerification } = require('../middleware/auth');
 const venueDataService = require('../services/venueDataService');
 const { scoreClasses } = require('../services/doabilityService');
+const { ensureCoordinates } = require('../services/autoGeocode');
 
 const router = express.Router();
 
@@ -832,6 +833,9 @@ router.post('/', [
     const newClass = new Class(classData);
     const savedClass = await newClass.save();
 
+    // Geocode if coordinates missing (0,0 or unset) — persists to DB
+    await ensureCoordinates(savedClass);
+
     console.log('✅ Class created successfully:', savedClass.name);
     console.log('📅 Saved classDates in database:', savedClass.classDates?.map(d => d.toISOString().split('T')[0]).join(', ') || 'None');
 
@@ -904,6 +908,9 @@ router.put('/:id', [
       updateData,
       { new: true, runValidators: true }
     );
+
+    // Geocode if location/address changed and coordinates still missing
+    await ensureCoordinates(updatedClass);
 
     console.log('✅ Class updated successfully:', updatedClass.name);
 

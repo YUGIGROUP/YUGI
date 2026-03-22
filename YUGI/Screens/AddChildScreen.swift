@@ -94,7 +94,7 @@ struct AddChildScreen: View {
                                     // Year Picker
                                     Picker("Year", selection: $selectedYear) {
                                         ForEach(2008...2024, id: \.self) { year in
-                                            Text("\(year)").tag(year)
+                                            Text(formatYear(year)).tag(year)
                                         }
                                     }
                                     .pickerStyle(WheelPickerStyle())
@@ -221,6 +221,13 @@ struct AddChildScreen: View {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US")
         return dateFormatter.monthSymbols[month - 1]
+    }
+    
+    private func formatYear(_ year: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .none
+        formatter.usesGroupingSeparator = false
+        return formatter.string(from: NSNumber(value: year)) ?? String(year)
     }
     
     private func updateDateOfBirth() {

@@ -838,7 +838,8 @@ YUGI Team
                 averageRating: 4.5,
                 ageRange: "0-2 years",
                 isFavorite: false,
-                isActive: true
+                isActive: true,
+                doability: nil
             )
             
             let enhancedBooking = EnhancedBooking(booking: booking, classInfo: mockClass)

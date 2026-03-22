@@ -175,7 +175,7 @@ struct ClassSearchView: View {
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                     
-                    Text("Discover amazing activities for your child")
+                    Text("Discover activities for your child and you")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
@@ -443,7 +443,7 @@ struct ClassSearchView: View {
         isLoading = true
         error = nil
         
-        APIService.shared.fetchClasses()
+        APIService.shared.fetchRecommendedClasses(latitude: 51.5074, longitude: -0.1278, category: selectedCategory?.rawValue)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { completion in
@@ -499,6 +499,11 @@ struct ClassSearchResultCard: View {
     
     private var cardHeader: some View {
         ZStack(alignment: .topTrailing) {
+            if let doability = classItem.doability {
+                DoabilityBadge(score: doability.score)
+                    .padding(12)
+                    .zIndex(1)
+            }
             Rectangle()
                 .fill(
                     LinearGradient(

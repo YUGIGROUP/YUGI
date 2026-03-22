@@ -59,7 +59,8 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 averageRating: 4.8,
                 ageRange: "0-12 months",
                 isFavorite: false,
-                isActive: true
+                isActive: true,
+                doability: nil
             ),
             Class(
                 id: "mock-class-2",
@@ -105,7 +106,8 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 averageRating: 4.6,
                 ageRange: "1-3 years",
                 isFavorite: true,
-                isActive: true
+                isActive: true,
+                doability: nil
             ),
             Class(
                 id: "mock-class-3",
@@ -151,7 +153,8 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 averageRating: 4.9,
                 ageRange: "0-12 months",
                 isFavorite: false,
-                isActive: true
+                isActive: true,
+                doability: nil
             )
         ]
     }

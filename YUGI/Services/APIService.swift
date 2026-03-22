@@ -243,9 +243,7 @@ class APIService: ObservableObject, @unchecked Sendable {
                 print("🔗 APIService: Response headers: \(httpResponse.allHeaderFields)")
                 
                 // Log raw response for debugging
-                if let jsonString = String(data: data, encoding: .utf8) {
-                    print("🔍 APIService: Raw JSON response: \(jsonString)")
-                }
+                print("DEBUG API: Raw response: \(String(data: data, encoding: .utf8) ?? "nil")")
                 
                 switch httpResponse.statusCode {
                 case 200...299:
@@ -928,6 +926,22 @@ class APIService: ObservableObject, @unchecked Sendable {
         
         let queryString = queryItems.isEmpty ? "" : "?\(queryItems.joined(separator: "&"))"
         return request(endpoint: "/classes\(queryString)", requiresAuth: false)
+    }
+    
+    func fetchRecommendedClasses(latitude: Double, longitude: Double, category: String? = nil) -> AnyPublisher<ClassesResponse, APIError> {
+        var queryItems = [
+            "recommend=true",
+            "latitude=\(latitude)",
+            "longitude=\(longitude)"
+        ]
+        if let category = category {
+            queryItems.append("category=\(category)")
+        }
+        let queryString = "?\(queryItems.joined(separator: "&"))"
+        let fullURL = "\(APIConfig.baseURL)/classes\(queryString)"
+        print("DEBUG API: Calling URL: \(fullURL)")
+        print("DEBUG API: Auth token exists: \(authToken != nil)")
+        return request(endpoint: "/classes\(queryString)", requiresAuth: true)
     }
     
     func fetchClass(id: String) -> AnyPublisher<ClassResponse, APIError> {
@@ -1668,7 +1682,8 @@ class APIService: ObservableObject, @unchecked Sendable {
                     averageRating: 0.0,
                     ageRange: classData.ageRange,
                     isFavorite: false,
-                    isActive: true
+                    isActive: true,
+                    doability: nil
                 )
                 
                 let response = ClassResponse(data: mockClass)

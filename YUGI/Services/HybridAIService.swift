@@ -87,9 +87,14 @@ class HybridAIService: ObservableObject {
         errorMessage = nil
         currentSource = ""
         
+        print("🔍 HybridAIService: Starting venue analysis for: \(location.name)")
+        print("🔍 HybridAIService: Address: \(location.address.formatted)")
+        print("🔍 HybridAIService: Coordinates: \(location.coordinates.latitude), \(location.coordinates.longitude)")
+        
         defer {
             isAnalyzing = false
             analysisProgress = 1.0
+            print("🔍 HybridAIService: Analysis complete. Source: \(currentSource)")
         }
         
         let cacheKey = generateCacheKey(location)
@@ -98,6 +103,7 @@ class HybridAIService: ObservableObject {
         analysisProgress = 0.1
         if let cachedData = venueCache[cacheKey], !cachedData.isExpired {
             currentSource = "Cache (\(cachedData.source))"
+            print("✅ HybridAIService: Using cached data from \(cachedData.source)")
             analytics.recordCacheHit(source: cachedData.source)
             return cachedData.facilities
         }
@@ -106,37 +112,61 @@ class HybridAIService: ObservableObject {
         analysisProgress = 0.4
         if apiUsageTracker.canUseGooglePlaces() {
             currentSource = "Google Places API"
+            print("🔍 HybridAIService: Attempting Google Places API...")
             if let googleResult = await tryGooglePlacesAPI(location) {
+                print("✅ HybridAIService: Google Places API succeeded")
+                print("   Parking: \(googleResult.parkingInfo ?? "nil")")
+                print("   Baby Changing: \(googleResult.babyChangingFacilities ?? "nil")")
+                print("   Accessibility: \(googleResult.accessibilityNotes ?? "nil")")
                 cacheResult(cacheKey: cacheKey, facilities: googleResult, source: "Google Places")
                 analytics.recordAPISuccess(source: "Google Places")
                 return googleResult
+            } else {
+                print("❌ HybridAIService: Google Places API failed or returned no results")
             }
+        } else {
+            print("⚠️ HybridAIService: Google Places API usage limit reached")
         }
         
         // Step 3: Try Foursquare API (40-70%)
         analysisProgress = 0.7
         if apiUsageTracker.canUseFoursquare() {
             currentSource = "Foursquare API"
+            print("🔍 HybridAIService: Attempting Foursquare API...")
             if let foursquareResult = await tryFoursquareAPI(location) {
+                print("✅ HybridAIService: Foursquare API succeeded")
                 cacheResult(cacheKey: cacheKey, facilities: foursquareResult, source: "Foursquare")
                 analytics.recordAPISuccess(source: "Foursquare")
                 return foursquareResult
+            } else {
+                print("❌ HybridAIService: Foursquare API failed or returned no results")
             }
+        } else {
+            print("⚠️ HybridAIService: Foursquare API usage limit reached")
         }
         
         // Step 4: Try OpenStreetMap (70-90%)
         analysisProgress = 0.9
         currentSource = "OpenStreetMap"
+        print("🔍 HybridAIService: Attempting OpenStreetMap API...")
         if let osmResult = await tryOpenStreetMapAPI(location) {
+            print("✅ HybridAIService: OpenStreetMap API succeeded")
             cacheResult(cacheKey: cacheKey, facilities: osmResult, source: "OpenStreetMap")
             analytics.recordAPISuccess(source: "OpenStreetMap")
             return osmResult
+        } else {
+            print("❌ HybridAIService: OpenStreetMap API failed or returned no results")
         }
         
         // Step 5: Enhanced pattern matching fallback (90-100%)
         analysisProgress = 1.0
         currentSource = "Pattern Analysis"
+        print("⚠️ HybridAIService: All APIs failed, using pattern matching fallback")
         let fallbackResult = await enhancedPatternMatching(location)
+        print("🔍 HybridAIService: Fallback result:")
+        print("   Parking: \(fallbackResult.parkingInfo ?? "nil")")
+        print("   Baby Changing: \(fallbackResult.babyChangingFacilities ?? "nil")")
+        print("   Accessibility: \(fallbackResult.accessibilityNotes ?? "nil")")
         cacheResult(cacheKey: cacheKey, facilities: fallbackResult, source: "Pattern Analysis")
         analytics.recordAPISuccess(source: "Pattern Analysis")
         return fallbackResult
@@ -224,14 +254,55 @@ class HybridAIService: ObservableObject {
     }
     
     private func findPlaceID(_ location: Location) async throws -> String? {
-        let searchInput = "\(location.name) \(location.address.formatted)"
-        print("🔍 Google Places: Search input: '\(searchInput)'")
+        // Try multiple search strategies to find the correct venue
+        // Strategy 1: Venue name + address (most specific)
+        let searchInput1 = "\(location.name) \(location.address.formatted)"
+        print("🔍 Google Places: Strategy 1 - Search input: '\(searchInput1)'")
         
+        if let placeID = try await findPlaceIDWithQuery(searchInput1) {
+            print("✅ Google Places: Found venue with Strategy 1")
+            return placeID
+        }
+        
+        // Strategy 2: Venue name only (in case address causes issues)
+        let searchInput2 = location.name
+        print("🔍 Google Places: Strategy 2 - Search input: '\(searchInput2)'")
+        
+        if let placeID = try await findPlaceIDWithQuery(searchInput2) {
+            print("✅ Google Places: Found venue with Strategy 2")
+            return placeID
+        }
+        
+        // Strategy 3: Use coordinates if available (most accurate)
+        if location.coordinates.latitude != 0.0 && location.coordinates.longitude != 0.0 {
+            let searchInput3 = "\(location.name) \(location.coordinates.latitude),\(location.coordinates.longitude)"
+            print("🔍 Google Places: Strategy 3 - Search with coordinates: '\(searchInput3)'")
+            
+            if let placeID = try await findPlaceIDWithQuery(searchInput3) {
+                print("✅ Google Places: Found venue with Strategy 3 (coordinates)")
+                return placeID
+            }
+        }
+        
+        // Strategy 4: Try with city/postal code only
+        let searchInput4 = "\(location.name) \(location.address.city) \(location.address.postalCode)"
+        print("🔍 Google Places: Strategy 4 - Search input: '\(searchInput4)'")
+        
+        if let placeID = try await findPlaceIDWithQuery(searchInput4) {
+            print("✅ Google Places: Found venue with Strategy 4")
+            return placeID
+        }
+        
+        print("❌ Google Places: Could not find venue with any strategy")
+        return nil
+    }
+    
+    private func findPlaceIDWithQuery(_ searchInput: String) async throws -> String? {
         let url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
         let parameters = [
             "input": searchInput,
             "inputtype": "textquery",
-            "fields": "place_id",
+            "fields": "place_id,name,formatted_address",
             "key": googlePlacesAPIKey
         ]
         
@@ -242,6 +313,10 @@ class HybridAIService: ObservableObject {
         if let candidates = response["candidates"] as? [[String: Any]],
            let firstCandidate = candidates.first,
            let placeID = firstCandidate["place_id"] as? String {
+            // Log the matched venue name for debugging
+            if let matchedName = firstCandidate["name"] as? String {
+                print("✅ Google Places: Matched venue: '\(matchedName)'")
+            }
             return placeID
         }
         
@@ -909,13 +984,13 @@ class HybridAIService: ObservableObject {
         let address = location.address.formatted.lowercased()
         
         if venueName.contains("shopping") || venueName.contains("mall") {
-            return "Parking available - check venue for current charges and restrictions"
+            return "Parking available - check \(location.name) for current charges and restrictions"
         } else if venueName.contains("library") || venueName.contains("community") {
-            return "Free parking typically available - confirm with venue"
+            return "Free parking typically available - confirm with \(location.name)"
         } else if address.contains("high street") || address.contains("main street") {
-            return "Street parking available - check parking meters and restrictions"
+            return "Street parking available near \(location.name) - check parking meters and restrictions"
         } else {
-            return "Parking information not available - please contact venue for current details"
+            return "Parking information not available for \(location.name) - please contact the venue directly for current parking details"
         }
     }
     
@@ -923,11 +998,11 @@ class HybridAIService: ObservableObject {
         let venueName = location.name.lowercased()
         
         if venueName.contains("baby") || venueName.contains("child") || venueName.contains("family") {
-            return "Dedicated baby changing facilities likely available"
+            return "Dedicated baby changing facilities likely available at \(location.name)"
         } else if venueName.contains("library") || venueName.contains("community") {
-            return "Baby changing facilities typically available in accessible restroom"
+            return "Baby changing facilities typically available in accessible restroom at \(location.name)"
         } else {
-            return "Baby changing facilities information not available - please contact venue to confirm"
+            return "Baby changing facilities information not available for \(location.name) - please contact the venue directly to confirm availability"
         }
     }
     
@@ -935,9 +1010,9 @@ class HybridAIService: ObservableObject {
         let venueName = location.name.lowercased()
         
         if venueName.contains("community") || venueName.contains("library") {
-            return "Wheelchair accessible entrance and facilities typically available"
+            return "Wheelchair accessible entrance and facilities typically available at \(location.name)"
         } else {
-            return "Accessibility information not available - please contact venue for specific details"
+            return "Accessibility information not available for \(location.name) - please contact the venue directly for specific accessibility details and wheelchair access information"
         }
     }
     

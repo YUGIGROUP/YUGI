@@ -108,6 +108,7 @@ struct VenueAnalysisScreen: View {
                         loadingView
                     } else if let analysis = analysisData {
                         venueInfoSection(analysis)
+                        transportSection(analysis)
                         accessibilitySection(analysis)
                         safetySection(analysis)
                         amenitiesSection(analysis)
@@ -163,6 +164,49 @@ struct VenueAnalysisScreen: View {
                 AnalysisRow(icon: "location.circle", title: "Coordinates", value: String(format: "%.4f, %.4f", analysis.coordinates.latitude, analysis.coordinates.longitude))
                 AnalysisRow(icon: "building.2", title: "Venue Type", value: analysis.venueType)
                 AnalysisRow(icon: "person.3", title: "Capacity", value: "\(enhancedBooking.classInfo.maxCapacity) people")
+            }
+        }
+    }
+    
+    private func transportSection(_ analysis: VenueAnalysisUIData) -> some View {
+        // Extract transport links from parking info
+        let parkingInfo = venueApiData?.parkingInfo ?? enhancedBooking.classInfo.location?.parkingInfo ?? ""
+        let hasTransportInfo = parkingInfo.lowercased().contains("station") || parkingInfo.lowercased().contains("transport") || parkingInfo.lowercased().contains("tube") || parkingInfo.lowercased().contains("overground")
+        
+        // Extract station names from parking info
+        var stations: [String] = []
+        if hasTransportInfo, let stationsRange = parkingInfo.range(of: "Nearest stations:") {
+            let stationsText = String(parkingInfo[stationsRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+            if stationsText.hasSuffix(".") {
+                let stationsWithoutPeriod = String(stationsText.dropLast())
+                stations = stationsWithoutPeriod.components(separatedBy: ", ").map { $0.trimmingCharacters(in: .whitespaces) }
+            } else {
+                stations = stationsText.components(separatedBy: ", ").map { $0.trimmingCharacters(in: .whitespaces) }
+            }
+        }
+        
+        return AnalysisCard(title: "Public Transport") {
+            VStack(alignment: .leading, spacing: 12) {
+                if !stations.isEmpty {
+                    ForEach(stations, id: \.self) { station in
+                        HStack(spacing: 8) {
+                            Image(systemName: "tram.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .frame(width: 16)
+                            
+                            Text(station)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                        }
+                    }
+                } else if hasTransportInfo {
+                    AnalysisRow(icon: "tram.fill", title: "Public Transport", value: "Public transport recommended - check parking info for details")
+                } else {
+                    AnalysisRow(icon: "tram.fill", title: "Public Transport", value: "Transport information not available")
+                }
             }
         }
     }
@@ -444,7 +488,8 @@ struct VenueAnalysisUIData {
             averageRating: 4.5,
             ageRange: "0-2 years",
             isFavorite: false,
-            isActive: true
+            isActive: true,
+            doability: nil
         )
     ))
 }
