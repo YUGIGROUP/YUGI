@@ -37,6 +37,7 @@ class VenueDataService {
     this.openWeatherApiKey = process.env.OPENWEATHERMAP_API_KEY;
     this.cache             = new Map();
     this.cacheExpiry       = 24 * 60 * 60 * 1000; // 24 hours
+    console.log(`🔑 VenueDataService: Google=${!!this.googleApiKey}, Foursquare=${!!this.foursquareApiKey}, Weather=${!!this.openWeatherApiKey}`);
   }
 
   // ─── Cache helpers ──────────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ class VenueDataService {
     try {
       // ── Try Google Places (New API) ──────────────────────────────────────
       const googleData = await this._getGooglePlacesData(venueName, address);
+      if (!googleData) console.log(`⚠️ Google Places returned no data for: ${venueName} — trying Foursquare`);
       if (googleData) {
         const lat = googleData.location && googleData.location.latitude;
         const lng = googleData.location && googleData.location.longitude;
@@ -110,6 +112,7 @@ class VenueDataService {
 
       // ── Foursquare fallback ──────────────────────────────────────────────
       const foursquareData = await this._getFoursquareData(venueName, address);
+      if (!foursquareData) console.log(`⚠️ Foursquare returned no data for: ${venueName} — falling back to defaults`);
       if (foursquareData) {
         const result = this._buildResult(foursquareData, 'foursquare', [], null);
         this._setCached(key, result);
@@ -125,7 +128,10 @@ class VenueDataService {
   // ─── Google Places (New API) ────────────────────────────────────────────────
 
   async _getGooglePlacesData(venueName, address) {
-    if (!this.googleApiKey) return null;
+    if (!this.googleApiKey) {
+      console.log('⚠️ Google Places: GOOGLE_PLACES_API_KEY not set — skipping');
+      return null;
+    }
     try {
       const query = `${venueName} ${address.street} ${address.city}`.trim();
 
