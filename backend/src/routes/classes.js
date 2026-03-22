@@ -1166,7 +1166,7 @@ router.get('/provider/my-classes', protect, /* requireProviderVerification, */ n
 // preventing issues where cached data might be missing transit station information.
 // This is critical for newly created/published classes where providers expect
 // complete venue information including nearest tube/train stations.
-router.post('/venues/analyze', /* protect - temporarily public for testing */ async (req, res) => {
+router.post('/venues/analyze', protect, async (req, res) => {
   try {
     const { venueName, address } = req.body;
 

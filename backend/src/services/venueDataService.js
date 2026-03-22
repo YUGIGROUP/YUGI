@@ -220,7 +220,14 @@ class VenueDataService {
             && !n.includes('fire station');
         })
         .sort((a, b) => (a.distance !== null ? a.distance : 9999) - (b.distance !== null ? b.distance : 9999))
-        .slice(0, 3); // 3 nearest
+        // Deduplicate by base name (e.g. "South Wimbledon station" and "South Wimbledon" → keep closest)
+        .reduce((unique, station) => {
+          const base = station.name.toLowerCase().replace(/\s*station\s*/gi, '').trim();
+          const existing = unique.find(s => s.name.toLowerCase().replace(/\s*station\s*/gi, '').trim() === base);
+          if (!existing) unique.push(station);
+          return unique;
+        }, [])
+        .slice(0, 3); // 3 nearest unique
 
       console.log(`🚇 Found ${stations.length} nearby stations for (${lat}, ${lng})`);
       return stations;
