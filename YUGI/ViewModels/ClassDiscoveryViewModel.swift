@@ -141,7 +141,7 @@ class ClassDiscoveryViewModel: ObservableObject {
                 ageRange: "0-3 years", // Default age range
                 isFavorite: false,
                 isActive: true,
-                doability: nil, venueAccessibility: <#VenueAccessibility?#>
+                doability: nil, venueAccessibility: nil
             )
         }
         
