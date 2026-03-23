@@ -98,6 +98,7 @@ struct ProviderDashboardScreen: View {
     @State private var shouldNavigateToMyClasses = false
     @State private var shouldNavigateToClassSearch = false
     @State private var shouldNavigateToChildrenBookings = false
+    @State private var shouldNavigateToVenueCheck = false
 
     @State private var showingHelpSupport = false
     @State private var showingAddChild = false
@@ -194,6 +195,14 @@ struct ProviderDashboardScreen: View {
                                         color: .white
                                     ) {
                                         shouldNavigateToClassSearch = true
+                                    }
+                                    
+                                    ProviderQuickActionButton(
+                                        title: "Venue Check",
+                                        icon: "mappin.and.ellipse",
+                                        color: .white
+                                    ) {
+                                        shouldNavigateToVenueCheck = true
                                     }
                                 }
                             }
@@ -366,6 +375,9 @@ struct ProviderDashboardScreen: View {
             }
             .sheet(isPresented: $shouldNavigateToMyClasses) {
                 ProviderMyClassesScreen(businessName: displayBusinessName)
+            }
+            .sheet(isPresented: $shouldNavigateToVenueCheck) {
+                VenueCheckScreen()
             }
             .sheet(isPresented: $shouldNavigateToClassSearch) {
                 ClassSearchView()

@@ -387,6 +387,7 @@ struct ParentDashboardScreen: View {
     @State private var bookingToCancel: EnhancedBooking? = nil
     @State private var showingContactForm = false
     @State private var selectedBookingForAnalysis: EnhancedBooking? = nil
+    @State private var shouldNavigateToVenueCheck = false
     
     // Use shared booking service instead of local state
     @StateObject private var sharedBookingService = SharedBookingService.shared
@@ -695,6 +696,9 @@ struct ParentDashboardScreen: View {
                     self.children = user.children ?? []
                 }
             }
+            .sheet(isPresented: $shouldNavigateToVenueCheck) {
+                VenueCheckScreen()
+            }
             .sheet(isPresented: $shouldNavigateToClassDiscovery) {
                 ClassSearchView()
             }
@@ -965,6 +969,14 @@ struct ParentDashboardScreen: View {
                         ) {
                             showingClassBookings = true
                         }
+                    }
+                    
+                    ParentQuickActionButton(
+                        title: "Venue Check",
+                        icon: "mappin.and.ellipse",
+                        color: .white
+                    ) {
+                        shouldNavigateToVenueCheck = true
                     }
                 }
             }

@@ -1026,6 +1026,22 @@ class APIService: ObservableObject, @unchecked Sendable {
         ]
         return request(endpoint: "/classes/venues/analyze", method: .POST, body: body)
     }
+
+    func fetchVenueAnalysis(venueName: String, location: String) -> AnyPublisher<VenueAnalysisResponse, APIError> {
+        let parts = location.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        let city = parts.first ?? location
+        let body: [String: Any] = [
+            "venueName": venueName,
+            "address": [
+                "street": "",
+                "city": city,
+                "state": "",
+                "postalCode": "",
+                "country": "UK"
+            ]
+        ]
+        return request(endpoint: "/classes/venues/analyze", method: .POST, body: body)
+    }
     
     // MARK: - Bookings
     func createBooking(classId: String, children: [Child], sessionDate: Date, sessionTime: String, specialRequests: String? = nil) -> AnyPublisher<(BookingResponse, String), APIError> {
@@ -1777,6 +1793,8 @@ struct VenueAnalysisAPIData: Codable {
     let parkingInfo: String
     let babyChangingFacilities: String
     let accessibilityNotes: String?
+    let venueAccessibility: VenueAccessibility?
+    let formattedAddress: String?
     let source: String
     let lastUpdated: String
     
