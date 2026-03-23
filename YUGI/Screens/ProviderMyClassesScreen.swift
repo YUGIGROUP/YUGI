@@ -839,7 +839,7 @@ YUGI Team
                 ageRange: "0-2 years",
                 isFavorite: false,
                 isActive: true,
-                doability: nil
+                doability: nil, venueAccessibility: nil
             )
             
             let enhancedBooking = EnhancedBooking(booking: booking, classInfo: mockClass)
