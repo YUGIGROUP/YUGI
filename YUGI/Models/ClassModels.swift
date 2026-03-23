@@ -51,6 +51,24 @@ struct FrictionWarning: Codable {
     let severity: String
 }
 
+struct NearestStation: Codable {
+    let name: String
+    let distance: Int?
+    let type: String?
+}
+
+struct VenueAccessibility: Codable {
+    let pramAccessibleEntrance: Bool?
+    let accessibleRestroom: Bool?
+    let accessibleSeating: Bool?
+    let accessibleParking: Bool?
+    let hasBabyChanging: Bool?
+    let parkingType: String?
+    let nearestStations: [NearestStation]?
+    let weatherForecast: String?
+    let lastVerified: String?
+}
+
 struct DoabilityInfo: Codable {
     let score: Int
     let reasons: [String]
@@ -75,12 +93,14 @@ struct Class: Identifiable, Codable {
     var isFavorite: Bool
     let isActive: Bool?  // Whether the class is active (not cancelled)
     let doability: DoabilityInfo?
+    let venueAccessibility: VenueAccessibility?
     
     enum CodingKeys: String, CodingKey {
         case id, name, description, category, provider, providerName, location
         case schedule, pricing, maxCapacity, currentEnrollment
         case averageRating, ageRange, isFavorite, isActive
         case doability = "_doability"
+        case venueAccessibility
     }
     
     var isAvailable: Bool {

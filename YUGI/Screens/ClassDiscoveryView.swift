@@ -674,6 +674,20 @@ struct ClassCardDetails: View {
         classItem.location?.babyChangingFacilities ?? "No changing facilities"
     }
     
+    private var weatherIcon: String {
+        let forecast = classItem.venueAccessibility?.weatherForecast?.lowercased() ?? ""
+        if forecast.contains("rain") || forecast.contains("drizzle") || forecast.contains("shower") {
+            return "cloud.rain.fill"
+        } else if forecast.contains("snow") {
+            return "cloud.snow.fill"
+        } else if forecast.contains("cloud") || forecast.contains("overcast") {
+            return "cloud.fill"
+        } else if forecast.contains("clear") || forecast.contains("sunny") {
+            return "sun.max.fill"
+        }
+        return "cloud.fill"
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Doability section (for class detail)
@@ -735,12 +749,50 @@ struct ClassCardDetails: View {
             Divider()
                 .background(Color.yugiGray.opacity(0.2))
             
+            // Weather forecast chip (if available)
+            if let forecast = classItem.venueAccessibility?.weatherForecast {
+                HStack(spacing: 6) {
+                    Image(systemName: weatherIcon)
+                        .font(.system(size: 12))
+                        .foregroundColor(forecast.lowercased().contains("rain") ? Color(hex: "#5B8DB8") : Color(hex: "#E8A045"))
+                    Text(forecast)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.yugiGray)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color(hex: "#F5F5F0"))
+                .cornerRadius(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             // Class Details
             VStack(alignment: .leading, spacing: 12) {
                 ClassDetailRow(icon: "calendar", text: formatSchedule(classItem.schedule))
                 ClassDetailRow(icon: "mappin.circle", text: classItem.location?.address.formatted ?? "Location TBD")
                 ClassDetailRow(icon: "car.fill", text: parkingText)
                 ClassDetailRow(icon: "person.2.fill", text: babyChangingText)
+                
+                // Nearest transit stations
+                if let stations = classItem.venueAccessibility?.nearestStations, !stations.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(stations, id: \.name) { station in
+                            HStack(spacing: 6) {
+                                Image(systemName: station.type == "tube" ? "tram.fill" : station.type == "rail" ? "train.side.front.car" : "bus.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .frame(width: 16)
+                                if let dist = station.distance {
+                                    Text("\(station.name) (\(dist)m)")
+                                } else {
+                                    Text(station.name)
+                                }
+                            }
+                            .font(.system(size: 13))
+                            .foregroundColor(.yugiGray)
+                        }
+                    }
+                }
             }
         }
         .padding(.horizontal, 20)
