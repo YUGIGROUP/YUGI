@@ -1029,14 +1029,51 @@ class APIService: ObservableObject, @unchecked Sendable {
 
     func fetchVenueAnalysis(venueName: String, location: String) -> AnyPublisher<VenueAnalysisResponse, APIError> {
         let parts = location.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-        let city = parts.first ?? location
+
+        // Detect UK postcode: e.g. "TW9 1DN", "SW1A 2AA", "EC1A 1BB"
+        let postcodePattern = "^[A-Z]{1,2}[0-9][0-9A-Z]?\\s*[0-9][A-Z]{2}$"
+        let postcodeRegex = try? NSRegularExpression(pattern: postcodePattern, options: .caseInsensitive)
+        func isPostcode(_ s: String) -> Bool {
+            guard let re = postcodeRegex else { return false }
+            return re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) != nil
+        }
+
+        var street = ""
+        var city = ""
+        var postalCode = ""
+
+        switch parts.count {
+        case 1:
+            // Single token — postcode or city name
+            if isPostcode(parts[0]) { postalCode = parts[0] } else { city = parts[0] }
+        case 2:
+            // "Street, City" / "City, Postcode" / "Postcode, City"
+            if isPostcode(parts[0]) {
+                postalCode = parts[0]; city = parts[1]
+            } else if isPostcode(parts[1]) {
+                city = parts[0]; postalCode = parts[1]
+            } else {
+                street = parts[0]; city = parts[1]
+            }
+        default:
+            // 3+ parts: first = street, last = postcode (if it looks like one), middle = city
+            street = parts[0]
+            let last = parts[parts.count - 1]
+            if isPostcode(last) {
+                postalCode = last
+                city = parts[1..<(parts.count - 1)].joined(separator: ", ")
+            } else {
+                city = parts[1...].joined(separator: ", ")
+            }
+        }
+
         let body: [String: Any] = [
             "venueName": venueName,
             "address": [
-                "street": "",
+                "street": street,
                 "city": city,
                 "state": "",
-                "postalCode": "",
+                "postalCode": postalCode,
                 "country": "UK"
             ]
         ]
