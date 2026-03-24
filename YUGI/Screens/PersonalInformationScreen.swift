@@ -26,6 +26,7 @@ struct PersonalInformationScreen: View {
     @State private var showingSuccess = false
     @State private var successMessage = ""
     @State private var isLoading = false
+    @State private var trackingEnabled = ConsentManager.shared.hasConsented()
     
     var body: some View {
         NavigationStack {
@@ -355,7 +356,41 @@ struct PersonalInformationScreen: View {
                 .background(Color.white)
                 .cornerRadius(12)
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-                
+
+                // Activity tracking toggle
+                HStack {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .frame(width: 24)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Activity tracking")
+                            .font(.system(size: 14))
+                            .foregroundColor(.yugiGray.opacity(0.7))
+
+                        Text("Personalised recommendations")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.yugiGray)
+                    }
+
+                    Spacer()
+
+                    Toggle("", isOn: $trackingEnabled)
+                        .labelsHidden()
+                        .tint(Color(hex: "#BC6C5C"))
+                        .onChange(of: trackingEnabled) { _, newValue in
+                            if newValue {
+                                ConsentManager.shared.grantConsent()
+                            } else {
+                                ConsentManager.shared.revokeConsent()
+                            }
+                        }
+                }
+                .padding()
+                .background(Color.white)
+                .cornerRadius(12)
+                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
 
             }
         }
