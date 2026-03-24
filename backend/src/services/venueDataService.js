@@ -76,7 +76,7 @@ class VenueDataService {
    * @param {Date|null}   classTime    - Used to select the right weather forecast slot
    */
   async getRealVenueData(venueName, address, forceRefresh = false, classTime = null) {
-    if (!venueName || !address || !address.street) {
+    if (!venueName || !address?.city) {
       return this.getDefaultVenueData(venueName);
     }
 
@@ -133,7 +133,9 @@ class VenueDataService {
       return null;
     }
     try {
-      const query = `${venueName} ${address.street} ${address.city}`.trim();
+      const query = address.street
+        ? `${venueName} ${address.street} ${address.city}`.trim()
+        : `${venueName} ${address.city}`.trim();
 
       // Step 1: Text search to find the place ID
       const searchResp = await axios.post(
