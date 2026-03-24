@@ -325,9 +325,9 @@ struct VenueCheckScreen: View {
 
     private func accessibilityEmoji(_ value: Bool?) -> String {
         switch value {
-        case true:  return "\u2705"
-        case false: return "\u274c"
-        default:    return "\u2753"
+        case true:  return "\u{2705}"
+        case false: return "\u{274c}"
+        default:    return "\u{2753}"
         }
     }
 
