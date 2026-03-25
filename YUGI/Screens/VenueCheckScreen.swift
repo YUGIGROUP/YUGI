@@ -404,11 +404,16 @@ struct VenueCheckScreen: View {
                 receiveCompletion: { completion in
                     isLoading = false
                     if case .failure(let error) = completion {
-                        errorMessage = error.localizedDescription ?? "Could not find venue. Try a more specific name or include the city."
+                        errorMessage = error.localizedDescription
                     }
                 },
                 receiveValue: { response in
                     venueData = response.data
+                    EventTracker.shared.trackVenueChecked(
+                        venueName: name,
+                        location: loc,
+                        venueLocation: response.data?.coordinates.map { (lat: $0.latitude, lng: $0.longitude) }
+                    )
                 }
             )
             .store(in: &cancellables)

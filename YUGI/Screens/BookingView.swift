@@ -232,6 +232,10 @@ struct BookingView: View {
         // Add booking to SharedBookingService so it appears in Children Bookings
         SharedBookingService.shared.addBooking(enhancedBooking)
         print("🎯 BookingView: Added booking to SharedBookingService for Children Bookings")
+        EventTracker.shared.trackBookingCompleted(
+            classId: classItem.id,
+            bookingId: enhancedBooking.booking.id.uuidString
+        )
         
         // Send notifications
         notificationService.sendBookingNotification(for: enhancedBooking)
@@ -345,6 +349,7 @@ struct BookingView: View {
             }
             .onAppear {
                 setupBookingView()
+                EventTracker.shared.trackBookingStarted(classId: classItem.id)
             }
             .onReceive(apiService.$currentUser) { user in
                 handleUserDataChange(user)
@@ -366,6 +371,7 @@ struct BookingView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
+                    EventTracker.shared.trackBookingCancelled(classId: classItem.id, reason: "user_dismissed")
                     dismiss()
                 }
                 .foregroundColor(Color(hex: "#BC6C5C"))

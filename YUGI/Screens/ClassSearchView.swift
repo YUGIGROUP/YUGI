@@ -412,6 +412,11 @@ struct ClassSearchView: View {
                                 classItem: classItem,
                                 onBook: { selectedClass in
                                     print("📅 Book button tapped for class: \(selectedClass.name)")
+                                    EventTracker.shared.trackClassViewed(
+                                        classId: selectedClass.id,
+                                        className: selectedClass.name,
+                                        venueLocation: selectedClass.location.map { (lat: $0.coordinates.latitude, lng: $0.coordinates.longitude) }
+                                    )
                                     print("📅 Setting selectedClassForBooking to: \(selectedClass.name)")
                                     selectedClassForBooking = selectedClass
                                     print("📅 selectedClassForBooking is now: \(selectedClassForBooking?.name ?? "nil")")
@@ -459,6 +464,10 @@ struct ClassSearchView: View {
                     classes = response.data
                     showResults = true
                     print("✅ ClassSearchView: Loaded \(response.data.count) classes")
+                    EventTracker.shared.trackSearch(
+                        query: location,
+                        filters: selectedCategory.map { ["category": $0.rawValue] }
+                    )
                 }
             )
             .store(in: &cancellables)
