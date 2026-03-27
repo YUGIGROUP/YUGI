@@ -1079,7 +1079,48 @@ class APIService: ObservableObject, @unchecked Sendable {
         ]
         return request(endpoint: "/classes/venues/analyze", method: .POST, body: body)
     }
-    
+
+    // MARK: - AI Class Generation
+
+    struct GeneratedClassListing: Codable {
+        let className: String
+        let category: String
+        let description: String
+        let ageRange: String
+        let price: Double
+        let isFree: Bool
+        let duration: Int
+        let whatToBring: String
+        let specialRequirements: String
+        let venueName: String
+        let city: String
+        let postalCode: String
+        let streetAddress: String
+    }
+
+    func generateClassListing(prompt: String) async throws -> GeneratedClassListing {
+        guard let token = authToken else { throw APIError.unauthorized }
+        guard let url = URL(string: "\(APIConfig.baseURL)/classes/generate") else { throw APIError.invalidURL }
+
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        urlRequest.timeoutInterval = 30
+
+        let body: [String: String] = ["prompt": prompt]
+        urlRequest.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            throw APIError.serverError("AI generation failed")
+        }
+
+        struct Wrapper: Codable { let data: GeneratedClassListing }
+        let wrapper = try JSONDecoder().decode(Wrapper.self, from: data)
+        return wrapper.data
+    }
+
     // MARK: - Bookings
     func createBooking(classId: String, children: [Child], sessionDate: Date, sessionTime: String, specialRequests: String? = nil) -> AnyPublisher<(BookingResponse, String), APIError> {
         guard let currentUser = currentUser else {

@@ -19,6 +19,7 @@
   "author": "YUGI Team",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@aws-sdk/client-ses": "^3.932.0",
     "@sendgrid/mail": "^8.1.6",
     "axios": "^1.12.2",

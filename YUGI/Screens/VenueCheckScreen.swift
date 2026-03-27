@@ -412,7 +412,7 @@ struct VenueCheckScreen: View {
                     EventTracker.shared.trackVenueChecked(
                         venueName: name,
                         location: loc,
-                        venueLocation: response.data?.coordinates.map { (lat: $0.latitude, lng: $0.longitude) }
+                        venueLocation: response.data.coordinates.map { (lat: $0.latitude, lng: $0.longitude) }
                     )
                 }
             )

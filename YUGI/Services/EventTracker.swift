@@ -56,6 +56,7 @@ final class EventTracker {
     }()
 
     private init() {
+        print("📊 EventTracker: initialized")
         startFlushTimer()
         #if canImport(UIKit)
         NotificationCenter.default.addObserver(
@@ -89,9 +90,16 @@ final class EventTracker {
     }
 
     private func sendBatch(_ events: [TrackedEvent]) {
-        // APIConfig.baseURL already includes /api, e.g. "https://yugi-production.up.railway.app/api"
-        guard let url = URL(string: "\(APIConfig.baseURL)/events/batch") else { return }
-        guard let token = UserDefaults.standard.string(forKey: "authToken") else { return }
+        print("📊 EventTracker: sendBatch called with \(events.count) events")
+        guard let url = URL(string: "https://yugi-production.up.railway.app/api/events/batch") else {
+            print("📊 EventTracker: invalid batch URL")
+            return
+        }
+        guard let token = UserDefaults.standard.string(forKey: "authToken") else {
+            print("📊 EventTracker: no authToken in UserDefaults — skipping batch")
+            return
+        }
+        print("📊 EventTracker: sending to \(url) with token \(String(token.prefix(20)))...")
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -99,14 +107,17 @@ final class EventTracker {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         let body = ["events": events]
-        guard let data = try? JSONEncoder().encode(body) else { return }
+        guard let data = try? JSONEncoder().encode(body) else {
+            print("📊 EventTracker: JSON encode failed")
+            return
+        }
         request.httpBody = data
 
         URLSession.shared.dataTask(with: request) { _, response, error in
             if let error = error {
-                print("EventTracker: batch send failed: \(error.localizedDescription)")
-            } else if let http = response as? HTTPURLResponse, http.statusCode != 201 {
-                print("EventTracker: batch returned \(http.statusCode)")
+                print("📊 EventTracker: send error=\(error)")
+            } else if let http = response as? HTTPURLResponse {
+                print("📊 EventTracker: response status=\(http.statusCode)")
             }
         }.resume()
     }
@@ -119,6 +130,7 @@ final class EventTracker {
         metadata: [String: AnyCodable] = [:],
         venueLocation: CoordPayload? = nil
     ) {
+        print("📊 EventTracker: enqueue called for \(eventType), consent=\(ConsentManager.shared.hasConsented())")
         guard ConsentManager.shared.hasConsented() else { return }
 
         let loc = LocationService.shared
@@ -151,6 +163,7 @@ final class EventTracker {
     }
 
     func trackSearch(query: String, filters: [String: String]? = nil) {
+        print("📊 EventTracker: trackSearch called, consent=\(ConsentManager.shared.hasConsented())")
         var meta: [String: AnyCodable] = ["query": AnyCodable(query)]
         if let filters = filters { meta["filters"] = AnyCodable(filters) }
         enqueue(eventType: "class_searched", metadata: meta)

@@ -1246,4 +1246,58 @@ router.post('/venues/analyze', protect, async (req, res) => {
   }
 });
 
+// POST /api/classes/generate - AI-powered class listing generator
+router.post('/generate', protect, [
+  body('prompt').trim().notEmpty().withMessage('Prompt is required')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ success: false, errors: errors.array() });
+  }
+
+  const { prompt } = req.body;
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      system: `You are a UK children's activity expert helping providers create compelling class listings on the YUGI platform.
+When given a brief description of a class, return ONLY valid JSON with no markdown, no code fences, and no explanation — just the raw JSON object.
+Fields to include:
+- className (string): a creative, warm, appealing name for the class
+- category (string): one of exactly: "Baby", "Toddler", "Preschool", "School Age", "Wellness", "Music", "Art", "Sports", "Dance", "Swimming", "Cooking", "STEM", "Languages", "Drama", "Outdoors", "Special Needs", "Party", "Other"
+- description (string): 2-3 warm, professional sentences describing what parents and children can expect
+- ageRange (string): e.g. "0-12 months", "1-3 years", "3-5 years"
+- price (number): suggested price in GBP as a number, e.g. 15 (use 0 if free)
+- isFree (boolean): true only if the class is explicitly free
+- duration (number): suggested duration in minutes appropriate for the class type and age group
+- whatToBring (string): practical, friendly suggestions for what to bring
+- specialRequirements (string): any special requirements, or empty string if none
+- venueName (string): venue name if mentioned, otherwise empty string
+- city (string): city if mentioned, otherwise empty string
+- postalCode (string): UK postcode if mentioned, otherwise empty string
+- streetAddress (string): street address if mentioned, otherwise empty string`,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const rawText = message.content[0].text.trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(rawText);
+    } catch (parseError) {
+      console.error('Claude returned invalid JSON:', rawText);
+      return res.status(500).json({ success: false, message: 'AI returned an invalid response. Please try again.' });
+    }
+
+    return res.json({ success: true, data: parsed });
+  } catch (err) {
+    console.error('Error calling Anthropic API:', err);
+    return res.status(500).json({ success: false, message: 'Failed to generate class listing. Please try again.' });
+  }
+});
+
 module.exports = router;
