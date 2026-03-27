@@ -1401,6 +1401,7 @@ struct ProviderClassCreationScreen: View {
         defer { isGenerating = false }
 
         do {
+            // Step 1: AI generates class details from the prompt
             let result = try await APIService.shared.generateClassListing(prompt: trimmed)
             classData.className = result.className
             classData.description = result.description
@@ -1417,6 +1418,36 @@ struct ProviderClassCreationScreen: View {
             if let matched = ClassCategory(aiString: result.category) {
                 classData.category = matched
             }
+
+            // Step 2: If the AI returned a venue name, look it up via Google Places
+            // to get the real street address, postcode, and coordinates
+            let venueName = classData.venueName
+            let locationHint = [classData.city, classData.postalCode]
+                .filter { !$0.isEmpty }
+                .joined(separator: ", ")
+            if !venueName.isEmpty {
+                if let venueData = try? await APIService.shared
+                    .fetchVenueAnalysis(venueName: venueName, location: locationHint.isEmpty ? venueName : locationHint)
+                    .async() {
+                    let addr = venueData.data.address
+                    // Only overwrite fields that are empty or that Google returned something better
+                    if !addr.street.isEmpty {
+                        classData.streetAddress = addr.street
+                    }
+                    if !addr.postalCode.isEmpty {
+                        classData.postalCode = addr.postalCode
+                    }
+                    if !addr.city.isEmpty {
+                        classData.city = addr.city
+                    }
+                    if let coords = venueData.data.coordinates {
+                        classData.latitude = coords.latitude
+                        classData.longitude = coords.longitude
+                    }
+                }
+                // Venue lookup failure is non-fatal — the AI-supplied values remain
+            }
+
             withAnimation { aiSectionExpanded = false }
         } catch {
             aiErrorMessage = "Could not generate listing. Please check your connection and try again."
