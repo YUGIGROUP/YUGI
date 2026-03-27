@@ -921,51 +921,7 @@ struct ProviderClassCreationScreen: View {
                             placeholder: "e.g., SW1A 1AA"
                         )
                     }
-                    
-                    // Coordinates (optional)
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Coordinates (Optional)")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
-                        
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Latitude")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
-                                
-                                TextField("0.0", value: $classData.latitude, format: .number)
-                                    .keyboardType(.decimalPad)
-                                    .padding(8)
-                                    .background(Color.white)
-                                    .cornerRadius(8)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
-                                    )
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Longitude")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
-                                
-                                TextField("0.0", value: $classData.longitude, format: .number)
-                                    .keyboardType(.decimalPad)
-                                    .padding(8)
-                                    .background(Color.white)
-                                    .cornerRadius(8)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
-                                    )
-                            }
-                        }
-                        
-                        Text("Tip: You can find coordinates by searching your venue on Google Maps")
-                            .font(.system(size: 12))
-                            .foregroundColor(.yugiGray.opacity(0.6))
-                    }
+
                 }
                 .padding()
                 .background(Color.white.opacity(0.05))

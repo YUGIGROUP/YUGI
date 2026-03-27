@@ -1157,6 +1157,52 @@ router.get('/provider/my-classes', protect, /* requireProviderVerification, */ n
   }
 });
 
+// ─── UK address parser ────────────────────────────────────────────────────────
+// Parses a Google Places formattedAddress string into { street, city, postalCode }.
+// Handles addresses like:
+//   "Polka Theatre, 240 The Broadway, Wimbledon, London SW19 1SB, UK"
+//   "1 George Street, Richmond, TW9 1HY, UK"
+//   "Sheen Lane, East Sheen, Richmond, London TW14 2BX, UK"
+function parseUKAddress(formattedAddress) {
+  if (!formattedAddress) return { street: '', city: '', postalCode: '' };
+
+  // Extract UK postcode from anywhere in the string
+  const postcodeRe = /([A-Z]{1,2}[0-9][0-9A-Z]?\s[0-9][A-Z]{2})/i;
+  const postcodeMatch = formattedAddress.match(postcodeRe);
+  const postalCode = postcodeMatch
+    ? postcodeMatch[1].toUpperCase().replace(/\s+/, ' ')
+    : '';
+
+  // Remove country suffix and postcode, then split on commas
+  const cleaned = formattedAddress
+    .replace(postcodeRe, '')
+    .replace(/,?\s*(uk|united kingdom)\s*$/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  const parts = cleaned.split(',').map(p => p.trim()).filter(Boolean);
+  if (parts.length === 0) return { street: '', city: '', postalCode };
+
+  // Identify the street: starts with a digit OR contains a known street suffix
+  const streetSuffixes = /(street|road|lane|avenue|way|close|place|gardens|grove|drive|court|terrace|walk|row|crescent|broadway|high\s*street|market|yard|mews|hill|green|square|parade|rise)/i;
+  let streetIdx = parts.findIndex(p => /^\d/.test(p) || streetSuffixes.test(p));
+
+  let street = '';
+  const cityParts = [...parts];
+
+  if (streetIdx !== -1) {
+    street = parts[streetIdx];
+    cityParts.splice(streetIdx, 1);
+  }
+
+  // First remaining part that has no number/suffix is likely a venue name — drop it from city
+  if (cityParts.length > 1 && !/^\d/.test(cityParts[0]) && !streetSuffixes.test(cityParts[0])) {
+    cityParts.shift();
+  }
+
+  return { street, city: cityParts.join(', '), postalCode };
+}
+
 // @route   POST /api/classes/venues/analyze
 // @desc    Analyze a venue and get detailed information
 // @access  Private
@@ -1222,16 +1268,36 @@ router.post('/venues/analyze', protect, async (req, res) => {
       coordinates = await venueDataService.getCoordinatesForAddress(addressObj);
     }
 
+    // Parse the Google formattedAddress into structured fields so iOS gets
+    // real street/postcode rather than the empty input address
+    const parsedAddr = parseUKAddress(venueData.formattedAddress);
+    const responseAddress = (parsedAddr && parsedAddr.street)
+      ? {
+          street:     parsedAddr.street,
+          city:       parsedAddr.city     || addressObj.city     || '',
+          state:      '',
+          postalCode: parsedAddr.postalCode || addressObj.postalCode || '',
+          country:    'United Kingdom',
+        }
+      : {
+          street:     addressObj.street     || '',
+          city:       addressObj.city       || '',
+          state:      '',
+          postalCode: addressObj.postalCode || '',
+          country:    'United Kingdom',
+        };
+
     res.json({
       success: true,
       data: {
         venueName: venueName,
-        address: address,
+        address: responseAddress,
         coordinates: coordinates,
         parkingInfo: venueData.parkingInfo,
         babyChangingFacilities: venueData.babyChangingFacilities,
         accessibilityNotes: venueData.accessibilityNotes,
         venueAccessibility: venueData.venueAccessibility || null,
+        formattedAddress: venueData.formattedAddress || null,
         source: venueData.source,
         lastUpdated: venueData.lastUpdated || new Date().toISOString()
       }
