@@ -1410,10 +1410,10 @@ struct ProviderClassCreationScreen: View {
             classData.duration = result.duration
             classData.whatToBring = result.whatToBring
             classData.specialRequirements = result.specialRequirements
-            classData.venueName = result.venueName
-            classData.city = result.city
-            classData.postalCode = result.postalCode
-            classData.streetAddress = result.streetAddress
+            classData.venueName = result.venueName ?? ""
+            classData.city = result.city ?? ""
+            classData.postalCode = result.postalCode ?? ""
+            classData.streetAddress = result.streetAddress ?? ""
             if let matched = ClassCategory(aiString: result.category) {
                 classData.category = matched
             }

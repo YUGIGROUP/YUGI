@@ -1092,10 +1092,11 @@ class APIService: ObservableObject, @unchecked Sendable {
         let duration: Int
         let whatToBring: String
         let specialRequirements: String
-        let venueName: String
-        let city: String
-        let postalCode: String
-        let streetAddress: String
+        // Venue fields are optional — Claude may omit or snake_case them
+        let venueName: String?
+        let city: String?
+        let postalCode: String?
+        let streetAddress: String?
     }
 
     func generateClassListing(prompt: String) async throws -> GeneratedClassListing {
@@ -1117,7 +1118,10 @@ class APIService: ObservableObject, @unchecked Sendable {
         }
 
         struct Wrapper: Codable { let data: GeneratedClassListing }
-        let wrapper = try JSONDecoder().decode(Wrapper.self, from: data)
+        // Use convertFromSnakeCase so both venueName and venue_name work
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let wrapper = try decoder.decode(Wrapper.self, from: data)
         return wrapper.data
     }
 
