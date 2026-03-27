@@ -1400,6 +1400,9 @@ struct ProviderClassCreationScreen: View {
                         classData.latitude = coords.latitude
                         classData.longitude = coords.longitude
                     }
+                    if !venueData.data.venueName.isEmpty {
+                        classData.venueName = venueData.data.venueName
+                    }
                 }
                 // Venue lookup failure is non-fatal — the AI-supplied values remain
             }

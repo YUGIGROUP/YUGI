@@ -1167,16 +1167,17 @@ function parseUKAddress(formattedAddress) {
   if (!formattedAddress) return { street: '', city: '', postalCode: '' };
 
   // Extract UK postcode from anywhere in the string
-  const postcodeRe = /([A-Z]{1,2}[0-9][0-9A-Z]?\s[0-9][A-Z]{2})/i;
+  const postcodeRe = /([A-Z]{1,2}[0-9][0-9A-Z]?\s[0-9][A-Z]{2})/i;
   const postcodeMatch = formattedAddress.match(postcodeRe);
   const postalCode = postcodeMatch
     ? postcodeMatch[1].toUpperCase().replace(/\s+/, ' ')
     : '';
 
-  // Remove country suffix and postcode, then split on commas
+  // Remove postcode and country suffix, collapse stray commas, then split
   const cleaned = formattedAddress
     .replace(postcodeRe, '')
     .replace(/,?\s*(uk|united kingdom)\s*$/i, '')
+    .replace(/,\s*,/g, ',')
     .replace(/\s{2,}/g, ' ')
     .trim();
 
@@ -1184,23 +1185,29 @@ function parseUKAddress(formattedAddress) {
   if (parts.length === 0) return { street: '', city: '', postalCode };
 
   // Identify the street: starts with a digit OR contains a known street suffix
-  const streetSuffixes = /(street|road|lane|avenue|way|close|place|gardens|grove|drive|court|terrace|walk|row|crescent|broadway|high\s*street|market|yard|mews|hill|green|square|parade|rise)/i;
-  let streetIdx = parts.findIndex(p => /^\d/.test(p) || streetSuffixes.test(p));
+  const streetSuffixes = /(street|road|lane|avenue|way|close|place|gardens|grove|drive|court|terrace|walk|row|crescent|broadway|high\s*street|market|yard|mews|hill|green|square|parade|rise)/i;
+  const streetIdx = parts.findIndex(p => /^\d/.test(p) || streetSuffixes.test(p));
 
   let street = '';
-  const cityParts = [...parts];
+  let city = '';
 
-  if (streetIdx !== -1) {
+  if (streetIdx === -1) {
+    // No street component found — parts might be [VenueName, City] or just [City]
+    city = parts.length > 1 ? parts[1] : parts[0];
+  } else {
     street = parts[streetIdx];
-    cityParts.splice(streetIdx, 1);
+    const nonStreet = parts.filter((_, i) => i !== streetIdx);
+    if (streetIdx > 0) {
+      // The part(s) before the street are venue/building names — skip them
+      // Take the first non-street part AFTER the street as the city
+      city = nonStreet.length > 1 ? nonStreet[1] : nonStreet[0] || '';
+    } else {
+      // Street was first; the immediately following part is the city
+      city = nonStreet[0] || '';
+    }
   }
 
-  // First remaining part that has no number/suffix is likely a venue name — drop it from city
-  if (cityParts.length > 1 && !/^\d/.test(cityParts[0]) && !streetSuffixes.test(cityParts[0])) {
-    cityParts.shift();
-  }
-
-  return { street, city: cityParts.join(', '), postalCode };
+  return { street, city, postalCode };
 }
 
 // @route   POST /api/classes/venues/analyze
@@ -1290,7 +1297,7 @@ router.post('/venues/analyze', protect, async (req, res) => {
     res.json({
       success: true,
       data: {
-        venueName: venueName,
+        venueName: venueData.officialName || venueName,
         address: responseAddress,
         coordinates: coordinates,
         parkingInfo: venueData.parkingInfo,

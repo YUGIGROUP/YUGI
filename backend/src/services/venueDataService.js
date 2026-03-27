@@ -355,6 +355,7 @@ class VenueDataService {
                                 ? { latitude: coords.latitude, longitude: coords.longitude }
                                 : null,
       formattedAddress:       placeData.formattedAddress || null,
+      officialName:           (placeData.displayName && placeData.displayName.text) || null,
       venueAccessibility,
       source,
       lastUpdated:            new Date().toISOString(),
