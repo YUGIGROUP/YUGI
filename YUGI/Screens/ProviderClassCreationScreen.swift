@@ -1390,7 +1390,39 @@ struct ProviderClassCreationScreen: View {
         }
         .padding(.horizontal)
     }
-} 
+
+    @MainActor
+    private func generateWithAI() async {
+        let trimmed = aiPrompt.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+
+        aiErrorMessage = nil
+        isGenerating = true
+        defer { isGenerating = false }
+
+        do {
+            let result = try await APIService.shared.generateClassListing(prompt: trimmed)
+            classData.className = result.className
+            classData.description = result.description
+            classData.ageRange = result.ageRange
+            classData.price = result.price
+            classData.isFree = result.isFree
+            classData.duration = result.duration
+            classData.whatToBring = result.whatToBring
+            classData.specialRequirements = result.specialRequirements
+            classData.venueName = result.venueName
+            classData.city = result.city
+            classData.postalCode = result.postalCode
+            classData.streetAddress = result.streetAddress
+            if let matched = ClassCategory(aiString: result.category) {
+                classData.category = matched
+            }
+            withAnimation { aiSectionExpanded = false }
+        } catch {
+            aiErrorMessage = "Could not generate listing. Please check your connection and try again."
+        }
+    }
+}
 
 // MARK: - Supporting Models
 
@@ -1429,37 +1461,6 @@ enum ChildSpotsOption: String, CaseIterable {
         return Int(rawValue)
     }
 
-    @MainActor
-    private func generateWithAI() async {
-        let trimmed = aiPrompt.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-
-        aiErrorMessage = nil
-        isGenerating = true
-        defer { isGenerating = false }
-
-        do {
-            let result = try await APIService.shared.generateClassListing(prompt: trimmed)
-            classData.className = result.className
-            classData.description = result.description
-            classData.ageRange = result.ageRange
-            classData.price = result.price
-            classData.isFree = result.isFree
-            classData.duration = result.duration
-            classData.whatToBring = result.whatToBring
-            classData.specialRequirements = result.specialRequirements
-            classData.venueName = result.venueName
-            classData.city = result.city
-            classData.postalCode = result.postalCode
-            classData.streetAddress = result.streetAddress
-            if let matched = ClassCategory(aiString: result.category) {
-                classData.category = matched
-            }
-            withAnimation { aiSectionExpanded = false }
-        } catch {
-            aiErrorMessage = "Could not generate listing. Please check your connection and try again."
-        }
-    }
 }
 
 struct ClassCreationData {
