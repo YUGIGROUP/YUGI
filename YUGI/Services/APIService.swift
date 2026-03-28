@@ -1099,6 +1099,21 @@ class APIService: ObservableObject, @unchecked Sendable {
         let streetAddress: String?
     }
 
+    // MARK: - Intake
+
+    func submitIntakeResponse(bookingId: String, answers: [[String: String]]) -> AnyPublisher<APIResponse<IntakeResponseData>, APIError> {
+        let body: [String: Any] = ["bookingId": bookingId, "answers": answers]
+        return request(endpoint: "/intake", method: .POST, body: body)
+    }
+
+    func fetchIntakeResponses(classId: String) -> AnyPublisher<APIResponse<[IntakeResponseData]>, APIError> {
+        return request(endpoint: "/intake/class/\(classId)")
+    }
+
+    func fetchIntakeResponse(bookingId: String) -> AnyPublisher<APIResponse<IntakeResponseData>, APIError> {
+        return request(endpoint: "/intake/booking/\(bookingId)")
+    }
+
     func generateClassListing(prompt: String) async throws -> GeneratedClassListing {
         guard let token = authToken else { throw APIError.unauthorized }
         guard let url = URL(string: "\(APIConfig.baseURL)/classes/generate") else { throw APIError.invalidURL }
@@ -1976,6 +1991,30 @@ struct ChildrenResponse: Codable {
 
 struct EmptyResponse: Codable {}
 
+struct IntakeAnswerData: Codable {
+    let questionText: String
+    let answerType: String
+    let answer: String
+}
+
+struct IntakeResponseData: Codable {
+    let id: String
+    let bookingId: String
+    let classId: String
+    let parentId: String
+    let providerId: String
+    let answers: [IntakeAnswerData]
+    let submittedAt: String?
+    let parentName: String?
+    let parentEmail: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case bookingId, classId, parentId, providerId, answers, submittedAt
+        case parentName, parentEmail
+    }
+}
+
 // MARK: - Extensions
 extension ClassCreationData {
     func toDictionary() -> [String: Any] {
@@ -2042,6 +2081,19 @@ extension ClassCreationData {
         }
         if !specialRequirements.isEmpty {
             dict["specialRequirements"] = specialRequirements
+        }
+        if !intakeQuestions.isEmpty {
+            dict["intakeQuestions"] = intakeQuestions.map { q in
+                var qDict: [String: Any] = [
+                    "questionText": q.questionText,
+                    "answerType": q.answerType.rawValue,
+                    "isRequired": q.isRequired
+                ]
+                if !q.options.isEmpty {
+                    qDict["options"] = q.options
+                }
+                return qDict
+            }
         }
         
         return dict

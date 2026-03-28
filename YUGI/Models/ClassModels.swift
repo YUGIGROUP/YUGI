@@ -76,6 +76,49 @@ struct DoabilityInfo: Codable {
     let scores: SubScores?
 }
 
+struct IntakeQuestion: Identifiable, Codable, Equatable {
+    var id: String = UUID().uuidString
+    var questionText: String = ""
+    var answerType: AnswerType = .freeText
+    var options: [String] = []
+    var isRequired: Bool = true
+
+    enum AnswerType: String, Codable, CaseIterable {
+        case freeText = "free_text"
+        case multipleChoice = "multiple_choice"
+
+        var displayName: String {
+            switch self {
+            case .freeText: return "Free text"
+            case .multipleChoice: return "Multiple choice"
+            }
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case questionText, answerType, options, isRequired
+    }
+
+    // Custom init for new questions created in-app (no server _id yet)
+    init(id: String = UUID().uuidString, questionText: String = "", answerType: AnswerType = .freeText, options: [String] = [], isRequired: Bool = true) {
+        self.id = id
+        self.questionText = questionText
+        self.answerType = answerType
+        self.options = options
+        self.isRequired = isRequired
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? c.decode(String.self, forKey: .id)) ?? UUID().uuidString
+        questionText = try c.decode(String.self, forKey: .questionText)
+        answerType = try c.decode(AnswerType.self, forKey: .answerType)
+        options = (try? c.decode([String].self, forKey: .options)) ?? []
+        isRequired = (try? c.decode(Bool.self, forKey: .isRequired)) ?? true
+    }
+}
+
 struct Class: Identifiable, Codable {
     let id: String
     let name: String
@@ -94,13 +137,14 @@ struct Class: Identifiable, Codable {
     let isActive: Bool?  // Whether the class is active (not cancelled)
     let doability: DoabilityInfo?
     let venueAccessibility: VenueAccessibility?
-    
+    let intakeQuestions: [IntakeQuestion]?
+
     enum CodingKeys: String, CodingKey {
         case id, name, description, category, provider, providerName, location
         case schedule, pricing, maxCapacity, currentEnrollment
         case averageRating, ageRange, isFavorite, isActive
         case doability = "_doability"
-        case venueAccessibility
+        case venueAccessibility, intakeQuestions
     }
     
     var isAvailable: Bool {

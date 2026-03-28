@@ -15,6 +15,7 @@ const paymentRoutes = require('./routes/payments');
 const providerRoutes = require('./routes/providers');
 const adminRoutes = require('./routes/admin');
 const eventsRoutes = require('./routes/events');
+const intakeRoutes = require('./routes/intake');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -120,6 +121,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/events', eventsRoutes);
+app.use('/api/intake', intakeRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

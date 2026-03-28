@@ -215,6 +215,26 @@ const classSchema = new mongoose.Schema({
     default: 0
   },
   
+  // Intake Questions
+  intakeQuestions: [{
+    questionText: {
+      type: String,
+      required: true
+    },
+    answerType: {
+      type: String,
+      enum: ['free_text', 'multiple_choice'],
+      required: true
+    },
+    options: [{
+      type: String
+    }],
+    isRequired: {
+      type: Boolean,
+      default: true
+    }
+  }],
+
   // Timestamps
   createdAt: {
     type: Date,

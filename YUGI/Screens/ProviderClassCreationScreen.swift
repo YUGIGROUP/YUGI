@@ -886,6 +886,39 @@ struct ProviderClassCreationScreen: View {
                     minHeight: 80
                 )
             }
+
+            // Intake Questions
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "list.clipboard.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(hex: "#BC6C5C"))
+                    Text("Intake Questions")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.yugiGray)
+                    Spacer()
+                    Button {
+                        classData.intakeQuestions.append(IntakeQuestion())
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color(hex: "#BC6C5C"))
+                    }
+                }
+
+                if classData.intakeQuestions.isEmpty {
+                    Text("No questions added. Tap + to add a question parents will answer after booking.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.yugiGray.opacity(0.55))
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    ForEach($classData.intakeQuestions) { $question in
+                        IntakeQuestionEditor(question: $question, onDelete: {
+                            classData.intakeQuestions.removeAll { $0.id == question.id }
+                        })
+                    }
+                }
+            }
         }
     }
     
@@ -1338,6 +1371,7 @@ struct ClassCreationData {
     var longitude: Double = 0.0
     var whatToBring = ""
     var specialRequirements = ""
+    var intakeQuestions: [IntakeQuestion] = []
     
     var maxCapacity: Int {
         let individualSpots = individualChildSpots.numericValue ?? 0
@@ -1565,6 +1599,100 @@ extension Publisher {
                     }
                 )
         }
+    }
+}
+
+// MARK: - IntakeQuestionEditor
+
+struct IntakeQuestionEditor: View {
+    @Binding var question: IntakeQuestion
+    let onDelete: () -> Void
+    @State private var newOption = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Question text + delete
+            HStack(alignment: .top, spacing: 8) {
+                YUGITextField(text: $question.questionText, placeholder: "Question text")
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14))
+                        .foregroundColor(.red.opacity(0.7))
+                }
+                .padding(.top, 12)
+            }
+
+            // Answer type picker
+            HStack(spacing: 12) {
+                Text("Answer type")
+                    .font(.system(size: 14))
+                    .foregroundColor(.yugiGray.opacity(0.7))
+                Picker("", selection: $question.answerType) {
+                    ForEach(IntakeQuestion.AnswerType.allCases, id: \.self) { type in
+                        Text(type.displayName).tag(type)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accentColor(Color(hex: "#BC6C5C"))
+            }
+
+            // Required toggle
+            HStack {
+                Text("Required")
+                    .font(.system(size: 14))
+                    .foregroundColor(.yugiGray.opacity(0.7))
+                Spacer()
+                Toggle("", isOn: $question.isRequired)
+                    .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                    .labelsHidden()
+            }
+
+            // Options (multiple choice only)
+            if question.answerType == .multipleChoice {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(question.options.indices, id: \.self) { i in
+                        HStack {
+                            Text("• \(question.options[i])")
+                                .font(.system(size: 14))
+                                .foregroundColor(.yugiGray)
+                            Spacer()
+                            Button {
+                                question.options.remove(at: i)
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.yugiGray.opacity(0.4))
+                            }
+                        }
+                    }
+
+                    HStack {
+                        TextField("Add option", text: $newOption)
+                            .font(.system(size: 14))
+                            .padding(8)
+                            .background(Color.white)
+                            .cornerRadius(8)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1))
+                        Button {
+                            let trimmed = newOption.trimmingCharacters(in: .whitespaces)
+                            if !trimmed.isEmpty {
+                                question.options.append(trimmed)
+                                newOption = ""
+                            }
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundColor(Color(hex: "#BC6C5C"))
+                        }
+                        .disabled(newOption.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#BC6C5C").opacity(0.25), lineWidth: 1))
     }
 }
 
