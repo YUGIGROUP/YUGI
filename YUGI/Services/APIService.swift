@@ -1997,21 +1997,29 @@ struct IntakeAnswerData: Codable {
     let answer: String
 }
 
+struct ParentInfo: Codable {
+    let id: String
+    let email: String?
+    let fullName: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case email, fullName
+    }
+}
+
 struct IntakeResponseData: Codable {
     let id: String
     let bookingId: String
     let classId: String
-    let parentId: String
+    let parentId: ParentInfo
     let providerId: String
     let answers: [IntakeAnswerData]
     let submittedAt: String?
-    let parentName: String?
-    let parentEmail: String?
 
     enum CodingKeys: String, CodingKey {
         case id = "_id"
         case bookingId, classId, parentId, providerId, answers, submittedAt
-        case parentName, parentEmail
     }
 }
 

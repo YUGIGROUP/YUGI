@@ -87,7 +87,7 @@ private struct ResponseCard: View {
     @State private var isExpanded = false
 
     private var displayName: String {
-        response.parentName ?? response.parentEmail ?? "Parent"
+        response.parentId.fullName ?? response.parentId.email ?? "Parent"
     }
 
     var body: some View {
