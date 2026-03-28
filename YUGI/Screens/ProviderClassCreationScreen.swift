@@ -4,15 +4,12 @@ import Combine
 struct ProviderClassCreationScreen: View {
     let businessName: String
     let onClassPublished: ((ClassCreationData) -> Void)?
+    var initialData: ClassCreationData? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var classData = ClassCreationData()
     @State private var currentStep = 0
     @State private var isSaving = false
     @State private var showingSuccessAlert = false
-    @State private var aiPrompt = ""
-    @State private var isGenerating = false
-    @State private var aiSectionExpanded = true
-    @State private var aiErrorMessage: String? = nil
     
     private let steps = [
         "Basic Info & Pricing",
@@ -77,6 +74,11 @@ struct ProviderClassCreationScreen: View {
             .animation(.easeInOut(duration: 0.3), value: showingSuccessAlert)
             .animation(.easeInOut(duration: 0.2), value: isSaving)
         }
+        .onAppear {
+            if let data = initialData {
+                classData = data
+            }
+        }
         // Terms acceptance is handled during account creation, not here
     }
     
@@ -112,87 +114,6 @@ struct ProviderClassCreationScreen: View {
     
     private var basicInfoSection: some View {
         VStack(spacing: 24) {
-            // AI Class Generator
-            VStack(alignment: .leading, spacing: 0) {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        aiSectionExpanded.toggle()
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
-                        Text("Generate with AI")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
-                        Spacer()
-                        Image(systemName: aiSectionExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.yugiGray.opacity(0.5))
-                    }
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(hex: "#BC6C5C").opacity(0.4), lineWidth: 1.5)
-                    )
-                }
-                .buttonStyle(.plain)
-
-                if aiSectionExpanded {
-                    VStack(alignment: .leading, spacing: 12) {
-                        TextField("Describe your class in a few words...", text: $aiPrompt, axis: .vertical)
-                            .lineLimit(3, reservesSpace: false)
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(10)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
-                            )
-
-                        Text("e.g. 'Baby sensory, Polka Theatre Wimbledon, Tuesdays 10am, £15, ages 0-12 months'")
-                            .font(.system(size: 12))
-                            .foregroundColor(.yugiGray.opacity(0.55))
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        if let errorMsg = aiErrorMessage {
-                            Text(errorMsg)
-                                .font(.system(size: 13))
-                                .foregroundColor(.red.opacity(0.8))
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        Button {
-                            Task { await generateWithAI() }
-                        } label: {
-                            HStack(spacing: 8) {
-                                if isGenerating {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .scaleEffect(0.85)
-                                } else {
-                                    Image(systemName: "sparkles")
-                                }
-                                Text(isGenerating ? "Generating..." : "Generate with AI")
-                                    .fontWeight(.semibold)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(aiPrompt.trimmingCharacters(in: .whitespaces).isEmpty ? Color(hex: "#BC6C5C").opacity(0.4) : Color(hex: "#BC6C5C"))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        }
-                        .disabled(aiPrompt.trimmingCharacters(in: .whitespaces).isEmpty || isGenerating)
-                    }
-                    .padding(.horizontal, 2)
-                    .padding(.top, 12)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-            }
-
             // Business Image Note
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
@@ -1347,71 +1268,6 @@ struct ProviderClassCreationScreen: View {
         .padding(.horizontal)
     }
 
-    @MainActor
-    private func generateWithAI() async {
-        let trimmed = aiPrompt.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-
-        aiErrorMessage = nil
-        isGenerating = true
-        defer { isGenerating = false }
-
-        do {
-            // Step 1: AI generates class details from the prompt
-            let result = try await APIService.shared.generateClassListing(prompt: trimmed)
-            classData.className = result.className
-            classData.description = result.description
-            classData.ageRange = result.ageRange
-            classData.price = result.price
-            classData.isFree = result.isFree
-            classData.duration = result.duration
-            classData.whatToBring = result.whatToBring
-            classData.specialRequirements = result.specialRequirements
-            classData.venueName = result.venueName ?? ""
-            classData.city = result.city ?? ""
-            classData.postalCode = result.postalCode ?? ""
-            classData.streetAddress = result.streetAddress ?? ""
-            if let matched = ClassCategory(aiString: result.category) {
-                classData.category = matched
-            }
-
-            // Step 2: If the AI returned a venue name, look it up via Google Places
-            // to get the real street address, postcode, and coordinates
-            let venueName = classData.venueName
-            let locationHint = [classData.city, classData.postalCode]
-                .filter { !$0.isEmpty }
-                .joined(separator: ", ")
-            if !venueName.isEmpty {
-                if let venueData = try? await APIService.shared
-                    .fetchVenueAnalysis(venueName: venueName, location: locationHint.isEmpty ? venueName : locationHint)
-                    .async() {
-                    let addr = venueData.data.address
-                    // Only overwrite fields that are empty or that Google returned something better
-                    if !addr.street.isEmpty {
-                        classData.streetAddress = addr.street
-                    }
-                    if !addr.postalCode.isEmpty {
-                        classData.postalCode = addr.postalCode
-                    }
-                    if !addr.city.isEmpty {
-                        classData.city = addr.city
-                    }
-                    if let coords = venueData.data.coordinates {
-                        classData.latitude = coords.latitude
-                        classData.longitude = coords.longitude
-                    }
-                    if !venueData.data.venueName.isEmpty {
-                        classData.venueName = venueData.data.venueName
-                    }
-                }
-                // Venue lookup failure is non-fatal — the AI-supplied values remain
-            }
-
-            withAnimation { aiSectionExpanded = false }
-        } catch {
-            aiErrorMessage = "Could not generate listing. Please check your connection and try again."
-        }
-    }
 }
 
 // MARK: - Supporting Models

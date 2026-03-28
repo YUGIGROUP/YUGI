@@ -88,6 +88,8 @@ struct ProviderDashboardScreen: View {
     @State private var shouldNavigateToClassDiscovery = false
     @State private var shouldNavigateToProfileCompletion = false
     @State private var shouldNavigateToClassCreation = false
+    @State private var shouldNavigateToClassCreationForm = false
+    @State private var pendingClassData: ClassCreationData? = nil
     @State private var shouldNavigateToBookings = false
     @State private var shouldNavigateToTermsPrivacy = false
     @State private var shouldNavigateToAcceptedTerms = false
@@ -342,18 +344,34 @@ struct ProviderDashboardScreen: View {
                 ProviderProfileCompletionScreen()
             }
             .sheet(isPresented: $shouldNavigateToClassCreation) {
+                AIClassGeneratorScreen(
+                    businessName: displayBusinessName,
+                    onGenerated: { generatedData in
+                        shouldNavigateToClassCreation = false
+                        // Brief delay so the sheet dismisses before the next one presents
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            pendingClassData = generatedData
+                            shouldNavigateToClassCreationForm = true
+                        }
+                    },
+                    onSkip: {
+                        shouldNavigateToClassCreation = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            pendingClassData = nil
+                            shouldNavigateToClassCreationForm = true
+                        }
+                    }
+                )
+            }
+            .sheet(isPresented: $shouldNavigateToClassCreationForm) {
                 ProviderClassCreationScreen(
                     businessName: displayBusinessName,
                     onClassPublished: { classData in
-                        print("🏠 ProviderDashboard: Class published callback triggered")
-                        print("🏠 ProviderDashboard: Class name: \(classData.className)")
-                        
-                        // Add to shared storage so it appears in My Classes
                         NewClassStorage.shared.addNewClass(classData)
-                        
-                        shouldNavigateToClassCreation = false // Dismiss the class creation screen
-                        shouldNavigateToMyClasses = true // Navigate to My Classes
-                    }
+                        shouldNavigateToClassCreationForm = false
+                        shouldNavigateToMyClasses = true
+                    },
+                    initialData: pendingClassData
                 )
             }
             .sheet(isPresented: $shouldNavigateToBookings) {
