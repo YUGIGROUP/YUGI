@@ -341,8 +341,12 @@ struct BookingView: View {
                 Button("OK") {
                     showingConfirmation = false
                     let hasIntake = !(classItem.intakeQuestions?.isEmpty ?? true)
+                    print("📋 BookingView: hasIntakeQuestions=\(hasIntake), completedBookingId=\(completedBookingId ?? "nil")")
                     if hasIntake && completedBookingId != nil {
-                        showingIntakeForm = true
+                        // Delay sheet presentation one cycle after alert dismissal
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showingIntakeForm = true
+                        }
                     } else {
                         dismiss()
                     }
@@ -432,6 +436,7 @@ struct BookingView: View {
     
     private func setupBookingView() {
         print("🎯 BookingView loaded for class: \(classItem.name)")
+        print("📋 BookingView: intakeQuestions count: \(classItem.intakeQuestions?.count ?? 0)")
         print("🎯 BookingView: Available children count: \(availableChildren.count)")
         print("🎯 BookingView: Current user type: \(apiService.currentUser?.userType.rawValue ?? "unknown")")
         print("🎯 BookingView: Is provider: \(isProvider)")
