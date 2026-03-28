@@ -19,6 +19,8 @@ struct BookingView: View {
     @State private var shouldNavigateToParentDashboard = false
     @State private var shouldNavigateToProviderDashboard = false // New state for provider navigation
     @State private var isProviderUser = false // State variable for provider status
+    @State private var showingIntakeForm = false
+    @State private var completedBookingId: String? = nil
     @StateObject private var notificationService = NotificationService.shared
     
     private var apiService = APIService.shared
@@ -258,6 +260,9 @@ struct BookingView: View {
             participants: participants
         )
         
+        // Store the MongoDB booking ID for the intake form
+        completedBookingId = enhancedBooking.booking.mongoObjectId
+
         // Dismiss the payment sheet
         showingPaymentSheet = false
         
@@ -335,17 +340,31 @@ struct BookingView: View {
             .alert("Booking Confirmed!", isPresented: $showingConfirmation) {
                 Button("OK") {
                     showingConfirmation = false
-                    // Dismiss the booking view after showing success
-                    dismiss()
+                    let hasIntake = !(classItem.intakeQuestions?.isEmpty ?? true)
+                    if hasIntake && completedBookingId != nil {
+                        showingIntakeForm = true
+                    } else {
+                        dismiss()
+                    }
                 }
             } message: {
-                Text("Your booking has been confirmed successfully! We'll send you a confirmation email shortly.")
+                Text("Your booking has been confirmed! We'll send you a confirmation email shortly.")
             }
             .fullScreenCover(isPresented: $shouldNavigateToParentDashboard) {
                 ParentDashboardScreen(parentName: apiService.currentUser?.fullName ?? "Parent", initialTab: 0)
             }
             .fullScreenCover(isPresented: $shouldNavigateToProviderDashboard) {
                 ProviderDashboardScreen(businessName: apiService.currentUser?.businessName ?? "Provider")
+            }
+            .sheet(isPresented: $showingIntakeForm) {
+                if let bookingId = completedBookingId {
+                    IntakeFormScreen(
+                        classItem: classItem,
+                        bookingId: bookingId,
+                        onCompleted: { dismiss() },
+                        onSkip: { dismiss() }
+                    )
+                }
             }
             .onAppear {
                 setupBookingView()
