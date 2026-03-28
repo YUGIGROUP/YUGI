@@ -80,6 +80,7 @@ struct ProviderClass: Identifiable {
     let location: String
     let nextSession: Date?
     let createdAt: Date
+    var hasIntakeQuestions: Bool = false
 }
 
 struct ProviderDashboardScreen: View {

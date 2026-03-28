@@ -2,7 +2,8 @@ import SwiftUI
 import Combine
 
 struct IntakeResponsesScreen: View {
-    let classItem: Class
+    let classId: String
+    let className: String
 
     @State private var responses: [IntakeResponseData] = []
     @State private var isLoading = true
@@ -70,7 +71,7 @@ struct IntakeResponsesScreen: View {
 
         do {
             let result = try await APIService.shared
-                .fetchIntakeResponses(classId: classItem.id)
+                .fetchIntakeResponses(classId: classId)
                 .async()
             responses = result.data ?? []
         } catch {

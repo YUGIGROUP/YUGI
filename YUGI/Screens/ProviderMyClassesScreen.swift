@@ -10,6 +10,7 @@ struct ProviderMyClassesScreen: View {
     @State private var showingCancelClass = false
     @State private var showingDeleteClass = false
     @State private var selectedClass: ProviderClass?
+    @State private var intakeClass: ProviderClass?
     @State private var showingCancelSuccess = false
     @State private var showingCancelError = false
     @State private var cancelErrorMessage = ""
@@ -41,6 +42,9 @@ struct ProviderMyClassesScreen: View {
             .navigationBarBackButtonHidden(true)
 
 
+            .sheet(item: $intakeClass) { cls in
+                IntakeResponsesScreen(classId: cls.id, className: cls.name)
+            }
             .sheet(isPresented: $showingEditClass) {
                 if let selectedClass = selectedClass {
                     ProviderClassEditScreen(classItem: selectedClass)
@@ -174,7 +178,10 @@ struct ProviderMyClassesScreen: View {
                                 onDelete: {
                                     selectedClass = classItem
                                     showingDeleteClass = true
-                                }
+                                },
+                                onViewIntake: classItem.hasIntakeQuestions ? {
+                                    intakeClass = classItem
+                                } : nil
                             )
                         }
                     }
@@ -235,6 +242,7 @@ struct ProviderClassManagementCard: View {
     let onEdit: () -> Void
     let onCancel: () -> Void
     let onDelete: () -> Void
+    var onViewIntake: (() -> Void)? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -319,6 +327,23 @@ struct ProviderClassManagementCard: View {
                     }
                     .buttonStyle(.plain)
                 }
+            }
+            // Intake Responses Button
+            if classItem.hasIntakeQuestions, let viewIntake = onViewIntake {
+                Button(action: viewIntake) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "list.clipboard.fill")
+                            .font(.system(size: 13))
+                        Text("View Intake Responses")
+                            .font(.system(size: 13, weight: .medium))
+                    }
+                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color(hex: "#BC6C5C").opacity(0.08))
+                    .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(16)
@@ -442,7 +467,8 @@ class ProviderMyClassesViewModel: ObservableObject {
                     status: status,
                     location: classData.location?.name ?? "Location TBD",
                     nextSession: classData.schedule.startDate,
-                    createdAt: Date() // Default to current date since it's not in the model
+                    createdAt: Date(), // Default to current date since it's not in the model
+                    hasIntakeQuestions: !(classData.intakeQuestions?.isEmpty ?? true)
                 )
             }
             
@@ -486,7 +512,8 @@ class ProviderMyClassesViewModel: ObservableObject {
             status: ClassStatus.upcoming,
             location: classData.location.isEmpty ? "Location TBD" : classData.location,
             nextSession: classData.classDates.first?.date,
-            createdAt: Date()
+            createdAt: Date(),
+            hasIntakeQuestions: !(classData.intakeQuestions.isEmpty)
         )
         
         // Add to the beginning of the list
