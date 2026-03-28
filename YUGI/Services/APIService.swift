@@ -1101,8 +1101,8 @@ class APIService: ObservableObject, @unchecked Sendable {
 
     // MARK: - Intake
 
-    func submitIntakeResponse(bookingId: String, answers: [[String: String]]) -> AnyPublisher<APIResponse<IntakeResponseData>, APIError> {
-        let body: [String: Any] = ["bookingId": bookingId, "answers": answers]
+    func submitIntakeResponse(bookingId: String, classId: String, answers: [[String: String]]) -> AnyPublisher<APIResponse<IntakeResponseData>, APIError> {
+        let body: [String: Any] = ["bookingId": bookingId, "classId": classId, "answers": answers]
         return request(endpoint: "/intake", method: .POST, body: body)
     }
 

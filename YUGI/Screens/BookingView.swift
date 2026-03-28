@@ -260,8 +260,8 @@ struct BookingView: View {
             participants: participants
         )
         
-        // Store the MongoDB booking ID for the intake form
-        completedBookingId = enhancedBooking.booking.mongoObjectId
+        // Store the booking ID for the intake form — MongoDB _id from API, or local UUID fallback (Apple Pay sim)
+        completedBookingId = enhancedBooking.booking.mongoObjectId ?? enhancedBooking.booking.id.uuidString
 
         // Dismiss the payment sheet
         showingPaymentSheet = false

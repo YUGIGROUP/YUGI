@@ -139,7 +139,7 @@ struct IntakeFormScreen: View {
 
         do {
             _ = try await APIService.shared
-                .submitIntakeResponse(bookingId: bookingId, answers: payload)
+                .submitIntakeResponse(bookingId: bookingId, classId: classItem.id, answers: payload)
                 .async()
             onCompleted()
         } catch {

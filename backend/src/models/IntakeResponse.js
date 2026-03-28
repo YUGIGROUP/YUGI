@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const intakeResponseSchema = new mongoose.Schema({
   bookingId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking',
+    type: String,
     required: true
   },
   classId: {

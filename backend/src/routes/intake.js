@@ -12,7 +12,7 @@ const router = express.Router();
 // @access  Private
 router.post('/', [
   protect,
-  body('bookingId').isMongoId(),
+  body('bookingId').notEmpty().withMessage('bookingId is required'),
   body('answers').isArray({ min: 1 }),
   body('answers.*.questionText').trim().notEmpty(),
   body('answers.*.answerType').isIn(['free_text', 'multiple_choice']),
@@ -26,16 +26,31 @@ router.post('/', [
 
     const { bookingId, answers } = req.body;
 
-    // Verify booking exists and belongs to this parent
-    const booking = await Booking.findById(bookingId).populate('class');
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+    // Look up the booking when bookingId is a valid MongoDB ObjectId.
+    // For local UUID bookings (Apple Pay simulation) there is no server record —
+    // in that case we trust the authenticated user and use the classId from the body.
+    const mongoose = require('mongoose');
+    let classDoc;
+    if (mongoose.Types.ObjectId.isValid(bookingId)) {
+      const booking = await Booking.findById(bookingId).populate('class');
+      if (!booking) {
+        return res.status(404).json({ message: 'Booking not found' });
+      }
+      if (booking.parent.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorised' });
+      }
+      classDoc = booking.class;
+    } else {
+      // UUID fallback — classId must be supplied in the body
+      const { classId } = req.body;
+      if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
+        return res.status(400).json({ message: 'classId required for non-API bookings' });
+      }
+      classDoc = await require('../models/Class').findById(classId);
+      if (!classDoc) {
+        return res.status(404).json({ message: 'Class not found' });
+      }
     }
-    if (booking.parent.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorised' });
-    }
-
-    const classDoc = booking.class;
 
     // Prevent duplicate submission
     const existing = await IntakeResponse.findOne({ bookingId, parentId: req.user._id });
