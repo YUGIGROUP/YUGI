@@ -229,7 +229,7 @@ struct ClassDiscoveryView: View {
                 ageRange: class_.ageRange,
                 isFavorite: class_.isFavorite,
                 isActive: class_.isActive,
-                doability: class_.doability, venueAccessibility: class_.venueAccessibility
+                doability: class_.doability, venueAccessibility: class_.venueAccessibility, intakeQuestions: nil
             )
             
             // Update the class in the view model using the index

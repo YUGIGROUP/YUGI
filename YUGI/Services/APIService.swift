@@ -1796,7 +1796,7 @@ class APIService: ObservableObject, @unchecked Sendable {
                     ageRange: classData.ageRange,
                     isFavorite: false,
                     isActive: true,
-                    doability: nil, venueAccessibility: nil
+                    doability: nil, venueAccessibility: nil, intakeQuestions: nil
                 )
                 
                 let response = ClassResponse(data: mockClass)

@@ -48,7 +48,7 @@ struct ProviderClassSearchView: View {
             ageRange: "0-12 months",
             isFavorite: false,
             isActive: true,
-            doability: nil, venueAccessibility: nil
+            doability: nil, venueAccessibility: nil, intakeQuestions: nil
         ),
         Class(
             id: "mock-class-id-2",
@@ -87,7 +87,7 @@ struct ProviderClassSearchView: View {
             ageRange: "1-3 years",
             isFavorite: false,
             isActive: true,
-            doability: nil, venueAccessibility: nil
+            doability: nil, venueAccessibility: nil, intakeQuestions: nil
         ),
         Class(
             id: "mock-class-id-3",
@@ -126,7 +126,7 @@ struct ProviderClassSearchView: View {
             ageRange: "0-18 months",
             isFavorite: false,
             isActive: true,
-            doability: nil, venueAccessibility: nil
+            doability: nil, venueAccessibility: nil, intakeQuestions: nil
         )
     ]
     
