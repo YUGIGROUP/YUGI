@@ -1219,6 +1219,8 @@ struct ApplePayButton: View {
     let onSuccess: (EnhancedBooking) -> Void
     let onError: (Error) -> Void
     
+    @State private var cancellables = Set<AnyCancellable>()
+    
     private var totalPriceText: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
@@ -1233,9 +1235,15 @@ struct ApplePayButton: View {
             processApplePay()
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: "applelogo")
-                    .font(.system(size: 18))
-                Text("Pay \(totalPriceText)")
+                if isProcessing {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(0.8)
+                } else {
+                    Image(systemName: "applelogo")
+                        .font(.system(size: 18))
+                }
+                Text(isProcessing ? "Processing..." : "Pay \(totalPriceText)")
                     .font(.system(size: 18, weight: .semibold))
             }
             .foregroundColor(.white)
@@ -1251,34 +1259,71 @@ struct ApplePayButton: View {
         print("🎯 ApplePayButton: Starting Apple Pay processing...")
         isProcessing = true
         
-        // Log payment method details
-        if let selectedCard = selectedSavedCard {
-            print("🎯 ApplePayButton: Using saved card: \(selectedCard.type.displayName) ending in \(selectedCard.lastFourDigits)")
-        } else {
-            print("🎯 ApplePayButton: Using Apple Pay")
+        guard !selectedChildren.isEmpty else {
+            print("❌ ApplePayButton: No children selected")
+            isProcessing = false
+            onError(NSError(domain: "BookingError", code: 400, userInfo: [NSLocalizedDescriptionKey: "Please select at least one child to book this class."]))
+            return
         }
         
-        // Simulate Apple Pay processing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            print("🎯 ApplePayButton: Apple Pay processing completed!")
-            isProcessing = false
-            let booking = Booking(
-                id: UUID(),
-                classId: classItem.id,
-                userId: UUID(), // TODO: Get from auth service
-                status: .upcoming,
-                bookingDate: Date().addingTimeInterval(86400), // Tomorrow
-                numberOfParticipants: participants,
-                selectedChildren: selectedChildren.isEmpty ? nil : selectedChildren,
-                specialRequirements: requirements.isEmpty ? nil : requirements,
-                attended: false
-            )
-            
-            let enhancedBooking = EnhancedBooking(booking: booking, classInfo: classItem)
-            
-            // Call the success callback instead of handling notifications here
-            onSuccess(enhancedBooking)
+        print("🎯 ApplePayButton: Using Apple Pay")
+        print("💳 ApplePayButton: Booking for \(selectedChildren.count) child(ren): \(selectedChildren.map { $0.name }.joined(separator: ", "))")
+        
+        let sessionDate = Date().addingTimeInterval(86400)
+        let apiService = APIService.shared
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        timeFormatter.timeZone = TimeZone(identifier: "UTC")
+        
+        let sessionTimeString: String
+        if let firstTimeSlot = classItem.schedule.timeSlots.first {
+            sessionTimeString = timeFormatter.string(from: firstTimeSlot.startTime)
+            print("💳 ApplePayButton: Extracted session time: \(sessionTimeString)")
+        } else {
+            sessionTimeString = "10:00"
+            print("⚠️ ApplePayButton: No time slot found, using default: \(sessionTimeString)")
         }
+        
+        apiService.createBooking(
+            classId: classItem.id,
+            children: selectedChildren,
+            sessionDate: sessionDate,
+            sessionTime: sessionTimeString,
+            specialRequests: requirements.isEmpty ? nil : requirements
+        )
+        .flatMap { (bookingResponse, mongoObjectId) -> AnyPublisher<(PaymentIntentResponse, String), APIError> in
+            print("💳 ApplePayButton: Booking created with MongoDB ObjectId: \(mongoObjectId)")
+            return apiService.createPaymentIntent(bookingId: mongoObjectId)
+                .map { paymentIntentResponse -> (PaymentIntentResponse, String) in
+                    print("💳 ApplePayButton: Payment intent created: \(paymentIntentResponse.paymentIntentId)")
+                    return (paymentIntentResponse, mongoObjectId)
+                }
+                .eraseToAnyPublisher()
+        }
+        .flatMap { (paymentIntentResponse, bookingId) -> AnyPublisher<BookingResponse, APIError> in
+            return apiService.confirmPayment(
+                paymentIntentId: paymentIntentResponse.paymentIntentId,
+                bookingId: bookingId
+            )
+        }
+        .receive(on: DispatchQueue.main)
+        .sink(
+            receiveCompletion: { completion in
+                isProcessing = false
+                if case .failure(let error) = completion {
+                    print("❌ ApplePayButton: Payment failed: \(error)")
+                    onError(error)
+                }
+            },
+            receiveValue: { bookingResponse in
+                print("✅ ApplePayButton: Payment confirmed!")
+                let booking = bookingResponse.data
+                let enhancedBooking = EnhancedBooking(booking: booking, classInfo: classItem)
+                onSuccess(enhancedBooking)
+            }
+        )
+        .store(in: &cancellables)
     }
 }
 
