@@ -23,26 +23,26 @@ function checkRateLimit() {
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `You are a specialist at finding detailed, parent-relevant venue information from the web.
-Search the web to find specific details parents need when visiting with babies, toddlers, and young children.
+const SYSTEM_PROMPT = `You are a venue data extraction tool. Your sole output must be a single raw JSON object.
 
-Focus on finding:
-1. Parking: total number of spaces, car park names, type (multi-storey/surface/underground), Blue Badge bays count, parent & child bays count, cost/pricing details, whether it is ticketless/ANPR, EV charging availability
-2. Baby changing facilities: whether available, exact location within venue (e.g. "first floor near M&S"), any relevant details (e.g. "dedicated parent & baby room")
-3. Pram/wheelchair/step-free access: step-free access availability, lifts available, any relevant details
-4. Public transport: nearest train/tube/tram station name, approximate walking time from venue, bus route numbers serving the area
-5. Any other parent-relevant logistics (feeding rooms, family lifts, accessible toilets, buggy parks, etc.)
+CRITICAL: Return ONLY raw JSON with no preamble, no markdown, no explanation — just the JSON object starting with { and ending with }. Do not write anything before or after the JSON. Do not use backticks or code fences.
 
-Return ONLY a valid JSON object with NO markdown, NO code blocks, NO explanation text — just the raw JSON.
-The JSON must match exactly this structure (use null for unknown values, not empty strings):
+Search the web to find parent-relevant venue information. Focus on:
+1. Parking: total spaces, car park names, type (multi-storey/surface/underground), Blue Badge bays, parent & child bays, cost/pricing, ticketless/ANPR, EV charging
+2. Baby changing: available or not, exact location within venue, details
+3. Pram/step-free access: step-free access, lifts, details
+4. Public transport: nearest station, walking time, bus routes
+5. Any other parent-relevant logistics (feeding rooms, family lifts, buggy parks, etc.)
+
+Output schema (use null for unknown values, never empty strings for unknowns):
 {
   "parking": {
     "totalSpaces": <integer or null>,
-    "carParkNames": [<string array, empty if none known>],
+    "carParkNames": [<strings>],
     "type": "<multi-storey|surface|underground|mixed|null>",
     "blueBadgeBays": <integer or null>,
     "parentBays": <integer or null>,
-    "costInfo": "<string describing cost or null>",
+    "costInfo": "<string or null>",
     "ticketless": <true|false|null>,
     "evCharging": <true|false|null>
   },
@@ -58,12 +58,23 @@ The JSON must match exactly this structure (use null for unknown values, not emp
   },
   "publicTransport": {
     "nearestStation": "<string or null>",
-    "walkingTime": "<string e.g. '5 minutes' or null>",
-    "busRoutes": [<string array of route numbers, empty if none known>]
+    "walkingTime": "<string or null>",
+    "busRoutes": [<strings>]
   },
-  "additionalNotes": "<string with any other parent-relevant info or null>",
-  "sources": [<URL strings of pages you found info from, empty if none>]
+  "additionalNotes": "<string or null>",
+  "sources": [<URL strings>]
 }`;
+
+// ─── Extract the JSON object from a Claude response string ────────────────────
+// Handles: preamble text before {, markdown code fences, trailing text after }
+
+function extractJson(raw) {
+  // Find the first { and last } to slice out just the JSON object
+  const start = raw.indexOf('{');
+  const end   = raw.lastIndexOf('}');
+  if (start === -1 || end === -1 || end < start) return null;
+  return raw.slice(start, end + 1);
+}
 
 // ─── GET /api/venues/:placeId/enrichment ─────────────────────────────────────
 
@@ -93,10 +104,7 @@ router.get('/:placeId/enrichment', async (req, res) => {
     // 2. Global rate limit: max 50 enrichments per hour
     if (!checkRateLimit()) {
       console.log(`⚠️ Venue enrichment rate limit reached`);
-      return res.status(429).json({
-        error:        'Rate limit reached — try again later',
-        enrichedData: {},
-      });
+      return res.status(429).json({ error: 'Rate limit reached — try again later', enrichedData: {} });
     }
 
     // 3. Call Claude Haiku with web_search tool
@@ -109,34 +117,35 @@ router.get('/:placeId/enrichment', async (req, res) => {
       system:     SYSTEM_PROMPT,
       messages:   [{
         role:    'user',
-        content: `Find detailed parent-relevant venue information for: ${venueName}`,
+        content: `Find parent-relevant venue information for: ${venueName}`,
       }],
     });
 
-    // 4. Extract text content blocks
-    let jsonText = '';
+    // 4. Concatenate all text blocks from the response
+    let rawText = '';
     for (const block of message.content) {
-      if (block.type === 'text') jsonText += block.text;
+      if (block.type === 'text') rawText += block.text;
     }
-    jsonText = jsonText
-      .trim()
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
 
-    // 5. Parse JSON — gracefully degrade on failure
+    // 5. Extract the JSON object — strip preamble, markdown fences, trailing text
+    const jsonText = extractJson(rawText);
+    if (!jsonText) {
+      console.error(`❌ No JSON object found in Claude response for ${venueName}:`, rawText.substring(0, 300));
+      return res.json({ placeId, venueName, enrichedData: {}, sources: [], confidence: 'web_enriched', cachedAt: null });
+    }
+
+    // 6. Parse JSON — gracefully degrade on failure
     let parsed;
     try {
       parsed = JSON.parse(jsonText);
     } catch (parseErr) {
-      console.error(`❌ Failed to parse Claude response for ${venueName}:`, jsonText.substring(0, 300));
+      console.error(`❌ JSON parse failed for ${venueName}:`, jsonText.substring(0, 300));
       return res.json({ placeId, venueName, enrichedData: {}, sources: [], confidence: 'web_enriched', cachedAt: null });
     }
 
     const { sources = [], ...enrichedData } = parsed;
 
-    // 6. Upsert into MongoDB (90-day TTL)
+    // 7. Upsert into MongoDB (90-day TTL)
     const doc = await VenueEnrichment.findOneAndUpdate(
       { placeId },
       {
@@ -163,7 +172,6 @@ router.get('/:placeId/enrichment', async (req, res) => {
 
   } catch (err) {
     console.error(`❌ Venue enrichment error for ${venueName}:`, err.message);
-    // Never break the experience — return empty enrichment on any failure
     return res.json({ placeId, venueName, enrichedData: {}, sources: [], confidence: 'web_enriched', cachedAt: null });
   }
 });
