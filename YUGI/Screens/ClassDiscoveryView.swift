@@ -455,6 +455,7 @@ struct ClassCard: View {
     let onBook: (Class) -> Void
     let onAnalyze: (Class) -> Void
     @State private var showingProviderProfile = false
+    @State private var enrichment: VenueEnrichmentResponse? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -464,6 +465,18 @@ struct ClassCard: View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .onAppear {
+            guard enrichment == nil, let loc = classItem.location else { return }
+            let slug = "\(loc.name)-\(loc.address.city)"
+                .lowercased()
+                .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                .filter { !$0.isEmpty }
+                .joined(separator: "-")
+            VenueEnrichmentService.shared.fetchEnrichment(
+                placeId: "yugi-\(slug)",
+                venueName: loc.name
+            ) { self.enrichment = $0 }
+        }
         .sheet(isPresented: $showingProviderProfile) {
             ProviderProfilePopup(providerId: classItem.provider)
         }
@@ -503,8 +516,25 @@ struct ClassCard: View {
     private var cardContent: some View {
         VStack(spacing: 16) {
             providerAndRatingSection
-            ClassCardDetails(classItem: classItem)
+            ClassCardDetails(classItem: classItem, enrichment: enrichment)
             actionButtonsSection
+            // Enrichment badges — appear async when data arrives, never block card render
+            if let badges = enrichment?.discoveryBadges, !badges.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(badges, id: \.self) { badge in
+                            Text(badge)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .padding(.horizontal, 10).padding(.vertical, 5)
+                                .background(Color(hex: "#BC6C5C").opacity(0.1))
+                                .cornerRadius(8)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "#BC6C5C").opacity(0.25), lineWidth: 1))
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                }
+            }
         }
         .padding(20)
     }
@@ -664,14 +694,23 @@ struct ClassCard: View {
 
 struct ClassCardDetails: View {
     let classItem: Class
+    var enrichment: VenueEnrichmentResponse? = nil
     @State private var isDescriptionExpanded = false
     
     private var parkingText: String {
-        classItem.location?.parkingInfo ?? "No parking info"
+        enrichment?.parkingDescription ?? classItem.location?.parkingInfo ?? "No parking info"
     }
     
     private var babyChangingText: String {
-        classItem.location?.babyChangingFacilities ?? "No changing facilities"
+        if let bc = enrichment?.enrichedData.babyChanging {
+            if bc.available == true {
+                let loc = bc.location.map { " (\($0))" } ?? ""
+                return "Baby changing available\(loc)"
+            } else if bc.available == false {
+                return "No baby changing confirmed"
+            }
+        }
+        return classItem.location?.babyChangingFacilities ?? "No changing facilities"
     }
     
     private var weatherIcon: String {
@@ -772,6 +811,14 @@ struct ClassCardDetails: View {
                 ClassDetailRow(icon: "mappin.circle", text: classItem.location?.address.formatted ?? "Location TBD")
                 ClassDetailRow(icon: "car.fill", text: parkingText)
                 ClassDetailRow(icon: "person.2.fill", text: babyChangingText)
+                if enrichment?.hasData == true {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 10)).foregroundColor(Color(hex: "#BC6C5C").opacity(0.7))
+                        Text(enrichment!.sourceLabel)
+                            .font(.system(size: 11)).foregroundColor(Color(hex: "#BC6C5C").opacity(0.7))
+                    }
+                }
                 
                 // Nearest transit stations
                 if let stations = classItem.venueAccessibility?.nearestStations, !stations.isEmpty {

@@ -9,6 +9,8 @@ struct VenueCheckScreen: View {
     @State private var venueData: VenueAnalysisAPIData?
     @State private var errorMessage: String?
     @State private var cancellables = Set<AnyCancellable>()
+    @State private var enrichment: VenueEnrichmentResponse? = nil
+    @State private var enrichmentLoading = false
 
     private let apiService = APIService.shared
 
@@ -180,30 +182,141 @@ struct VenueCheckScreen: View {
                 }
             }
 
-            // Parking card
+            // Parking card — enriched when available
             venueCard(title: "Parking", systemImage: "car.fill") {
-                VStack(alignment: .leading, spacing: 8) {
-                    if let parkingType = access?.parkingType {
+                VStack(alignment: .leading, spacing: 10) {
+                    if enrichmentLoading {
                         HStack(spacing: 8) {
-                            Image(systemName: "parkingsign.circle")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.8))
-                                .frame(width: 20)
-                            Text(formatParkingType(parkingType))
-                                .font(.system(size: 15))
-                                .foregroundColor(.white)
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.7)))
+                                .scaleEffect(0.8)
+                            Text("Finding detailed info...")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.7))
                         }
                     }
-                    if !data.parkingInfo.isEmpty {
-                        Text(data.parkingInfo)
+                    if let desc = enrichment?.parkingDescription {
+                        Text(desc)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundColor(.white.opacity(0.9))
                             .fixedSize(horizontal: false, vertical: true)
+                        sourceLabel(enrichment!.sourceLabel)
+                    } else {
+                        if let parkingType = access?.parkingType {
+                            HStack(spacing: 8) {
+                                Image(systemName: "parkingsign.circle")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .frame(width: 20)
+                                Text(formatParkingType(parkingType))
+                                    .font(.system(size: 15))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        if !data.parkingInfo.isEmpty {
+                            Text(data.parkingInfo)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        if access?.parkingType == nil && data.parkingInfo.isEmpty && !enrichmentLoading {
+                            Text("Parking information unavailable")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                        if !enrichmentLoading { sourceLabel("Via Google") }
                     }
-                    if access?.parkingType == nil && data.parkingInfo.isEmpty {
-                        Text("Parking information unavailable")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.6))
+                }
+            }
+
+            // Enriched baby changing (shown when enrichment arrives with richer data)
+            if let bc = enrichment?.enrichedData.babyChanging, bc.available != nil || bc.location != nil {
+                venueCard(title: "Baby Changing", systemImage: "figure.and.child.holdinghands") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let avail = bc.available {
+                            HStack(spacing: 8) {
+                                Text(avail ? "✅" : "❌").font(.system(size: 16))
+                                Text(avail ? "Available" : "Not available")
+                                    .font(.system(size: 15)).foregroundColor(.white)
+                            }
+                        }
+                        if let loc = bc.location {
+                            Text("Location: \(loc)")
+                                .font(.system(size: 14)).foregroundColor(.white.opacity(0.85))
+                        }
+                        if let details = bc.details {
+                            Text(details)
+                                .font(.system(size: 14)).foregroundColor(.white.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        sourceLabel(enrichment!.sourceLabel)
+                    }
+                }
+            }
+
+            // Enriched pram / step-free access
+            if let pr = enrichment?.enrichedData.pramAccess, pr.stepFreeAccess != nil || pr.liftAvailable != nil {
+                venueCard(title: "Step-Free & Pram Access", systemImage: "figure.roll") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let step = pr.stepFreeAccess {
+                            HStack(spacing: 8) {
+                                Text(step ? "✅" : "❌").font(.system(size: 16))
+                                Text(step ? "Step-free access confirmed" : "Step-free access not confirmed")
+                                    .font(.system(size: 15)).foregroundColor(.white)
+                            }
+                        }
+                        if let lift = pr.liftAvailable {
+                            HStack(spacing: 8) {
+                                Text(lift ? "✅" : "❌").font(.system(size: 16))
+                                Text(lift ? "Lifts available" : "No lifts confirmed")
+                                    .font(.system(size: 15)).foregroundColor(.white)
+                            }
+                        }
+                        if let details = pr.details {
+                            Text(details)
+                                .font(.system(size: 14)).foregroundColor(.white.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        sourceLabel(enrichment!.sourceLabel)
+                    }
+                }
+            }
+
+            // Enriched public transport
+            if let pt = enrichment?.enrichedData.publicTransport,
+               pt.nearestStation != nil || pt.busRoutes?.isEmpty == false {
+                venueCard(title: "Public Transport", systemImage: "tram.fill") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let station = pt.nearestStation {
+                            HStack(spacing: 8) {
+                                Image(systemName: "train.side.front.car")
+                                    .font(.system(size: 14)).foregroundColor(.white.opacity(0.8)).frame(width: 20)
+                                Text(station + (pt.walkingTime.map { " — \($0) walk" } ?? ""))
+                                    .font(.system(size: 15)).foregroundColor(.white)
+                            }
+                        }
+                        if let routes = pt.busRoutes, !routes.isEmpty {
+                            HStack(alignment: .top, spacing: 8) {
+                                Image(systemName: "bus.fill")
+                                    .font(.system(size: 14)).foregroundColor(.white.opacity(0.8)).frame(width: 20)
+                                Text("Bus routes: " + routes.joined(separator: ", "))
+                                    .font(.system(size: 14)).foregroundColor(.white.opacity(0.85))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        sourceLabel(enrichment!.sourceLabel)
+                    }
+                }
+            }
+
+            // Additional parent-relevant notes from enrichment
+            if let notes = enrichment?.enrichedData.additionalNotes {
+                venueCard(title: "Also Worth Knowing", systemImage: "info.circle") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(notes)
+                            .font(.system(size: 14)).foregroundColor(.white.opacity(0.9))
+                            .fixedSize(horizontal: false, vertical: true)
+                        sourceLabel(enrichment!.sourceLabel)
                     }
                 }
             }
@@ -286,6 +399,16 @@ struct VenueCheckScreen: View {
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.75))
         }
+    }
+
+    @ViewBuilder
+    private func sourceLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(.white.opacity(0.55))
+            .padding(.horizontal, 7).padding(.vertical, 3)
+            .background(Color.white.opacity(0.12))
+            .cornerRadius(4)
     }
 
     private func venueCard<Content: View>(title: String, systemImage: String, @ViewBuilder content: () -> Content) -> some View {
@@ -389,6 +512,15 @@ struct VenueCheckScreen: View {
 
     // MARK: - API Call
 
+    private static func syntheticPlaceId(name: String, loc: String) -> String {
+        let slug = "\(name)-\(loc)"
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
+        return "yugi-\(slug)"
+    }
+
     private func searchVenue() {
         let name = venueName.trimmingCharacters(in: .whitespaces)
         let loc = location.trimmingCharacters(in: .whitespaces)
@@ -397,6 +529,8 @@ struct VenueCheckScreen: View {
         isLoading = true
         errorMessage = nil
         venueData = nil
+        enrichment = nil
+        enrichmentLoading = false
 
         apiService.fetchVenueAnalysis(venueName: name, location: loc)
             .receive(on: DispatchQueue.main)
@@ -414,6 +548,15 @@ struct VenueCheckScreen: View {
                         location: loc,
                         venueLocation: response.data.coordinates.map { (lat: $0.latitude, lng: $0.longitude) }
                     )
+                    // Fetch enrichment async — never blocks UI
+                    self.enrichmentLoading = true
+                    VenueEnrichmentService.shared.fetchEnrichment(
+                        placeId: Self.syntheticPlaceId(name: name, loc: loc),
+                        venueName: name
+                    ) { result in
+                        self.enrichmentLoading = false
+                        self.enrichment = result
+                    }
                 }
             )
             .store(in: &cancellables)

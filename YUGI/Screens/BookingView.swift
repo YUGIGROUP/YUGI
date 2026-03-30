@@ -486,6 +486,7 @@ struct BookingView: View {
 
 struct ClassDetailsCard: View {
     let classItem: Class
+    @State private var enrichment: VenueEnrichmentResponse? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -508,14 +509,52 @@ struct ClassDetailsCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 BookingDetailRow(icon: "calendar", text: formatSchedule(classItem.schedule))
                 BookingDetailRow(icon: "mappin.circle", text: classItem.location?.address.formatted ?? "Location TBD")
-                BookingDetailRow(icon: "car.fill", text: classItem.location?.parkingInfo ?? "No parking info")
-                BookingDetailRow(icon: "person.2.fill", text: classItem.location?.babyChangingFacilities ?? "No changing facilities")
+                BookingDetailRow(
+                    icon: "car.fill",
+                    text: enrichment?.parkingDescription ?? classItem.location?.parkingInfo ?? "No parking info"
+                )
+                BookingDetailRow(
+                    icon: "person.2.fill",
+                    text: {
+                        if let bc = enrichment?.enrichedData.babyChanging, let avail = bc.available {
+                            let loc = bc.location.map { " (\($0))" } ?? ""
+                            return avail ? "Baby changing available\(loc)" : "No baby changing confirmed"
+                        }
+                        return classItem.location?.babyChangingFacilities ?? "No changing facilities"
+                    }()
+                )
             }
+            if let badges = enrichment?.discoveryBadges, !badges.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(badges, id: \.self) { badge in
+                            Text(badge)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .padding(.horizontal, 10).padding(.vertical, 5)
+                                .background(Color(hex: "#BC6C5C").opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                    }.padding(.horizontal, 2)
+                }
+            }
+            if let src = enrichment { Text(src.sourceLabel)
+                .font(.system(size: 11)).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .trailing) }
         }
         .padding(20)
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+        .onAppear {
+            guard enrichment == nil, let loc = classItem.location else { return }
+            let slug = "\(loc.name)-\(loc.address.city)"
+                .lowercased()
+                .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                .filter { !$0.isEmpty }.joined(separator: "-")
+            VenueEnrichmentService.shared.fetchEnrichment(
+                placeId: "yugi-\(slug)", venueName: loc.name
+            ) { self.enrichment = $0 }
+        }
     }
     
     private func formatSchedule(_ schedule: Schedule) -> String {
