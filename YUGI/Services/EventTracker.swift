@@ -212,4 +212,13 @@ final class EventTracker {
             metadata: ["warnings": AnyCodable(warnings)]
         )
     }
+    func trackVenueEnrichmentRequested(placeId: String, venueName: String) {
+        enqueue(
+            eventType: "venue_enrichment_requested",
+            metadata: [
+                "placeId":   AnyCodable(placeId),
+                "venueName": AnyCodable(venueName),
+            ]
+        )
+    }
 }

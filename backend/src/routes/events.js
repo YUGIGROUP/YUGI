@@ -13,6 +13,7 @@ const VALID_EVENT_TYPES = [
   'filter_used',
   'class_favorited',
   'doability_warning_seen',
+  'venue_enrichment_requested',
 ];
 
 function buildEventDoc(body, userId) {

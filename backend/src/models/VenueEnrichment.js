@@ -1,0 +1,52 @@
+const mongoose = require('mongoose');
+
+const parkingSchema = new mongoose.Schema({
+  totalSpaces:   { type: Number, default: null },
+  carParkNames:  [String],
+  type:          { type: String, default: null }, // 'multi-storey' | 'surface' | 'underground' | 'mixed'
+  blueBadgeBays: { type: Number, default: null },
+  parentBays:    { type: Number, default: null },
+  costInfo:      { type: String, default: null },
+  ticketless:    { type: Boolean, default: null },
+  evCharging:    { type: Boolean, default: null },
+}, { _id: false });
+
+const babyChangingSchema = new mongoose.Schema({
+  available: { type: Boolean, default: null },
+  location:  { type: String, default: null },
+  details:   { type: String, default: null },
+}, { _id: false });
+
+const pramAccessSchema = new mongoose.Schema({
+  stepFreeAccess: { type: Boolean, default: null },
+  liftAvailable:  { type: Boolean, default: null },
+  details:        { type: String, default: null },
+}, { _id: false });
+
+const publicTransportSchema = new mongoose.Schema({
+  nearestStation: { type: String, default: null },
+  walkingTime:    { type: String, default: null },
+  busRoutes:      [String],
+}, { _id: false });
+
+const enrichedDataSchema = new mongoose.Schema({
+  parking:         { type: parkingSchema,         default: {} },
+  babyChanging:    { type: babyChangingSchema,    default: {} },
+  pramAccess:      { type: pramAccessSchema,      default: {} },
+  publicTransport: { type: publicTransportSchema, default: {} },
+  additionalNotes: { type: String, default: null },
+}, { _id: false });
+
+const venueEnrichmentSchema = new mongoose.Schema({
+  placeId:      { type: String, required: true, unique: true, index: true },
+  venueName:    { type: String, required: true },
+  enrichedData: { type: enrichedDataSchema, default: {} },
+  sources:      [String],
+  confidence:   { type: String, default: 'web_enriched', enum: ['web_enriched', 'parent_verified'] },
+  expiresAt:    { type: Date, default: () => new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) },
+}, { timestamps: true, versionKey: false });
+
+// TTL index — MongoDB auto-deletes documents after expiresAt
+venueEnrichmentSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+module.exports = mongoose.model('VenueEnrichment', venueEnrichmentSchema);
