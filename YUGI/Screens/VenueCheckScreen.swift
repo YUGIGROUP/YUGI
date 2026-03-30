@@ -178,7 +178,7 @@ struct VenueCheckScreen: View {
                     accessibilityRow("Accessible Restroom", value: access?.accessibleRestroom)
                     accessibilityRow("Accessible Seating", value: access?.accessibleSeating)
                     accessibilityRow("Accessible Parking", value: access?.accessibleParking)
-                    accessibilityRow("Baby Changing", value: access?.hasBabyChanging)
+                    accessibilityRow("Baby Changing", value: access?.hasBabyChanging ?? enrichment?.enrichedData.babyChanging?.available)
                 }
             }
 
