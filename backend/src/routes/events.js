@@ -14,6 +14,9 @@ const VALID_EVENT_TYPES = [
   'class_favorited',
   'doability_warning_seen',
   'venue_enrichment_requested',
+  'feedback_notification_sent',
+  'feedback_submitted',
+  'feedback_skipped',
 ];
 
 function buildEventDoc(body, userId) {

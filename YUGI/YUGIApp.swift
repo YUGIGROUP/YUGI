@@ -10,15 +10,27 @@ import Firebase
 
 @main
 struct YUGIApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     init() {
         FirebaseApp.configure()
-        _ = LocationService.shared // trigger location permission request at app start
+        _ = LocationService.shared
         _ = EventTracker.shared
     }
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(FeedbackCoordinator.shared)
+                .sheet(item: Binding(
+                    get: { FeedbackCoordinator.shared.pendingFeedback },
+                    set: { FeedbackCoordinator.shared.pendingFeedback = $0 }
+                )) { context in
+                    PostVisitFeedbackScreen(
+                        bookingId: context.bookingId,
+                        className: context.className
+                    )
+                }
         }
     }
 }

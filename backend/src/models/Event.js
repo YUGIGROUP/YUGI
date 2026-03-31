@@ -25,6 +25,9 @@ const eventSchema = new mongoose.Schema({
       'class_favorited',
       'doability_warning_seen',
       'venue_enrichment_requested',
+      'feedback_notification_sent',
+      'feedback_submitted',
+      'feedback_skipped',
     ],
   },
   classId: {

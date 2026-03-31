@@ -18,6 +18,8 @@ const eventsRoutes = require('./routes/events');
 const intakeRoutes = require('./routes/intake');
 const venueRoutes = require('./routes/venues');
 
+const feedbackRoutes = require('./routes/feedback');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -124,6 +126,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/intake', intakeRoutes);
 app.use('/api/venues', venueRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -138,6 +141,80 @@ app.use((err, req, res, next) => {
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
+
+
+
+// ─── Post-visit feedback notification background job ─────────────────────────
+// Runs every 5 minutes; sends APNs notifications for past-due ScheduledNotifications.
+function startNotificationJob() {
+  const INTERVAL_MS = 5 * 60 * 1000;
+
+  async function processScheduledNotifications() {
+    const ScheduledNotification = require('./models/ScheduledNotification');
+    const User                  = require('./models/User');
+    const Event                 = require('./models/Event');
+    const { sendPostVisitFeedbackNotification } = require('./services/pushNotificationService');
+
+    try {
+      const pending = await ScheduledNotification.find({
+        sendAt: { $lte: new Date() },
+        status: 'pending',
+      }).populate('userId', 'deviceToken devicePlatform');
+
+      if (pending.length > 0) {
+        console.log(`🔔 Notification job: ${pending.length} pending notification(s)`);
+      }
+
+      for (const notif of pending) {
+        try {
+          const user = notif.userId; // populated
+          if (!user || !user.deviceToken || user.devicePlatform !== 'ios') {
+            notif.status = 'failed';
+            await notif.save();
+            continue;
+          }
+
+          const result = await sendPostVisitFeedbackNotification({
+            deviceToken: user.deviceToken,
+            bookingId:   notif.bookingId.toString(),
+            className:   notif.className,
+          });
+
+          notif.status = result.success ? 'sent' : 'failed';
+          await notif.save();
+
+          if (result.success) {
+            await Event.create({
+              userId:    user._id,
+              eventType: 'feedback_notification_sent',
+              classId:   notif.classId || null,
+              metadata:  { bookingId: notif.bookingId.toString(), className: notif.className },
+            }).catch(e => console.error('Event tracking error:', e.message));
+            console.log(`✅ Notification sent for booking ${notif.bookingId}`);
+          } else {
+            console.error(`❌ Notification failed for booking ${notif.bookingId}:`, result.reason);
+          }
+        } catch (err) {
+          console.error(`Error processing notification ${notif._id}:`, err.message);
+          notif.status = 'failed';
+          await notif.save();
+        }
+      }
+    } catch (err) {
+      console.error('Notification job error:', err.message);
+    }
+  }
+
+  processScheduledNotifications();
+  setInterval(processScheduledNotifications, INTERVAL_MS);
+  console.log('🔔 Notification job started (every 5 minutes)');
+}
+
+if (process.env.MONGODB_URI) {
+  // Start notification job only when DB is connected
+  const mongoose = require('mongoose');
+  mongoose.connection.once('open', startNotificationJob);
+}
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 YUGI Server running on port ${PORT}`);

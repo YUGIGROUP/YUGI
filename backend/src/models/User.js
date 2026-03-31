@@ -102,6 +102,18 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   
+
+  // Push notifications
+  deviceToken: {
+    type: String,
+    default: null,
+  },
+  devicePlatform: {
+    type: String,
+    enum: ['ios', 'android', null],
+    default: null,
+  },
+
   // Timestamps
   createdAt: {
     type: Date,

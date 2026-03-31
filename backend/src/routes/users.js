@@ -260,4 +260,30 @@ router.get('/', (req, res) => {
   res.json({ message: 'Users route working' });
 });
 
+
+// POST /api/users/device-token
+// Saves or updates the APNs/FCM device token for the authenticated user.
+router.post('/device-token', protect, async (req, res) => {
+  try {
+    const { token, platform } = req.body;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ message: 'token is required' });
+    }
+    if (!platform || !['ios', 'android'].includes(platform)) {
+      return res.status(400).json({ message: 'platform must be "ios" or "android"' });
+    }
+
+    await User.findByIdAndUpdate(req.user.id, {
+      deviceToken: token,
+      devicePlatform: platform,
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('POST /api/users/device-token error:', err.message);
+    return res.status(500).json({ message: 'Failed to save device token' });
+  }
+});
+
 module.exports = router; 

@@ -4,6 +4,8 @@ const Booking = require('../models/Booking');
 const Class = require('../models/Class');
 const { protect, requireUserType } = require('../middleware/auth');
 
+const ScheduledNotification = require('../models/ScheduledNotification');
+
 const router = express.Router();
 
 // @route   POST /api/bookings
@@ -111,6 +113,12 @@ router.post('/', [
       console.error('Populate error (non-fatal):', populateError);
       // Continue even if populate fails - booking is still created
     }
+
+
+    // Schedule post-visit feedback notification 3h after class ends (fire-and-forget)
+    schedulePostVisitFeedbackNotification(booking, classItem).catch(err =>
+      console.error('Notification scheduling error:', err.message)
+    );
 
     res.status(201).json({
       success: true,
@@ -375,5 +383,42 @@ router.put('/:id/complete', protect, requireUserType(['provider']), async (req, 
     res.status(500).json({ message: 'Server error completing booking' });
   }
 });
+
+
+// ── Post-visit feedback notification scheduler ────────────────────────────
+async function schedulePostVisitFeedbackNotification(booking, classItem) {
+  try {
+    const durationMinutes = classItem.duration || 60; // default 60 min if not set
+
+    // Parse sessionDate + sessionTime into a start datetime
+    const sessionDate = new Date(booking.sessionDate);
+    if (classItem.sessionTime || booking.sessionTime) {
+      const timeParts = (booking.sessionTime || '').match(/(\d+):(\d+)/);
+      if (timeParts) {
+        sessionDate.setHours(parseInt(timeParts[1], 10), parseInt(timeParts[2], 10), 0, 0);
+      }
+    }
+
+    const classEndTime = new Date(sessionDate.getTime() + durationMinutes * 60 * 1000);
+    const sendAt       = new Date(classEndTime.getTime() + 3 * 60 * 60 * 1000); // +3 hours
+
+    // Avoid duplicate notifications for same booking
+    const existing = await ScheduledNotification.findOne({ bookingId: booking._id, status: 'pending' });
+    if (existing) return;
+
+    await ScheduledNotification.create({
+      userId:    booking.parent,
+      bookingId: booking._id,
+      classId:   booking.class._id || booking.class,
+      className: classItem.name || 'your class',
+      sendAt,
+    });
+
+    console.log(`🔔 Feedback notification scheduled for booking ${booking._id} at ${sendAt.toISOString()}`);
+  } catch (err) {
+    console.error('schedulePostVisitFeedbackNotification error:', err.message);
+    throw err;
+  }
+}
 
 module.exports = router; 

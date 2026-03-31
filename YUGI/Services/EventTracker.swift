@@ -212,6 +212,22 @@ final class EventTracker {
             metadata: ["warnings": AnyCodable(warnings)]
         )
     }
+    func trackFeedbackSubmitted(bookingId: String, attended: Bool, rating: Int?) {
+        var meta: [String: AnyCodable] = [
+            "bookingId": AnyCodable(bookingId),
+            "attended":  AnyCodable(attended),
+        ]
+        if let rating = rating { meta["rating"] = AnyCodable(rating) }
+        enqueue(eventType: "feedback_submitted", metadata: meta)
+    }
+
+    func trackFeedbackSkipped(bookingId: String) {
+        enqueue(
+            eventType: "feedback_skipped",
+            metadata: ["bookingId": AnyCodable(bookingId)]
+        )
+    }
+
     func trackVenueEnrichmentRequested(placeId: String, venueName: String) {
         enqueue(
             eventType: "venue_enrichment_requested",
