@@ -138,13 +138,14 @@ struct Class: Identifiable, Codable {
     let doability: DoabilityInfo?
     let venueAccessibility: VenueAccessibility?
     let intakeQuestions: [IntakeQuestion]?
+    let googlePlaceId: String?
 
     enum CodingKeys: String, CodingKey {
         case id, name, description, category, provider, providerName, location
         case schedule, pricing, maxCapacity, currentEnrollment
         case averageRating, ageRange, isFavorite, isActive
         case doability = "_doability"
-        case venueAccessibility, intakeQuestions
+        case venueAccessibility, intakeQuestions, googlePlaceId
     }
     
     var isAvailable: Bool {

@@ -235,6 +235,12 @@ const classSchema = new mongoose.Schema({
     }
   }],
 
+  // Venue
+  googlePlaceId: {
+    type: String,
+    default: null
+  },
+
   // Timestamps
   createdAt: {
     type: Date,

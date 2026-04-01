@@ -396,6 +396,8 @@ const transformClassForIOS = async (classItem, classDates = null) => {
     currentEnrollment: classObj.currentBookings || 0,
     // Add isFavorite field
     isFavorite: false,
+    // Pass through Google Place ID for venue enrichment deduplication
+    googlePlaceId: classObj.googlePlaceId || null,
     // Preserve _doability metadata if it exists (from recommendation scoring)
     ...(doabilityData && { _doability: doabilityData })
   };
@@ -835,6 +837,21 @@ router.post('/', [
 
     // Geocode if coordinates missing (0,0 or unset) — persists to DB
     await ensureCoordinates(savedClass);
+
+    // Persist Google Place ID so discovery cards can use the real placeId for enrichment
+    try {
+      const googlePlaceId = await venueDataService.getGooglePlaceId(
+        savedClass.location?.name,
+        savedClass.location?.address || {}
+      );
+      if (googlePlaceId) {
+        savedClass.googlePlaceId = googlePlaceId;
+        await savedClass.save();
+        console.log(`📍 Stored Google Place ID: ${googlePlaceId}`);
+      }
+    } catch (e) {
+      console.warn('⚠️ Could not fetch Google Place ID at class creation:', e.message);
+    }
 
     console.log('✅ Class created successfully:', savedClass.name);
     console.log('📅 Saved classDates in database:', savedClass.classDates?.map(d => d.toISOString().split('T')[0]).join(', ') || 'None');

@@ -169,6 +169,12 @@ class VenueDataService {
     }
   }
 
+  // Return the raw Google Place ID for a venue (used to store on Class at creation)
+  async getGooglePlaceId(venueName, address) {
+    const data = await this._getGooglePlacesData(venueName, address);
+    return (data && data.id) || null;
+  }
+
   // Backwards-compat shim: classes.js calls this to get the formatted address
   async getGooglePlacesData(venueName, address) {
     const data = await this._getGooglePlacesData(venueName, address);

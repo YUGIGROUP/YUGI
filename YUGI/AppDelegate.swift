@@ -6,7 +6,7 @@
 import UIKit
 import UserNotifications
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     func application(
         _ application: UIApplication,
@@ -81,7 +81,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 // MARK: - UNUserNotificationCenterDelegate
 
-extension AppDelegate: UNUserNotificationCenterDelegate {
+extension AppDelegate {
 
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,

@@ -472,8 +472,9 @@ struct ClassCard: View {
                 .components(separatedBy: CharacterSet.alphanumerics.inverted)
                 .filter { !$0.isEmpty }
                 .joined(separator: "-")
+            let placeId = classItem.googlePlaceId ?? "yugi-\(slug)"
             VenueEnrichmentService.shared.fetchEnrichment(
-                placeId: "yugi-\(slug)",
+                placeId: placeId,
                 venueName: loc.name
             ) { self.enrichment = $0 }
         }
