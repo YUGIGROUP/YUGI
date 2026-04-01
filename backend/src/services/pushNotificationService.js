@@ -5,14 +5,14 @@ let provider = null;
 function getProvider() {
   if (provider) return provider;
 
-  const { APNS_KEY_ID, APNS_TEAM_ID, APNS_KEY_PATH } = process.env;
-  if (!APNS_KEY_ID || !APNS_TEAM_ID || !APNS_KEY_PATH) {
+  const { APNS_KEY_ID, APNS_TEAM_ID, APNS_KEY_CONTENT } = process.env;
+  if (!APNS_KEY_ID || !APNS_TEAM_ID || !APNS_KEY_CONTENT) {
     return null;
   }
 
   provider = new apn.Provider({
     token: {
-      key:    APNS_KEY_PATH,
+      key:    APNS_KEY_CONTENT,
       keyId:  APNS_KEY_ID,
       teamId: APNS_TEAM_ID,
     },
