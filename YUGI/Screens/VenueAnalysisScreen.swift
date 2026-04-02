@@ -489,7 +489,7 @@ struct VenueAnalysisUIData {
             ageRange: "0-2 years",
             isFavorite: false,
             isActive: true,
-            doability: nil, venueAccessibility: nil, intakeQuestions: nil
+            doability: nil, venueAccessibility: nil, intakeQuestions: nil, googlePlaceId: nil
         )
     ))
 }

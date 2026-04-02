@@ -60,7 +60,7 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 ageRange: "0-12 months",
                 isFavorite: false,
                 isActive: true,
-                doability: nil, venueAccessibility: nil, intakeQuestions: nil
+                doability: nil, venueAccessibility: nil, intakeQuestions: nil, googlePlaceId: nil
             ),
             Class(
                 id: "mock-class-2",
@@ -107,7 +107,7 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 ageRange: "1-3 years",
                 isFavorite: true,
                 isActive: true,
-                doability: nil, venueAccessibility: nil, intakeQuestions: nil
+                doability: nil, venueAccessibility: nil, intakeQuestions: nil, googlePlaceId: nil
             ),
             Class(
                 id: "mock-class-3",
@@ -154,7 +154,7 @@ class ProviderClassDiscoveryViewModel: ObservableObject {
                 ageRange: "0-12 months",
                 isFavorite: false,
                 isActive: true,
-                doability: nil, venueAccessibility: nil, intakeQuestions: nil
+                doability: nil, venueAccessibility: nil, intakeQuestions: nil, googlePlaceId: nil
             )
         ]
     }
