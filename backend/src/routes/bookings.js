@@ -399,8 +399,8 @@ async function schedulePostVisitFeedbackNotification(booking, classItem) {
       }
     }
 
-    const classEndTime = new Date(sessionDate.getTime() + durationMinutes * 60 * 1000);
-    const sendAt       = new Date(classEndTime.getTime() + 3 * 60 * 60 * 1000); // +3 hours
+    const classEndTime = new Date(); // TESTING ONLY — revert to 3 hours before launch
+    const sendAt       = new Date(classEndTime.getTime() + 2 * 60 * 1000); // TESTING ONLY — revert to 3 hours before launch
 
     // Avoid duplicate notifications for same booking
     const existing = await ScheduledNotification.findOne({ bookingId: booking._id, status: 'pending' });
