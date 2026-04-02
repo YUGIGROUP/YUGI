@@ -393,6 +393,10 @@ struct Booking: Identifiable, Codable {
     private enum ClassIdKey: String, CodingKey {
         case id = "_id"
     }
+
+    private enum ParentIdKey: String, CodingKey {
+        case id = "_id"
+    }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
@@ -419,8 +423,15 @@ struct Booking: Identifiable, Codable {
             self.classId = try container.decode(String.self, forKey: .classId)
         }
         
-        // Handle userId (parent) - MongoDB ObjectId as String
-        let userIdString = try container.decode(String.self, forKey: .userId)
+        // Handle userId (parent) — can be a plain String ObjectId or a populated User dict
+        let userIdString: String
+        if let str = try? container.decode(String.self, forKey: .userId) {
+            userIdString = str
+        } else {
+            // parent is a populated User object (e.g. confirm-payment response) — extract _id
+            let parentContainer = try container.nestedContainer(keyedBy: ParentIdKey.self, forKey: .userId)
+            userIdString = try parentContainer.decode(String.self, forKey: .id)
+        }
         let paddedUserId = userIdString.padding(toLength: 32, withPad: "0", startingAt: 0)
         let userIdUuidString = String(paddedUserId.prefix(8)) + "-" + 
                                String(paddedUserId.dropFirst(8).prefix(4)) + "-" +

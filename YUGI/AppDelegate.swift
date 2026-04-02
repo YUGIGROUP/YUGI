@@ -101,6 +101,9 @@ extension AppDelegate {
         if let type = userInfo["type"] as? String, type == "post_visit_feedback",
            let bookingId = userInfo["bookingId"] as? String {
             let className = response.notification.request.content.body
+            // Persist so feedback survives cold-launch login flow
+            UserDefaults.standard.set(bookingId, forKey: "pendingFeedbackBookingId")
+            UserDefaults.standard.set(className, forKey: "pendingFeedbackClassName")
             DispatchQueue.main.async {
                 FeedbackCoordinator.shared.pendingFeedback = FeedbackContext(
                     bookingId: bookingId,

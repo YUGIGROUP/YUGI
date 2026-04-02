@@ -207,6 +207,16 @@ struct AuthScreen: View {
                     } else {
                         shouldNavigateToParentDashboard = true
                     }
+
+                    // Resume pending feedback from cold-launch notification tap
+                    if let bookingId = UserDefaults.standard.string(forKey: "pendingFeedbackBookingId"),
+                       let className = UserDefaults.standard.string(forKey: "pendingFeedbackClassName") {
+                        UserDefaults.standard.removeObject(forKey: "pendingFeedbackBookingId")
+                        UserDefaults.standard.removeObject(forKey: "pendingFeedbackClassName")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            FeedbackCoordinator.shared.openFeedback(bookingId: bookingId, className: className)
+                        }
+                    }
                 }
             )
             .store(in: &apiService.cancellables)
