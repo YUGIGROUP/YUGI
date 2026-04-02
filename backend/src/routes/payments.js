@@ -69,7 +69,7 @@ router.post('/create-payment-intent', [
     }
 
     // Check ownership
-    if (booking.parent.toString() !== req.user.id) {
+    if (booking.parent._id.toString() !== req.user.id) {
       console.error('❌ Unauthorized: User', req.user.id, 'does not own booking', bookingId);
       return res.status(403).json({ message: 'Not authorized to pay for this booking' });
     }
@@ -172,7 +172,7 @@ router.post('/confirm-payment', [
     }
 
     // Check ownership
-    if (booking.parent.toString() !== req.user.id) {
+    if (booking.parent._id.toString() !== req.user.id) {
       console.error('❌ Unauthorized: User', req.user.id, 'does not own booking', bookingId);
       return res.status(403).json({ message: 'Not authorized' });
     }
