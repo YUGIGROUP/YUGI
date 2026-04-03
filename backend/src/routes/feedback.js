@@ -85,18 +85,45 @@ router.post('/', auth, async (req, res) => {
 // GET /api/feedback/pending — bookings where class ended 3+ hours ago with no feedback yet
 router.get('/pending', auth, async (req, res) => {
   try {
-    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
-
+    // Fetch confirmed/completed bookings for this parent whose sessionDate is in the past.
+    // We filter by exact end time in JS because end time = sessionDate + class.duration,
+    // which requires populating the Class document.
     const bookings = await Booking.find({
-      userId: req.user.id,
-      classEndTime: { $lt: threeHoursAgo },
-    }).select('_id className').lean();
+      parent: req.user.id,
+      status: { $in: ['confirmed', 'completed'] },
+      sessionDate: { $lt: new Date() },
+    })
+      .populate('class', 'name duration')
+      .select('_id sessionDate sessionTime class')
+      .lean();
 
-    if (!bookings.length) {
-      return res.json({ pending: [] });
-    }
+    if (!bookings.length) return res.json({ pending: [] });
 
-    const bookingIds = bookings.map(b => b._id);
+    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    // Keep only bookings where sessionEnd + 3 h has passed
+    const pastBookings = bookings.filter(b => {
+      if (!b.class) return false; // class deleted — skip
+
+      // Best-effort: parse sessionTime string (e.g. '10:30') to get accurate start
+      let startMs = new Date(b.sessionDate).getTime();
+      if (b.sessionTime) {
+        const m = b.sessionTime.match(/(\d{1,2}):(\d{2})/);
+        if (m) {
+          const d = new Date(b.sessionDate);
+          d.setHours(parseInt(m[1], 10), parseInt(m[2], 10), 0, 0);
+          startMs = d.getTime();
+        }
+      }
+
+      const durationMs = (b.class.duration || 60) * 60 * 1000;
+      return startMs + durationMs + THREE_HOURS_MS < now;
+    });
+
+    if (!pastBookings.length) return res.json({ pending: [] });
+
+    const bookingIds = pastBookings.map(b => b._id);
 
     const reviewed = await PostVisitFeedback.find({
       bookingId: { $in: bookingIds },
@@ -104,9 +131,9 @@ router.get('/pending', auth, async (req, res) => {
 
     const reviewedSet = new Set(reviewed.map(f => f.bookingId.toString()));
 
-    const pending = bookings
+    const pending = pastBookings
       .filter(b => !reviewedSet.has(b._id.toString()))
-      .map(b => ({ bookingId: b._id, className: b.className }));
+      .map(b => ({ bookingId: b._id, className: b.class.name }));
 
     return res.json({ pending });
   } catch (err) {
