@@ -5,7 +5,7 @@ const ScheduledNotification = require('../models/ScheduledNotification');
 const VenueEnrichment     = require('../models/VenueEnrichment');
 const Booking             = require('../models/Booking');
 const Event               = require('../models/Event');
-const auth                = require('../middleware/auth');
+const { protect: auth }   = require('../middleware/auth');
 
 // POST /api/feedback
 router.post('/', auth, async (req, res) => {

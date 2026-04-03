@@ -2,7 +2,7 @@ const express              = require('express');
 const router               = express.Router();
 const Booking              = require('../models/Booking');
 const ScheduledNotification = require('../models/ScheduledNotification');
-const auth                 = require('../middleware/auth');
+const { protect: auth }    = require('../middleware/auth');
 
 // POST /api/bookings
 // Records a confirmed booking and schedules a post-visit feedback notification
