@@ -5,279 +5,476 @@
 
 import SwiftUI
 
+// MARK: - Tri-state answer for accessibility questions
+
+private enum TriAnswer: Equatable {
+    case yes, no, didntCheck
+
+    var boolValue: Bool? {
+        switch self {
+        case .yes:       return true
+        case .no:        return false
+        case .didntCheck: return nil
+        }
+    }
+}
+
+// MARK: - Main View
+
 struct PostVisitFeedbackScreen: View {
     let bookingId: String
     let className: String
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var attended: Bool? = nil
-    @State private var rating: Int = 0
-    @State private var babyChangingAccurate: Bool? = nil
-    @State private var pramAccessAccurate: Bool? = nil
-    @State private var parkingAccurate: Bool? = nil
-    @State private var comments: String = ""
-    @State private var isSubmitting = false
-    @State private var isSubmitted = false
+    // Card index: 0 = attendance gate, 1–5 = feedback carousel
+    @State private var currentCard = 0
+
+    // Answers
+    @State private var babyChanging: TriAnswer? = nil
+    @State private var pramAccess:   TriAnswer? = nil
+    @State private var parking:      TriAnswer? = nil
+    @State private var rating = 0
+    @State private var comments = ""
+
+    // Flow control
+    @State private var showNotAttended = false
+    @State private var isSubmitting    = false
+    @State private var hasSubmitted    = false
     @State private var errorMessage: String? = nil
 
+    private let totalCards = 5
+
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+        ZStack {
+            Color.white.ignoresSafeArea()
 
-                if isSubmitted {
-                    submittedView
-                } else {
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            attendedSection
-
-                            if attended == true {
-                                ratingSection
-                                accessibilitySection
-                                commentsSection
-                                submitButton
-                            } else if attended == false {
-                                didNotAttendSection
-                                commentsSection
-                                submitButton
+            if showNotAttended {
+                notAttendedView
+                    .transition(.opacity)
+            } else if hasSubmitted {
+                thankYouView
+                    .transition(.opacity)
+            } else if currentCard == 0 {
+                attendanceCard
+            } else {
+                VStack(spacing: 0) {
+                    progressHeader
+                    feedbackCardView
+                        .id(currentCard)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal:   .move(edge: .leading).combined(with: .opacity)
+                        ))
+                }
+                .gesture(
+                    DragGesture(minimumDistance: 40)
+                        .onEnded { v in
+                            // Swipe right = go back, swipe left = advance (when answer given)
+                            if v.translation.width > 60, currentCard > 1 {
+                                withAnimation(.easeInOut(duration: 0.3)) { currentCard -= 1 }
+                            } else if v.translation.width < -60 {
+                                advanceIfAnswered()
                             }
                         }
-                        .padding()
-                    }
-                }
+                )
             }
-            .navigationTitle("How was it?")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Skip") {
-                        EventTracker.shared.trackFeedbackSkipped(bookingId: bookingId)
-                        dismiss()
-                    }
+        }
+        .animation(.easeInOut(duration: 0.35), value: currentCard)
+        .animation(.easeInOut(duration: 0.35), value: showNotAttended)
+        .animation(.easeInOut(duration: 0.35), value: hasSubmitted)
+        .onDisappear {
+            // If dismissed without submitting, mark as skipped so it won't reappear
+            if !hasSubmitted {
+                FeedbackCoordinator.shared.skipFeedback(bookingId: bookingId)
+            }
+        }
+    }
+
+    // MARK: - Progress Header
+
+    private var progressHeader: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Button {
+                    FeedbackCoordinator.shared.skipFeedback(bookingId: bookingId)
+                    dismiss()
+                } label: {
+                    Text("Not now")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text("\(currentCard) of \(totalCards)")
+                    .font(.caption.weight(.semibold))
                     .foregroundColor(.secondary)
+
+                Spacer()
+
+                // Balance the "Not now" button so counter is centred
+                Text("Not now")
+                    .font(.subheadline)
+                    .foregroundColor(.clear)
+            }
+            .padding(.horizontal, 20)
+
+            // Progress dots
+            HStack(spacing: 5) {
+                ForEach(1...totalCards, id: \.self) { i in
+                    Capsule()
+                        .fill(i <= currentCard ? Color.accentColor : Color(.systemGray5))
+                        .frame(width: i == currentCard ? 22 : 8, height: 6)
+                        .animation(.spring(response: 0.3), value: currentCard)
                 }
             }
         }
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
 
-    // MARK: - Sections
+    // MARK: - Card 0: Attendance Gate
 
-    private var attendedSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Did you attend \(className)?")
-                .font(.headline)
-
-            HStack(spacing: 12) {
-                attendanceButton(label: "Yes", value: true)
-                attendanceButton(label: "No", value: false)
+    private var attendanceCard: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Button {
+                    FeedbackCoordinator.shared.skipFeedback(bookingId: bookingId)
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.secondary)
+                        .padding(8)
+                        .background(Color(.systemGray6))
+                        .clipShape(Circle())
+                }
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+
+            Spacer()
+
+            VStack(spacing: 36) {
+                Text("Did you make it to\n\(className)?")
+                    .font(.title2.weight(.bold))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
+
+                VStack(spacing: 12) {
+                    Button {
+                        withAnimation { currentCard = 1 }
+                    } label: {
+                        Text("Yes, I was there!")
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 17)
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .cornerRadius(14)
+                    }
+
+                    Button {
+                        withAnimation { showNotAttended = true }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            dismiss()
+                        }
+                    } label: {
+                        Text("No, I couldn't make it")
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 17)
+                            .background(Color(.systemGray6))
+                            .foregroundColor(.primary)
+                            .cornerRadius(14)
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+
+            Spacer()
+            Spacer()
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
     }
 
-    private func attendanceButton(label: String, value: Bool) -> some View {
-        Button {
-            attended = value
+    // MARK: - Cards 1–5 Router
+
+    @ViewBuilder
+    private var feedbackCardView: some View {
+        switch currentCard {
+        case 1:
+            triStateCard(
+                question: "Help the next mum out —\nwas there baby changing?",
+                binding: $babyChanging,
+                onNext: { withAnimation { currentCard = 2 } }
+            )
+        case 2:
+            triStateCard(
+                question: "Was it easy to get in\nwith a pram?",
+                binding: $pramAccess,
+                onNext: { withAnimation { currentCard = 3 } }
+            )
+        case 3:
+            triStateCard(
+                question: "Was parking\nas described?",
+                binding: $parking,
+                onNext: { withAnimation { currentCard = 4 } }
+            )
+        case 4:
+            ratingCard
+        case 5:
+            commentsCard
+        default:
+            EmptyView()
+        }
+    }
+
+    // MARK: - Tri-state Card (cards 1–3)
+
+    private func triStateCard(
+        question: String,
+        binding: Binding<TriAnswer?>,
+        onNext: @escaping () -> Void
+    ) -> some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 36) {
+                Text(question)
+                    .font(.title2.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
+
+                VStack(spacing: 12) {
+                    triButton("Yes",          answer: .yes,        binding: binding)
+                    triButton("No",           answer: .no,         binding: binding)
+                    triButton("Didn't check", answer: .didntCheck, binding: binding)
+                }
+                .padding(.horizontal, 24)
+
+                Button(action: onNext) {
+                    Text("Next")
+                        .font(.body.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 17)
+                        .background(binding.wrappedValue != nil ? Color.accentColor : Color(.systemGray4))
+                        .foregroundColor(.white)
+                        .cornerRadius(14)
+                }
+                .disabled(binding.wrappedValue == nil)
+                .padding(.horizontal, 24)
+            }
+
+            Spacer()
+            Spacer()
+        }
+    }
+
+    private func triButton(_ label: String, answer: TriAnswer, binding: Binding<TriAnswer?>) -> some View {
+        let selected = binding.wrappedValue == answer
+        return Button {
+            binding.wrappedValue = answer
         } label: {
             Text(label)
                 .font(.body.weight(.semibold))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(attended == value ? Color.accentColor : Color(.tertiarySystemFill))
-                .foregroundColor(attended == value ? .white : .primary)
-                .cornerRadius(10)
+                .padding(.vertical, 17)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(selected ? Color.accentColor.opacity(0.10) : Color(.systemGray6))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 2)
+                )
+                .foregroundColor(selected ? Color.accentColor : .primary)
         }
     }
 
-    private var ratingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("How was it?")
-                .font(.headline)
+    // MARK: - Card 4: Star Rating
 
-            HStack(spacing: 8) {
-                ForEach(1...5, id: \.self) { star in
-                    Button {
-                        rating = star
-                    } label: {
-                        Image(systemName: star <= rating ? "star.fill" : "star")
-                            .font(.title2)
-                            .foregroundColor(star <= rating ? .yellow : .secondary)
-                    }
-                }
-                Spacer()
-            }
-        }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-    }
-
-    private var accessibilitySection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Was it as described?")
-                .font(.headline)
-
-            accuracyRow(
-                label: "Baby changing available",
-                icon: "figure.and.child.holdinghands",
-                value: $babyChangingAccurate
-            )
-            Divider()
-            accuracyRow(
-                label: "Pram access",
-                icon: "figure.roll",
-                value: $pramAccessAccurate
-            )
-            Divider()
-            accuracyRow(
-                label: "Parking",
-                icon: "car.fill",
-                value: $parkingAccurate
-            )
-        }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-    }
-
-    private func accuracyRow(label: String, icon: String, value: Binding<Bool?>) -> some View {
-        HStack {
-            Label(label, systemImage: icon)
-                .font(.subheadline)
+    private var ratingCard: some View {
+        VStack(spacing: 0) {
             Spacer()
-            HStack(spacing: 8) {
-                triStateButton(label: "Yes", target: true,  binding: value)
-                triStateButton(label: "No",  target: false, binding: value)
-                triStateButton(label: "N/A", target: nil,   binding: value)
-            }
-        }
-    }
 
-    private func triStateButton(label: String, target: Bool?, binding: Binding<Bool?>) -> some View {
-        let isSelected = binding.wrappedValue == target
-        return Button {
-            binding.wrappedValue = target
-        } label: {
-            Text(label)
-                .font(.caption.weight(.semibold))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(isSelected ? Color.accentColor : Color(.tertiarySystemFill))
-                .foregroundColor(isSelected ? .white : .primary)
-                .cornerRadius(8)
-        }
-    }
+            VStack(spacing: 40) {
+                Text("How would you rate it?")
+                    .font(.title2.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
 
-    private var didNotAttendSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Sorry to hear that!")
-                .font(.headline)
-            Text("Would you like to tell us why? (optional)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-    }
-
-    private var commentsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Anything else? (optional)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            TextEditor(text: $comments)
-                .frame(minHeight: 80)
-                .padding(8)
-                .background(Color(.tertiarySystemFill))
-                .cornerRadius(8)
-        }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-    }
-
-    private var submitButton: some View {
-        VStack(spacing: 8) {
-            if let error = errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(.red)
-            }
-
-            Button {
-                submitFeedback()
-            } label: {
-                Group {
-                    if isSubmitting {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .tint(.white)
-                    } else {
-                        Text("Submit")
-                            .font(.body.weight(.semibold))
+                HStack(spacing: 14) {
+                    ForEach(1...5, id: \.self) { star in
+                        Button {
+                            rating = star
+                        } label: {
+                            Image(systemName: star <= rating ? "star.fill" : "star")
+                                .font(.system(size: 46))
+                                .foregroundColor(star <= rating ? Color.accentColor : Color(.systemGray4))
+                        }
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color.accentColor)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+
+                Button {
+                    withAnimation { currentCard = 5 }
+                } label: {
+                    Text("Next")
+                        .font(.body.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 17)
+                        .background(rating > 0 ? Color.accentColor : Color(.systemGray4))
+                        .foregroundColor(.white)
+                        .cornerRadius(14)
+                }
+                .disabled(rating == 0)
+                .padding(.horizontal, 24)
             }
-            .disabled(isSubmitting || attended == nil)
+
+            Spacer()
+            Spacer()
         }
     }
 
-    private var submittedView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 64))
-                .foregroundColor(.green)
+    // MARK: - Card 5: Comments + Submit
 
-            Text("Thanks for your feedback!")
-                .font(.title2.weight(.semibold))
+    private var commentsCard: some View {
+        VStack(spacing: 0) {
+            Spacer()
 
-            Text("Your input helps other parents find the best classes.")
-                .font(.subheadline)
+            VStack(spacing: 28) {
+                VStack(spacing: 6) {
+                    Text("Anything else mums\nshould know?")
+                        .font(.title2.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                    Text("Optional")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 28)
+
+                ZStack(alignment: .topLeading) {
+                    if comments.isEmpty {
+                        Text("e.g. The lift was out of order")
+                            .foregroundColor(Color(.placeholderText))
+                            .padding(EdgeInsets(top: 13, leading: 9, bottom: 0, trailing: 9))
+                    }
+                    TextEditor(text: $comments)
+                        .frame(height: 110)
+                        .padding(4)
+                }
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+                .padding(.horizontal, 24)
+
+                VStack(spacing: 6) {
+                    if let error = errorMessage {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+
+                    Button {
+                        submitFeedback()
+                    } label: {
+                        Group {
+                            if isSubmitting {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                            } else {
+                                Text("Submit")
+                                    .font(.body.weight(.semibold))
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 17)
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(14)
+                    }
+                    .disabled(isSubmitting)
+                    .padding(.horizontal, 24)
+                }
+            }
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Not Attended Screen
+
+    private var notAttendedView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 60))
+                .foregroundColor(Color.accentColor)
+
+            Text("No worries!")
+                .font(.title2.weight(.bold))
+
+            Text("We hope you make it next time")
+                .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal)
-
-            Button("Done") { dismiss() }
-                .padding(.top, 8)
         }
-        .padding()
+        .padding(.horizontal, 32)
+    }
+
+    // MARK: - Thank You Screen
+
+    private var thankYouView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 68))
+                .foregroundColor(.green)
+
+            Text("Thanks!")
+                .font(.title.weight(.bold))
+
+            Text("You're helping mums find the best outings")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// Advance to the next card only if the current question has been answered.
+    private func advanceIfAnswered() {
+        switch currentCard {
+        case 1 where babyChanging != nil: withAnimation { currentCard = 2 }
+        case 2 where pramAccess   != nil: withAnimation { currentCard = 3 }
+        case 3 where parking      != nil: withAnimation { currentCard = 4 }
+        case 4 where rating       > 0:    withAnimation { currentCard = 5 }
+        default: break
+        }
     }
 
     // MARK: - Submission
 
     private func submitFeedback() {
-        guard let attended = attended else { return }
         isSubmitting = true
         errorMessage = nil
 
         var body: [String: Any] = [
             "bookingId": bookingId,
-            "attended":  attended,
+            "attended":  true,
         ]
-        if attended {
-            if rating > 0 { body["rating"] = rating }
-            if let v = babyChangingAccurate { body["babyChangingAccurate"] = v }
-            if let v = pramAccessAccurate   { body["pramAccessAccurate"] = v }
-            if let v = parkingAccurate      { body["parkingAccurate"] = v }
-        }
-        if !comments.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            body["comments"] = comments
-        }
+
+        if let v = babyChanging { body["babyChangingAccurate"] = v.boolValue as Any }
+        if let v = pramAccess   { body["pramAccessAccurate"]   = v.boolValue as Any }
+        if let v = parking      { body["parkingAccurate"]      = v.boolValue as Any }
+        if rating > 0           { body["rating"] = rating }
+
+        let trimmed = comments.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty { body["comments"] = trimmed }
 
         guard let url = URL(string: "https://yugi-production.up.railway.app/api/feedback") else { return }
-        guard let authToken = UserDefaults.standard.string(forKey: "authToken") else {
+        guard let token = UserDefaults.standard.string(forKey: "authToken") else {
             errorMessage = "Please log in to submit feedback."
             isSubmitting = false
             return
@@ -285,26 +482,31 @@ struct PostVisitFeedbackScreen: View {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(authToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json",  forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)",   forHTTPHeaderField: "Authorization")
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        URLSession.shared.dataTask(with: request) { [self] _, response, error in
+        URLSession.shared.dataTask(with: request) { _, response, error in
             DispatchQueue.main.async {
                 self.isSubmitting = false
-                if let error = error {
+
+                if error != nil {
                     self.errorMessage = "Something went wrong. Please try again."
-                    print("Feedback submission error: \(error.localizedDescription)")
                     return
                 }
+
                 guard let http = response as? HTTPURLResponse else { return }
+
                 if http.statusCode == 201 || http.statusCode == 409 {
                     EventTracker.shared.trackFeedbackSubmitted(
                         bookingId: self.bookingId,
-                        attended: attended,
-                        rating: self.rating > 0 ? self.rating : nil
+                        attended:  true,
+                        rating:    self.rating > 0 ? self.rating : nil
                     )
-                    self.isSubmitted = true
+                    withAnimation { self.hasSubmitted = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        self.dismiss()
+                    }
                 } else {
                     self.errorMessage = "Failed to submit. Please try again."
                 }

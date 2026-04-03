@@ -21,7 +21,13 @@ struct YUGIApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.light)
                 .environmentObject(FeedbackCoordinator.shared)
+                .task {
+                    // Small delay so auth state can settle before we hit the API
+                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                    FeedbackCoordinator.shared.fetchAndShowPendingFeedback()
+                }
                 .sheet(item: Binding(
                     get: { FeedbackCoordinator.shared.pendingFeedback },
                     set: { FeedbackCoordinator.shared.pendingFeedback = $0 }

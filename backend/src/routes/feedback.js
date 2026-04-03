@@ -5,10 +5,10 @@ const ScheduledNotification = require('../models/ScheduledNotification');
 const VenueEnrichment     = require('../models/VenueEnrichment');
 const Booking             = require('../models/Booking');
 const Event               = require('../models/Event');
-const { protect }         = require('../middleware/auth');
+const auth                = require('../middleware/auth');
 
 // POST /api/feedback
-router.post('/', protect, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const {
       bookingId,
@@ -21,68 +21,97 @@ router.post('/', protect, async (req, res) => {
     } = req.body;
 
     if (!bookingId) {
-      return res.status(400).json({ message: 'bookingId is required' });
+      return res.status(400).json({ error: 'bookingId is required' });
     }
     if (attended === undefined || attended === null) {
-      return res.status(400).json({ message: 'attended is required' });
+      return res.status(400).json({ error: 'attended is required' });
     }
 
-    const booking = await Booking.findById(bookingId).populate('class', 'name location');
+    // Look up the booking for additional metadata
+    const booking = await Booking.findById(bookingId);
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ error: 'Booking not found' });
     }
 
-    // Only the booking owner can submit feedback
-    if (booking.parent.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorised to submit feedback for this booking' });
-    }
-
+    // Find the matching scheduled notification so we can record when it was sent
     const scheduledNotif = await ScheduledNotification.findOne({
       bookingId: booking._id,
       status: { $in: ['sent', 'pending'] },
     });
 
     const feedback = await PostVisitFeedback.create({
-      bookingId:            booking._id,
-      classId:              booking.class?._id || booking.class,
-      userId:               req.user.id,
-      venuePlaceId:         booking.class?.location?.placeId || null,
-      attended:             Boolean(attended),
-      rating:               rating              ?? null,
+      bookingId:           booking._id,
+      classId:             booking.classId,
+      userId:              req.user.id,
+      venuePlaceId:        booking.venuePlaceId,
+      attended:            Boolean(attended),
+      rating:              rating              ?? null,
       babyChangingAccurate: babyChangingAccurate ?? null,
-      pramAccessAccurate:   pramAccessAccurate  ?? null,
-      parkingAccurate:      parkingAccurate     ?? null,
-      comments:             comments            || null,
-      notificationSentAt:   scheduledNotif?.updatedAt || null,
-      respondedAt:          new Date(),
+      pramAccessAccurate:  pramAccessAccurate  ?? null,
+      parkingAccurate:     parkingAccurate     ?? null,
+      comments:            comments            || null,
+      notificationSentAt:  scheduledNotif?.updatedAt || null,
+      respondedAt:         new Date(),
     });
 
+    // Mark scheduled notification as responded
     if (scheduledNotif) {
       await ScheduledNotification.findByIdAndUpdate(scheduledNotif._id, { status: 'sent' });
     }
 
+    // Track feedback_submitted event
     await Event.create({
       userId:    req.user.id,
       eventType: 'feedback_submitted',
-      classId:   booking.class?._id || null,
+      classId:   booking.classId || null,
       metadata:  { bookingId, attended: Boolean(attended), rating: rating ?? null },
-    }).catch(e => console.error('Event tracking error:', e.message));
+    });
 
-    // Upgrade venue confidence after 3+ confirming parent feedbacks
-    const venuePlaceId = booking.class?.location?.placeId;
-    if (venuePlaceId) {
-      maybeUpgradeVenueConfidence(venuePlaceId).catch(e =>
-        console.error('Venue confidence upgrade error:', e.message)
-      );
+    // If 3+ feedbacks confirm venue data, upgrade confidence to 'parent_verified'
+    if (booking.venuePlaceId) {
+      await maybeUpgradeVenueConfidence(booking.venuePlaceId);
     }
 
     return res.status(201).json({ success: true, feedbackId: feedback._id });
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(409).json({ message: 'Feedback already submitted for this booking' });
+      return res.status(409).json({ error: 'Feedback already submitted for this booking' });
     }
     console.error('POST /api/feedback error:', err.message);
-    return res.status(500).json({ message: 'Failed to save feedback' });
+    return res.status(500).json({ error: 'Failed to save feedback' });
+  }
+});
+
+// GET /api/feedback/pending — bookings where class ended 3+ hours ago with no feedback yet
+router.get('/pending', auth, async (req, res) => {
+  try {
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+
+    const bookings = await Booking.find({
+      userId: req.user.id,
+      classEndTime: { $lt: threeHoursAgo },
+    }).select('_id className').lean();
+
+    if (!bookings.length) {
+      return res.json({ pending: [] });
+    }
+
+    const bookingIds = bookings.map(b => b._id);
+
+    const reviewed = await PostVisitFeedback.find({
+      bookingId: { $in: bookingIds },
+    }).select('bookingId').lean();
+
+    const reviewedSet = new Set(reviewed.map(f => f.bookingId.toString()));
+
+    const pending = bookings
+      .filter(b => !reviewedSet.has(b._id.toString()))
+      .map(b => ({ bookingId: b._id, className: b.className }));
+
+    return res.json({ pending });
+  } catch (err) {
+    console.error('GET /api/feedback/pending error:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch pending feedback' });
   }
 });
 
@@ -90,6 +119,7 @@ router.post('/', protect, async (req, res) => {
 router.get('/:classId', async (req, res) => {
   try {
     const { classId } = req.params;
+
     const feedbacks = await PostVisitFeedback.find({ classId, attended: true });
 
     if (feedbacks.length === 0) {
@@ -110,33 +140,39 @@ router.get('/:classId', async (req, res) => {
 
     return res.json({
       classId,
-      count:                feedbacks.length,
-      averageRating:        avgRating,
-      babyChangingAccuracy: accuracy('babyChangingAccurate'),
-      pramAccessAccuracy:   accuracy('pramAccessAccurate'),
-      parkingAccuracy:      accuracy('parkingAccurate'),
+      count:                    feedbacks.length,
+      averageRating:            avgRating,
+      attendedCount:            feedbacks.length,
+      babyChangingAccuracy:     accuracy('babyChangingAccurate'),
+      pramAccessAccuracy:       accuracy('pramAccessAccurate'),
+      parkingAccuracy:          accuracy('parkingAccurate'),
     });
   } catch (err) {
     console.error('GET /api/feedback/:classId error:', err.message);
-    return res.status(500).json({ message: 'Failed to fetch feedback' });
+    return res.status(500).json({ error: 'Failed to fetch feedback' });
   }
 });
 
 async function maybeUpgradeVenueConfidence(venuePlaceId) {
-  const confirming = await PostVisitFeedback.countDocuments({
-    venuePlaceId,
-    attended: true,
-    $or: [
-      { babyChangingAccurate: true },
-      { pramAccessAccurate: true },
-      { parkingAccurate: true },
-    ],
-  });
-  if (confirming >= 3) {
-    await VenueEnrichment.findOneAndUpdate(
-      { placeId: venuePlaceId, confidence: 'web_enriched' },
-      { confidence: 'parent_verified' }
-    );
+  try {
+    const confirming = await PostVisitFeedback.countDocuments({
+      venuePlaceId,
+      attended: true,
+      $or: [
+        { babyChangingAccurate: true },
+        { pramAccessAccurate: true },
+        { parkingAccurate: true },
+      ],
+    });
+
+    if (confirming >= 3) {
+      await VenueEnrichment.findOneAndUpdate(
+        { placeId: venuePlaceId, confidence: 'web_enriched' },
+        { confidence: 'parent_verified' }
+      );
+    }
+  } catch (err) {
+    console.error('maybeUpgradeVenueConfidence error:', err.message);
   }
 }
 
