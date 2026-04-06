@@ -1336,26 +1336,30 @@ router.post('/venues/analyze', protect, async (req, res) => {
   }
 });
 
-// POST /api/classes/generate - AI-powered class listing generator
-router.post('/generate', protect, [
-  body('prompt').trim().notEmpty().withMessage('Prompt is required')
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ success: false, errors: errors.array() });
+// ─── Content moderation ────────────────────────────────────────────────────────
+
+const BLOCKED_PATTERNS = [
+  { label: 'profanity',      re: /\b(fuck|shit|cunt|bitch|bastard|piss|cock|dick|pussy|wanker|arse|bollocks|twat)\b/i },
+  { label: 'sexual_content', re: /\b(sex|porn|nude|naked|erotic|xxx|adult|fetish|bondage|kink|orgasm|masturbat|vibrator|dildo|onlyfans)\b/i },
+  { label: 'violence',       re: /\b(kill|murder|gore|torture|abuse|assault|weapon|gun|knife|bomb|shoot|stab|rape|trafficking)\b/i },
+  { label: 'drugs',          re: /\b(cocaine|heroin|meth|amphetamine|ecstasy|mdma|lsd|ketamine|marijuana|cannabis|weed|drug dealing|crack)\b/i },
+  { label: 'hate_speech',    re: /\b(nazi|terrorist|jihad|white.?supremac|grooming)\b/i },
+];
+
+function moderateText(text) {
+  for (const { label, re } of BLOCKED_PATTERNS) {
+    if (re.test(text)) return { blocked: true, reason: label };
   }
+  return { blocked: false };
+}
 
-  const { prompt } = req.body;
+const GENERATE_SYSTEM_PROMPT = `You are a UK children's activity expert helping providers create compelling class listings on the YUGI platform.
 
-  try {
-    const Anthropic = require('@anthropic-ai/sdk');
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+CONTENT POLICY — you must REFUSE any request that involves sexual, explicit, or adult content; violence or dangerous activities; drug or alcohol use; hate speech or discrimination; or anything unsuitable for a family-friendly children's platform.
+If the request violates this policy, respond ONLY with this exact JSON and nothing else:
+{"error":true,"reason":"inappropriate_content"}
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
-      system: `You are a UK children's activity expert helping providers create compelling class listings on the YUGI platform.
-When given a brief description of a class, return ONLY valid JSON with no markdown, no code fences, and no explanation — just the raw JSON object.
+Otherwise, return ONLY valid JSON with no markdown, no code fences, and no explanation — just the raw JSON object.
 Fields to include:
 - className (string): a creative, warm, appealing name for the class
 - category (string): one of exactly: "Baby", "Toddler", "Preschool", "School Age", "Wellness", "Music", "Art", "Sports", "Dance", "Swimming", "Cooking", "STEM", "Languages", "Drama", "Outdoors", "Special Needs", "Party", "Other"
@@ -1369,7 +1373,44 @@ Fields to include:
 - venueName (string): venue name if mentioned, otherwise empty string
 - city (string): city if mentioned, otherwise empty string
 - postalCode (string): UK postcode if mentioned, otherwise empty string
-- streetAddress (string): street address if mentioned, otherwise empty string`,
+- streetAddress (string): street address if mentioned, otherwise empty string`;
+
+// POST /api/classes/generate - AI-powered class listing generator
+router.post('/generate', protect, [
+  body('prompt').trim().notEmpty().withMessage('Prompt is required')
+    .isLength({ max: 1000 }).withMessage('Prompt must be under 1000 characters'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ success: false, errors: errors.array() });
+  }
+
+  const { prompt } = req.body;
+  const Event = require('../models/Event');
+
+  // ── Pre-flight content moderation ────────────────────────────────────────────
+  const preCheck = moderateText(prompt);
+  if (preCheck.blocked) {
+    Event.create({
+      userId:    req.user.id || req.user._id,
+      eventType: 'content_moderation_blocked',
+      metadata:  { stage: 'pre_flight', reason: preCheck.reason, promptLength: prompt.length },
+    }).catch(e => console.error('Failed to log moderation event:', e.message));
+
+    return res.status(400).json({
+      success: false,
+      message: 'Your description contains inappropriate content. Please revise and try again.',
+    });
+  }
+
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      system: GENERATE_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }]
     });
 
@@ -1383,9 +1424,38 @@ Fields to include:
       return res.status(500).json({ success: false, message: 'AI returned an invalid response. Please try again.' });
     }
 
+    // ── Check if Claude flagged the content ────────────────────────────────────
+    if (parsed.error === true && parsed.reason === 'inappropriate_content') {
+      Event.create({
+        userId:    req.user.id || req.user._id,
+        eventType: 'content_moderation_blocked',
+        metadata:  { stage: 'claude_flagged', promptLength: prompt.length },
+      }).catch(e => console.error('Failed to log moderation event:', e.message));
+
+      return res.status(400).json({
+        success: false,
+        message: 'Your description contains inappropriate content. Please revise and try again.',
+      });
+    }
+
+    // ── Post-generation output moderation ──────────────────────────────────────
+    const postCheck = moderateText(JSON.stringify(parsed));
+    if (postCheck.blocked) {
+      Event.create({
+        userId:    req.user.id || req.user._id,
+        eventType: 'content_moderation_blocked',
+        metadata:  { stage: 'post_generation', reason: postCheck.reason },
+      }).catch(e => console.error('Failed to log moderation event:', e.message));
+
+      return res.status(400).json({
+        success: false,
+        message: 'Generated content was flagged for review. Please try a different description.',
+      });
+    }
+
     return res.json({ success: true, data: parsed });
   } catch (err) {
-    console.error('Error calling Anthropic API:', err);
+    console.error('Error calling Anthropic API:', err.message);
     return res.status(500).json({ success: false, message: 'Failed to generate class listing. Please try again.' });
   }
 });

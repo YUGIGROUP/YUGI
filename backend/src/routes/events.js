@@ -17,6 +17,7 @@ const VALID_EVENT_TYPES = [
   'feedback_notification_sent',
   'feedback_submitted',
   'feedback_skipped',
+  'content_moderation_blocked',
 ];
 
 function buildEventDoc(body, userId) {

@@ -2,6 +2,7 @@ const express         = require('express');
 const router          = express.Router();
 const Anthropic       = require('@anthropic-ai/sdk');
 const VenueEnrichment = require('../models/VenueEnrichment');
+const { protect } = require('../middleware/auth');
 
 // ─── Rate limiter: max 50 Claude enrichments per hour globally ────────────────
 
@@ -78,7 +79,7 @@ function extractJson(raw) {
 
 // ─── GET /api/venues/:placeId/enrichment ─────────────────────────────────────
 
-router.get('/:placeId/enrichment', async (req, res) => {
+router.get('/:placeId/enrichment', protect, async (req, res) => {
   const { placeId } = req.params;
   const venueName   = req.query.venueName || placeId;
 

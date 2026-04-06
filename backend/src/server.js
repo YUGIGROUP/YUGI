@@ -32,23 +32,51 @@ if (process.env.MONGODB_URI) {
 
 // Security middleware
 app.use(helmet());
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'http://192.168.1.72:3000', 'http://127.0.0.1:3000'];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? '*' 
-    : [
-        'http://localhost:3000',
-        'http://192.168.1.72:3000',
-        'http://127.0.0.1:3000'
-      ],
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // mobile apps / server-to-server
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests — please try again later' },
 });
 app.use('/api/', limiter);
+
+// Feedback submission: 20/hour per user
+const feedbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  keyGenerator: req => (req.user ? `user:${req.user.id || req.user._id}` : req.ip),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Feedback submission limit reached — please try again later' },
+});
+
+// Class generation: 10/hour per user
+const classGenerationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  keyGenerator: req => (req.user ? `user:${req.user.id || req.user._id}` : req.ip),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Class generation limit reached — please try again later' },
+});
 
 // Body parsing middleware
 // Skip JSON parsing for Stripe webhook (needs raw body for signature verification)
@@ -62,6 +90,21 @@ app.use((req, res, next) => {
   }
 });
 app.use(express.urlencoded({ extended: true }));
+
+// MongoDB injection sanitisation — strip $-prefixed keys from user input
+function sanitiseObject(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith('$')) { delete obj[key]; } else { sanitiseObject(obj[key]); }
+  }
+  return obj;
+}
+app.use((req, _res, next) => {
+  if (req.body   && typeof req.body   === 'object') sanitiseObject(req.body);
+  if (req.query  && typeof req.query  === 'object') sanitiseObject(req.query);
+  next();
+});
+
 
 // Static files for admin interface
 app.use('/admin', express.static('public/admin'));
@@ -115,6 +158,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Per-route rate limiters
+app.use('/api/feedback', feedbackLimiter);
+app.use('/api/classes/generate', classGenerationLimiter);
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -130,10 +177,9 @@ app.use('/api/feedback', feedbackRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  console.error('Unhandled error:', err.message);
+  res.status(err.status || 500).json({
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong!',
   });
 });
 

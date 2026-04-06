@@ -143,7 +143,7 @@ router.get('/pending', auth, async (req, res) => {
 });
 
 // GET /api/feedback/:classId — aggregated feedback for a class
-router.get('/:classId', async (req, res) => {
+router.get('/:classId', auth, async (req, res) => {
   try {
     const { classId } = req.params;
 

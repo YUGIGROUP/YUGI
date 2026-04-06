@@ -28,6 +28,7 @@ const eventSchema = new mongoose.Schema({
       'feedback_notification_sent',
       'feedback_submitted',
       'feedback_skipped',
+      'content_moderation_blocked',
     ],
   },
   classId: {
