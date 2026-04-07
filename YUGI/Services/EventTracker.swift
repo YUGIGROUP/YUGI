@@ -237,4 +237,21 @@ final class EventTracker {
             ]
         )
     }
+
+    func trackSmartSearchUsed(query: String) {
+        enqueue(
+            eventType: "smart_search_used",
+            metadata: [
+                "query":  AnyCodable(query),
+                "source": AnyCodable("apple_intelligence"),
+            ]
+        )
+    }
+
+    func trackVenueSummaryGenerated(venueName: String) {
+        enqueue(
+            eventType: "venue_summary_generated",
+            metadata: ["venueName": AnyCodable(venueName)]
+        )
+    }
 }

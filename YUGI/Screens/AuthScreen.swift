@@ -207,7 +207,11 @@ struct AuthScreen: View {
                     } else {
                         shouldNavigateToParentDashboard = true
                     }
-
+                    // Check for any unreviewed bookings and show carousel
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                            FeedbackCoordinator.shared.fetchAndShowPendingFeedback()
+                                        }
+                    
                     // Resume pending feedback from cold-launch notification tap
                     if let bookingId = UserDefaults.standard.string(forKey: "pendingFeedbackBookingId"),
                        let className = UserDefaults.standard.string(forKey: "pendingFeedbackClassName") {

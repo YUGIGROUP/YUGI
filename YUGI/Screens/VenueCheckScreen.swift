@@ -1,6 +1,10 @@
 import SwiftUI
 import Combine
 
+#if canImport(FoundationModels)
+import FoundationModels
+#endif
+
 struct VenueCheckScreen: View {
     @Environment(\.dismiss) private var dismiss
     @State private var venueName: String = ""
@@ -11,6 +15,11 @@ struct VenueCheckScreen: View {
     @State private var cancellables = Set<AnyCancellable>()
     @State private var enrichment: VenueEnrichmentResponse? = nil
     @State private var enrichmentLoading = false
+
+    // MARK: - Venue Intelligence Summary (Foundation Models)
+    @State private var summaryText = ""
+    @State private var isSummaryStreaming = false
+    @State private var summaryAvailable = false
 
     private let apiService = APIService.shared
 
@@ -131,6 +140,45 @@ struct VenueCheckScreen: View {
     private func resultsView(_ data: VenueAnalysisAPIData) -> some View {
         let access = data.venueAccessibility
         VStack(spacing: 16) {
+        // MARK: - YUGI Intelligence Summary (Apple Intelligence / Foundation Models)
+        if summaryAvailable || isSummaryStreaming {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("YUGI Intelligence")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.9))
+                    Spacer()
+                    if isSummaryStreaming {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.7)))
+                            .scaleEffect(0.7)
+                    }
+                }
+
+                if summaryText.isEmpty && isSummaryStreaming {
+                    HStack(spacing: 6) {
+                        ForEach([100, 70, 50], id: \.self) { w in
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.white.opacity(0.25))
+                                .frame(width: CGFloat(w), height: 11)
+                        }
+                    }
+                } else if !summaryText.isEmpty {
+                    Text(summaryText)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.95))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(16)
+            .background(Color.white.opacity(0.12))
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.25), lineWidth: 1))
+        }
+
             // Venue header card
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
@@ -556,12 +604,49 @@ struct VenueCheckScreen: View {
                     ) { result in
                         self.enrichmentLoading = false
                         self.enrichment = result
+                        if let result {
+                            self.generateVenueSummary(result)
+                        }
                     }
                 }
             )
             .store(in: &cancellables)
     }
 }
+
+    // MARK: - Venue Intelligence Summary generation
+
+    private func generateVenueSummary(_ enrichmentData: VenueEnrichmentResponse) {
+        guard enrichmentData.hasData else { return }
+        let isAIAvailable: Bool = {
+            if #available(iOS 26, macOS 26, *) {
+                #if canImport(FoundationModels)
+                let av = SystemLanguageModel.default.availability
+                if case .available = av { return true }
+                #endif
+            }
+            return false
+        }()
+        guard isAIAvailable,
+              let stream = VenueSummaryGeneratorWrapper.shared.summaryStream(for: enrichmentData) else { return }
+
+        summaryAvailable = true
+        isSummaryStreaming = true
+        summaryText = ""
+
+        Task { @MainActor in
+            do {
+                for try await chunk in stream {
+                    summaryText = chunk
+                }
+                EventTracker.shared.trackVenueSummaryGenerated(venueName: venueName)
+            } catch {
+                if summaryText.isEmpty { summaryAvailable = false }
+            }
+            isSummaryStreaming = false
+        }
+    }
+
 
 #Preview {
     VenueCheckScreen()

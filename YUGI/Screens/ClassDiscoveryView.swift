@@ -1,5 +1,9 @@
 import SwiftUI
 
+#if canImport(FoundationModels)
+import FoundationModels
+#endif
+
 // MARK: - Shared Components
 
 struct YUGICategoryButton: View {
@@ -62,6 +66,13 @@ struct ClassDiscoveryView: View {
     @State private var animateCards = false
     @State private var shouldNavigateToProviderDashboard = false
     @State private var shouldNavigateToParentDashboard = false
+
+    // MARK: - Smart Search (Foundation Models / Apple Intelligence)
+    @State private var smartQuery = ""
+    @State private var isSmartSearching = false
+    @State private var aiFilters: ParsedSearchFilters? = nil
+    @State private var aiSearchAvailable = false
+    @State private var smartSearchTask: Task<Void, Never>? = nil
     @StateObject private var apiService = APIService.shared
     
     init(bookingService: BookingService) {
@@ -162,6 +173,7 @@ struct ClassDiscoveryView: View {
                     .padding()
             }
         }
+        .task { checkAIAvailability() }
         .onAppear {
                 print("ClassDiscoveryView appeared")
                 viewModel.startLocationUpdates()
@@ -271,7 +283,8 @@ struct ClassDiscoveryView: View {
     private var classListSection: some View {
         ScrollView {
             VStack(spacing: 20) {
-                ForEach(Array(viewModel.filteredClasses.enumerated()), id: \.element.id) { index, classItem in
+                smartSearchBar
+                ForEach(Array(displayedClasses.enumerated()), id: \.element.id) { index, classItem in
                     ClassCard(
                         classItem: classItem,
                         onBook: { selectedClass in
@@ -321,6 +334,114 @@ struct ClassDiscoveryView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
+
+    // MARK: - Smart Search helpers
+
+    private var displayedClasses: [Class] {
+        guard let filters = aiFilters else { return viewModel.filteredClasses }
+        return viewModel.filteredClasses.filter { c in
+            if let cat = filters.category?.lowercased(), !cat.isEmpty {
+                let catMatch = c.category.rawValue.lowercased().contains(cat)
+                    || c.name.lowercased().contains(cat)
+                    || c.description.lowercased().contains(cat)
+                if !catMatch { return false }
+            }
+            if let loc = filters.locationHint?.lowercased(), !loc.isEmpty {
+                let addr = ((c.location?.address.city ?? "") + " " + (c.location?.name ?? "")).lowercased()
+                if !addr.contains(loc) { return false }
+            }
+            return true
+        }
+    }
+
+    @ViewBuilder
+    private var smartSearchBar: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                YUGISearchBar(text: $smartQuery)
+                    .onChange(of: smartQuery) { _, q in scheduleSmartSearch(q) }
+
+                if aiSearchAvailable {
+                    VStack(spacing: 2) {
+                        if isSmartSearching {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .scaleEffect(0.55)
+                                .tint(.white)
+                                .frame(width: 16, height: 16)
+                        } else {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                        Text("AI")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white.opacity(0.75))
+                    }
+                    .frame(width: 32)
+                }
+            }
+
+            if let filters = aiFilters {
+                HStack(spacing: 5) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.8))
+                    Text(aiFilterSummary(filters))
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.85))
+                    Spacer()
+                    Button("Clear") { aiFilters = nil; smartQuery = "" }
+                        .font(.system(size: 12))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 4)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+    }
+
+    private func checkAIAvailability() {
+        if #available(iOS 26, macOS 26, *) {
+            #if canImport(FoundationModels)
+            let av = SystemLanguageModel.default.availability
+            if case .available = av { aiSearchAvailable = true }
+            #endif
+        }
+    }
+
+    private func scheduleSmartSearch(_ query: String) {
+        smartSearchTask?.cancel()
+        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
+            aiFilters = nil
+            return
+        }
+        smartSearchTask = Task {
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            guard !Task.isCancelled else { return }
+            await MainActor.run { isSmartSearching = true }
+            let filters = await SmartSearchServiceWrapper.shared.parseQuery(query)
+            await MainActor.run {
+                isSmartSearching = false
+                aiFilters = filters
+                if filters != nil {
+                    EventTracker.shared.trackSmartSearchUsed(query: query)
+                }
+            }
+        }
+    }
+
+    private func aiFilterSummary(_ f: ParsedSearchFilters) -> String {
+        var parts: [String] = []
+        if let c = f.category { parts.append(c) }
+        if let l = f.locationHint { parts.append("near \(l)") }
+        if f.needsParking { parts.append("parking") }
+        if f.needsBabyChanging { parts.append("baby changing") }
+        if f.needsStepFreeAccess { parts.append("step-free") }
+        return parts.isEmpty ? "Smart filters active" : parts.joined(separator: " · ")
+    }
+
 
 // MARK: - Doability Components
 

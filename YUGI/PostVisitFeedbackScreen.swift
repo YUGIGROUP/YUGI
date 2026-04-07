@@ -233,109 +233,88 @@ struct PostVisitFeedbackScreen: View {
 
     // MARK: - Tri-state Card (cards 1–3)
 
-    private func triStateCard(
-        question: String,
-        binding: Binding<TriAnswer?>,
-        onNext: @escaping () -> Void
-    ) -> some View {
-        VStack(spacing: 0) {
-            Spacer()
+        private func triStateCard(
+            question: String,
+            binding: Binding<TriAnswer?>,
+            onNext: @escaping () -> Void
+        ) -> some View {
+            VStack(spacing: 0) {
+                Spacer()
 
-            VStack(spacing: 36) {
-                Text(question)
-                    .font(.title2.weight(.semibold))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
+                VStack(spacing: 36) {
+                    Text(question)
+                        .font(.title2.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
 
-                VStack(spacing: 12) {
-                    triButton("Yes",          answer: .yes,        binding: binding)
-                    triButton("No",           answer: .no,         binding: binding)
-                    triButton("Didn't check", answer: .didntCheck, binding: binding)
+                    VStack(spacing: 12) {
+                        triButton("Yes",          answer: .yes,        binding: binding)
+                        triButton("No",           answer: .no,         binding: binding)
+                        triButton("Didn't check", answer: .didntCheck, binding: binding)
+                    }
+                    .padding(.horizontal, 24)
                 }
-                .padding(.horizontal, 24)
 
-                Button(action: onNext) {
-                    Text("Next")
-                        .font(.body.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 17)
-                        .background(binding.wrappedValue != nil ? Color.accentColor : Color(.systemGray4))
-                        .foregroundColor(.white)
-                        .cornerRadius(14)
-                }
-                .disabled(binding.wrappedValue == nil)
-                .padding(.horizontal, 24)
+                Spacer()
+                Spacer()
             }
-
-            Spacer()
-            Spacer()
         }
-    }
 
-    private func triButton(_ label: String, answer: TriAnswer, binding: Binding<TriAnswer?>) -> some View {
-        let selected = binding.wrappedValue == answer
-        return Button {
-            binding.wrappedValue = answer
-        } label: {
-            Text(label)
-                .font(.body.weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 17)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(selected ? Color.accentColor.opacity(0.10) : Color(.systemGray6))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 2)
-                )
-                .foregroundColor(selected ? Color.accentColor : .primary)
+        private func triButton(_ label: String, answer: TriAnswer, binding: Binding<TriAnswer?>) -> some View {
+            let selected = binding.wrappedValue == answer
+            return Button {
+                binding.wrappedValue = answer
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    advanceIfAnswered()
+                }
+            } label: {
+                Text(label)
+                    .font(.body.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(selected ? Color.accentColor.opacity(0.10) : Color(.systemGray6))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 2)
+                    )
+                    .foregroundColor(selected ? Color.accentColor : .primary)
+            }
         }
-    }
-
     // MARK: - Card 4: Star Rating
 
-    private var ratingCard: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        private var ratingCard: some View {
+            VStack(spacing: 0) {
+                Spacer()
 
-            VStack(spacing: 40) {
-                Text("How would you rate it?")
-                    .font(.title2.weight(.semibold))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
+                VStack(spacing: 40) {
+                    Text("How would you rate it?")
+                        .font(.title2.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
 
-                HStack(spacing: 14) {
-                    ForEach(1...5, id: \.self) { star in
-                        Button {
-                            rating = star
-                        } label: {
-                            Image(systemName: star <= rating ? "star.fill" : "star")
-                                .font(.system(size: 46))
-                                .foregroundColor(star <= rating ? Color.accentColor : Color(.systemGray4))
+                    HStack(spacing: 14) {
+                        ForEach(1...5, id: \.self) { star in
+                            Button {
+                                rating = star
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    withAnimation { currentCard = 5 }
+                                }
+                            } label: {
+                                Image(systemName: star <= rating ? "star.fill" : "star")
+                                    .font(.system(size: 46))
+                                    .foregroundColor(star <= rating ? Color.accentColor : Color(.systemGray4))
+                            }
                         }
                     }
                 }
 
-                Button {
-                    withAnimation { currentCard = 5 }
-                } label: {
-                    Text("Next")
-                        .font(.body.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 17)
-                        .background(rating > 0 ? Color.accentColor : Color(.systemGray4))
-                        .foregroundColor(.white)
-                        .cornerRadius(14)
-                }
-                .disabled(rating == 0)
-                .padding(.horizontal, 24)
+                Spacer()
+                Spacer()
             }
-
-            Spacer()
-            Spacer()
         }
-    }
 
     // MARK: - Card 5: Comments + Submit
 
