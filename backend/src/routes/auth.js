@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const { sendAdminProviderNotification } = require('../services/pushNotificationService');
 const emailService = require('../services/emailService');
 const { inMemoryUsers, useInMemoryStorage } = require('../utils/inMemoryStorage');
 
@@ -277,6 +278,19 @@ router.post('/upload-documents', protect, async (req, res) => {
       },
       { new: true }
     );
+
+    // Fire-and-forget: notify all admins with an iOS device token
+    const providerName = user.businessName || user.fullName || String(req.user.id);
+    User.find({ isAdmin: true, deviceToken: { $ne: null }, devicePlatform: 'ios' })
+      .select('deviceToken')
+      .lean()
+      .then(admins => Promise.all(
+        admins.map(admin =>
+          sendAdminProviderNotification({ deviceToken: admin.deviceToken, providerName })
+            .catch(err => console.error('Admin push notification failed:', err.message))
+        )
+      ))
+      .catch(err => console.error('Failed to query admins for notification:', err.message));
 
     res.json({
       success: true,

@@ -66,4 +66,45 @@ async function sendPostVisitFeedbackNotification({ deviceToken, bookingId, class
   }
 }
 
-module.exports = { sendPostVisitFeedbackNotification };
+
+/**
+ * Send a push notification to an admin when a provider submits documents for review.
+ * @param {object} opts
+ * @param {string} opts.deviceToken
+ * @param {string} opts.providerName  - businessName or fullName of the provider
+ * @returns {Promise<{ success: boolean, reason?: string }>}
+ */
+async function sendAdminProviderNotification({ deviceToken, providerName }) {
+  const p = getProvider();
+  if (!p) {
+    console.warn('⚠️  APNs not configured — skipping admin push notification');
+    return { success: false, reason: 'not_configured' };
+  }
+
+  const notification = new apn.Notification();
+  notification.expiry  = Math.floor(Date.now() / 1000) + 24 * 3600;
+  notification.badge   = 1;
+  notification.sound   = 'default';
+  notification.alert   = {
+    title: 'New provider awaiting review',
+    body:  `New provider awaiting review: ${providerName}`,
+  };
+  notification.payload = { type: 'provider_verification' };
+  notification.topic   = process.env.APNS_BUNDLE_ID || 'uk.yugi.YUGI';
+
+  try {
+    const result = await p.send(notification, deviceToken);
+    if (result.failed && result.failed.length > 0) {
+      const failure = result.failed[0];
+      const reason  = failure.response?.reason || failure.error?.message || 'unknown';
+      console.error('APNs admin notification failed:', reason);
+      return { success: false, reason };
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('APNs provider error:', err.message);
+    return { success: false, reason: err.message };
+  }
+}
+
+module.exports = { sendPostVisitFeedbackNotification, sendAdminProviderNotification };
