@@ -1,7 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const Event   = require('../models/Event');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
 const VALID_EVENT_TYPES = [
   'class_viewed',
@@ -70,11 +70,8 @@ router.post('/batch', protect, async (req, res) => {
 });
 
 // GET /api/events/stats — admin only
-router.get('/stats', protect, async (req, res) => {
+router.get('/stats', protect, adminOnly, async (req, res) => {
   try {
-    if (req.user.userType !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
     const [countsByType, mostViewedClasses, searchTerms, cancellationReasons] = await Promise.all([
       Event.aggregate([
         { $group: { _id: '$eventType', count: { $sum: 1 } } },

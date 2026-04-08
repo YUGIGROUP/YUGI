@@ -2,7 +2,9 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Class = require('../models/Class');
-const Booking = require('../models/Booking');
+const Booking           = require('../models/Booking');
+const PostVisitFeedback = require('../models/PostVisitFeedback');
+const Event             = require('../models/Event');
 const { protect, requireUserType } = require('../middleware/auth');
 const { sendEmail } = require('../services/emailService');
 
@@ -292,6 +294,74 @@ router.get('/providers', protect, requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Get providers error:', error);
     res.status(500).json({ message: 'Server error fetching providers' });
+  }
+});
+
+
+// @route   GET /api/admin/stats
+// @desc    Full admin dashboard — users, bookings, events, moderation
+// @access  Private (admin only)
+router.get('/stats', protect, requireAdmin, async (req, res) => {
+  try {
+    const [
+      totalUsers,
+      totalParents,
+      totalProviders,
+      totalBookings,
+      totalFeedback,
+      totalEvents,
+      popularClasses,
+      activeVenues,
+      recentModerationBlocks,
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ userType: 'parent' }),
+      User.countDocuments({ userType: 'provider' }),
+      Booking.countDocuments(),
+      PostVisitFeedback.countDocuments(),
+      Event.countDocuments(),
+
+      // Top 10 classes by booking count
+      Booking.aggregate([
+        { $group: { _id: '$classId', bookingCount: { $sum: 1 }, className: { $first: '$className' } } },
+        { $sort: { bookingCount: -1 } },
+        { $limit: 10 },
+        { $project: { _id: 0, classId: '$_id', className: 1, bookingCount: 1 } },
+      ]),
+
+      // Top 10 venues by enrichment requests
+      Event.aggregate([
+        { $match: { eventType: 'venue_enrichment_requested' } },
+        { $group: { _id: '$metadata.placeId', requests: { $sum: 1 }, venueName: { $first: '$metadata.venueName' } } },
+        { $sort: { requests: -1 } },
+        { $limit: 10 },
+        { $project: { _id: 0, placeId: '$_id', venueName: 1, requests: 1 } },
+      ]),
+
+      // Last 20 content moderation blocks
+      Event.find({ eventType: 'content_moderation_blocked' })
+        .sort({ timestamp: -1 })
+        .limit(20)
+        .select('userId metadata timestamp -_id')
+        .lean(),
+    ]);
+
+    return res.json({
+      users: {
+        total: totalUsers,
+        parents: totalParents,
+        providers: totalProviders,
+      },
+      totalBookings,
+      totalFeedback,
+      totalEvents,
+      popularClasses,
+      activeVenues,
+      recentModerationBlocks,
+    });
+  } catch (error) {
+    console.error('GET /api/admin/stats error:', error.message);
+    res.status(500).json({ message: 'Server error fetching admin stats' });
   }
 });
 

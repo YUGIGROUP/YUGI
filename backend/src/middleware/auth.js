@@ -155,9 +155,17 @@ const requireProviderVerification = async (req, res, next) => {
   next();
 };
 
+const adminOnly = (req, res, next) => {
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
 module.exports = {
   protect,
   optionalAuth,
   requireUserType,
-  requireProviderVerification
+  requireProviderVerification,
+  adminOnly,
 }; 
