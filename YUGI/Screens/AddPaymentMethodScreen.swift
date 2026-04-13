@@ -47,7 +47,7 @@ struct AddPaymentMethodScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -171,14 +171,14 @@ struct AddPaymentMethodScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Card Details")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             VStack(spacing: 16) {
                 // Card Number
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Card Number")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     
                     YUGITextField(
                         text: $cardNumber,
@@ -203,7 +203,7 @@ struct AddPaymentMethodScreen: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Cardholder Name")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     
                     YUGITextField(
                         text: $cardholderName,
@@ -218,7 +218,7 @@ struct AddPaymentMethodScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Month")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.yugiGray.opacity(0.8))
+                            .foregroundColor(Color.yugiGray.opacity(0.8))
                         
                         Picker("Month", selection: $expiryMonth) {
                             ForEach(months, id: \.self) { month in
@@ -237,7 +237,7 @@ struct AddPaymentMethodScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Year")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.yugiGray.opacity(0.8))
+                            .foregroundColor(Color.yugiGray.opacity(0.8))
                         
                         Picker("Year", selection: $expiryYear) {
                             ForEach(years, id: \.self) { year in
@@ -256,7 +256,7 @@ struct AddPaymentMethodScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("CVV")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.yugiGray.opacity(0.8))
+                            .foregroundColor(Color.yugiGray.opacity(0.8))
                         
                         YUGITextField(
                             text: $cvv,
@@ -279,27 +279,27 @@ struct AddPaymentMethodScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Default Payment Method")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             HStack {
                 Image(systemName: "star.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Set as default")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("This card will be used for future bookings")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
                 
                 Toggle("", isOn: $isDefault)
-                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                    .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
             }
             .padding()
             .background(Color.white)
@@ -328,7 +328,7 @@ struct AddPaymentMethodScreen: View {
             .padding(.vertical, 16)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                    gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )
@@ -350,11 +350,11 @@ struct AddPaymentMethodScreen: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Secure Payment")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Your card information is encrypted and secure")
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()

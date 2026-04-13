@@ -22,15 +22,15 @@ struct AIClassGeneratorScreen: View {
                             VStack(spacing: 12) {
                                 Image(systemName: "sparkles")
                                     .font(.system(size: 48))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
 
                                 Text("Create your listing")
                                     .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
 
                                 Text("Describe your class and we'll create your listing for you")
                                     .font(.system(size: 16))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                                     .multilineTextAlignment(.center)
                             }
                             .padding(.top, 40)
@@ -49,7 +49,7 @@ struct AIClassGeneratorScreen: View {
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(.yugiMocha.opacity(0.35), lineWidth: 1.5)
+                                        .stroke(Color.yugiMocha.opacity(0.35), lineWidth: 1.5)
                                 )
                                 .font(.system(size: 15))
 
@@ -85,8 +85,8 @@ struct AIClassGeneratorScreen: View {
                             .padding(.vertical, 16)
                             .background(
                                 aiPrompt.trimmingCharacters(in: .whitespaces).isEmpty
-                                    ? .yugiMocha.opacity(0.4)
-                                    : .yugiMocha
+                                    ? Color.yugiMocha.opacity(0.4)
+                                    : Color.yugiMocha
                             )
                             .foregroundColor(.white)
                             .cornerRadius(14)
@@ -98,7 +98,7 @@ struct AIClassGeneratorScreen: View {
                         } label: {
                             Text("Skip and create listing manually")
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray.opacity(0.55))
+                                .foregroundColor(Color.yugiGray.opacity(0.55))
                         }
                         .padding(.bottom, 8)
                     }
@@ -115,7 +115,7 @@ struct AIClassGeneratorScreen: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.yugiGray.opacity(0.6))
+                            .foregroundColor(Color.yugiGray.opacity(0.6))
                     }
                 }
             }

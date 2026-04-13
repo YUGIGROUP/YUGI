@@ -81,17 +81,17 @@ struct LiveChatScreen: View {
                     
                     Text("S")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.yugiOrange)
+                        .foregroundColor(Color.yugiOrange)
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sarah")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Customer Support Agent")
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -100,7 +100,7 @@ struct LiveChatScreen: View {
                     HStack(spacing: 4) {
                         Text("typing")
                             .font(.system(size: 12))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                         
                         ChatTypingIndicator()
                     }
@@ -262,13 +262,13 @@ struct ChatBubble: View {
                     
                     Text(formatTime(message.timestamp))
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(message.text)
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(
@@ -282,7 +282,7 @@ struct ChatBubble: View {
                     
                     Text(formatTime(message.timestamp))
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer(minLength: 60)

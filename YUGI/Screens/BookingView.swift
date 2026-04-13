@@ -140,7 +140,7 @@ struct BookingView: View {
     // MARK: - View Components
     
     private var backgroundView: some View {
-        .yugiMocha
+        Color.yugiMocha
             .ignoresSafeArea()
     }
     
@@ -312,14 +312,14 @@ struct BookingView: View {
             .navigationTitle("Book Class")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.yugiMocha, for: .navigationBar)
+            .toolbarBackground(Color.yugiMocha, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
             }
     }
@@ -389,7 +389,7 @@ struct BookingView: View {
         .navigationTitle("Book Class")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(.yugiMocha, for: .navigationBar)
+        .toolbarBackground(Color.yugiMocha, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -397,7 +397,7 @@ struct BookingView: View {
                     EventTracker.shared.trackBookingCancelled(classId: classItem.id, reason: "user_dismissed")
                     dismiss()
                 }
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             }
         }
     }
@@ -495,11 +495,11 @@ struct ClassDetailsCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(classItem.name)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text(classItem.providerName ?? "Provider \(classItem.provider)")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.yugiMocha.opacity(0.7))
+                        .foregroundColor(Color.yugiMocha.opacity(0.7))
                 }
                 
                 Spacer()
@@ -530,9 +530,9 @@ struct ClassDetailsCard: View {
                         ForEach(badges, id: \.self) { badge in
                             Text(badge)
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                                 .padding(.horizontal, 10).padding(.vertical, 5)
-                                .background(.yugiMocha.opacity(0.1))
+                                .background(Color.yugiMocha.opacity(0.1))
                                 .cornerRadius(8)
                         }
                     }.padding(.horizontal, 2)
@@ -596,22 +596,22 @@ struct BookingOptionsCard: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Booking Options")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             
             // Base Participants (1 Adult + 1 Child)
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "person.2.fill")
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("1 Adult + 1 Child")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         Text("Standard booking includes one adult and one child")
                             .font(.system(size: 13))
-                            .foregroundColor(.yugiMocha.opacity(0.7))
+                            .foregroundColor(Color.yugiMocha.opacity(0.7))
                     }
                     
                     Spacer()
@@ -636,14 +636,14 @@ struct BookingOptionsCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Special Requirements (Optional)")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 
                 TextField("Any special needs or requests...", text: $requirements, axis: .vertical)
                     .textFieldStyle(.plain)
                     .padding(12)
                     .background(Color.white.opacity(0.05))
                     .cornerRadius(12)
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
             }
             
             // Price Summary
@@ -651,40 +651,40 @@ struct BookingOptionsCard: View {
                 HStack {
                     Text("Subtotal")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiMocha.opacity(0.8))
+                        .foregroundColor(Color.yugiMocha.opacity(0.8))
                     
                     Spacer()
                     
                     Text(String(format: "£%.2f", NSDecimalNumber(decimal: basePrice).doubleValue))
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiMocha.opacity(0.8))
+                        .foregroundColor(Color.yugiMocha.opacity(0.8))
                 }
                 
                 HStack {
                     Text("Service Fee")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiMocha.opacity(0.8))
+                        .foregroundColor(Color.yugiMocha.opacity(0.8))
                     
                     Spacer()
                     
                     Text("£1.99")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiMocha.opacity(0.8))
+                        .foregroundColor(Color.yugiMocha.opacity(0.8))
                 }
                 
                 Divider()
-                    .background(.yugiMocha.opacity(0.3))
+                    .background(Color.yugiMocha.opacity(0.3))
                 
                 HStack {
                     Text("Total")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Spacer()
                     
                     Text(totalPriceText)
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
             }
             .padding(.top, 8)
@@ -705,7 +705,7 @@ struct PaymentMethodsCard: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Payment Method")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             
             VStack(spacing: 12) {
                 // Show saved cards first
@@ -713,7 +713,7 @@ struct PaymentMethodsCard: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Saved Cards")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.yugiMocha.opacity(0.8))
+                            .foregroundColor(Color.yugiMocha.opacity(0.8))
                         
                         ForEach(sharedPaymentService.paymentMethods, id: \.id) { card in
                             SavedCardRow(
@@ -771,7 +771,7 @@ struct SavedCardRow: View {
                     HStack {
                         Text("•••• \(card.lastFourDigits)")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         if card.isDefault {
                             Text("DEFAULT")
@@ -779,14 +779,14 @@ struct SavedCardRow: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(.yugiMocha)
+                                .background(Color.yugiMocha)
                                 .cornerRadius(4)
                         }
                     }
                     
                     Text("Expires \(String(format: "%02d/%d", card.expiryMonth, card.expiryYear))")
                         .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.yugiMocha.opacity(0.7))
+                        .foregroundColor(Color.yugiMocha.opacity(0.7))
                 }
                 
                 Spacer()
@@ -795,20 +795,20 @@ struct SavedCardRow: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 } else {
                     Circle()
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 2)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 2)
                         .frame(width: 20, height: 20)
                 }
             }
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? .yugiMocha.opacity(0.05) : Color.white.opacity(0.05))
+                    .fill(isSelected ? Color.yugiMocha.opacity(0.05) : Color.white.opacity(0.05))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? .yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
+                            .stroke(isSelected ? Color.yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
                     )
             )
         }
@@ -838,11 +838,11 @@ struct PaymentMethodRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(method.displayName)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text(method.description)
                         .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.yugiMocha.opacity(0.7))
+                        .foregroundColor(Color.yugiMocha.opacity(0.7))
                 }
                 
                 Spacer()
@@ -851,20 +851,20 @@ struct PaymentMethodRow: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 } else {
                     Circle()
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 2)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 2)
                         .frame(width: 20, height: 20)
                 }
             }
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? .yugiMocha.opacity(0.05) : Color.white.opacity(0.05))
+                    .fill(isSelected ? Color.yugiMocha.opacity(0.05) : Color.white.opacity(0.05))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? .yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
+                            .stroke(isSelected ? Color.yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
                     )
             )
         }
@@ -921,7 +921,7 @@ struct TotalAndBookSection: View {
                 .frame(height: 56)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -947,13 +947,13 @@ struct BookingDetailRow: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(width: 20)
                 .padding(.top, 2) // Align icon with first line of text
             
             Text(text)
                 .font(.system(size: 14, weight: .regular))
-                .foregroundColor(.yugiMocha.opacity(0.8))
+                .foregroundColor(Color.yugiMocha.opacity(0.8))
                 .lineLimit(isAddress ? nil : 2) // No limit for addresses, 2 lines for others
                 .fixedSize(horizontal: false, vertical: true)
             
@@ -1047,7 +1047,7 @@ struct PaymentSheet: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(.yugiMocha)
+                            .background(Color.yugiMocha)
                             .cornerRadius(12)
                         }
                         
@@ -1113,7 +1113,7 @@ struct PaymentSummaryView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Payment Summary")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             
             VStack(spacing: 12) {
                 SummaryRow(title: "Class", value: classItem.name)
@@ -1125,12 +1125,12 @@ struct PaymentSummaryView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Selected Children")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.yugiMocha.opacity(0.8))
+                            .foregroundColor(Color.yugiMocha.opacity(0.8))
                         
                         ForEach(selectedChildren, id: \.id) { child in
                             Text("• \(child.name) (\(child.age) years old)")
                                 .font(.system(size: 13))
-                                .foregroundColor(.yugiMocha.opacity(0.7))
+                                .foregroundColor(Color.yugiMocha.opacity(0.7))
                         }
                     }
                 }
@@ -1165,13 +1165,13 @@ struct SummaryRow: View {
         HStack {
             Text(title)
                 .font(.system(size: 14, weight: .regular))
-                .foregroundColor(.yugiMocha.opacity(0.8))
+                .foregroundColor(Color.yugiMocha.opacity(0.8))
             
             Spacer()
             
             Text(value)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
         }
     }
 }
@@ -1184,13 +1184,13 @@ struct TotalSummaryRow: View {
         HStack {
             Text(title)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             
             Spacer()
             
             Text(value)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
         }
     }
 }
@@ -1412,7 +1412,7 @@ struct StandardPaymentButton: View {
             .frame(height: 56)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                    gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )
@@ -1531,11 +1531,11 @@ struct ChildSelectionCard: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Select Children")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             
             Text("Choose which children will attend this class")
                 .font(.system(size: 14))
-                .foregroundColor(.yugiMocha.opacity(0.7))
+                .foregroundColor(Color.yugiMocha.opacity(0.7))
             
             VStack(spacing: 12) {
                 ForEach(availableChildren, id: \.id) { child in
@@ -1561,7 +1561,7 @@ struct ChildSelectionCard: View {
             HStack {
                 Text("Selected: \(selectedChildren.count) of \(maxChildrenAllowed)")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 
                 Spacer()
                 
@@ -1593,23 +1593,23 @@ struct ChildSelectionRow: View {
                 // Avatar
                 ZStack {
                     Circle()
-                        .fill(isSelected ? .yugiMocha : .yugiMocha.opacity(0.1))
+                        .fill(isSelected ? Color.yugiMocha : Color.yugiMocha.opacity(0.1))
                         .frame(width: 40, height: 40)
                     
                     Text(String(child.name.prefix(1)))
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(isSelected ? .white : .yugiMocha)
+                        .foregroundColor(isSelected ? .white : Color.yugiMocha)
                 }
                 
                 // Child info
                 VStack(alignment: .leading, spacing: 2) {
                     Text(child.name)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("\(child.age) years old")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiMocha.opacity(0.7))
+                        .foregroundColor(Color.yugiMocha.opacity(0.7))
                 }
                 
                 Spacer()
@@ -1618,20 +1618,20 @@ struct ChildSelectionRow: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 } else {
                     Circle()
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 2)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 2)
                         .frame(width: 20, height: 20)
                 }
             }
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? .yugiMocha.opacity(0.1) : Color.white.opacity(0.05))
+                    .fill(isSelected ? Color.yugiMocha.opacity(0.1) : Color.white.opacity(0.05))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? .yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
+                            .stroke(isSelected ? Color.yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
                     )
             )
         }

@@ -137,9 +137,9 @@ struct ProviderBusinessProfileScreen: View {
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            .yugiMocha,
-                            .yugiMocha.opacity(0.9),
-                            .yugiMocha.opacity(0.8)
+                            Color.yugiMocha,
+                            Color.yugiMocha.opacity(0.9),
+                            Color.yugiMocha.opacity(0.8)
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -389,22 +389,22 @@ struct BusinessOverviewTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.1))
+                                .fill(Color.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "camera.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Business Profile Image")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("This image will appear on your classes")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                         }
                         
                         Spacer()
@@ -427,7 +427,7 @@ struct BusinessOverviewTab: View {
                             } else {
                                 Text(String(businessInfo.name.prefix(1).uppercased()))
                                     .font(.system(size: 48, weight: .bold))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                             }
                             
                             if showingEditMode {
@@ -443,7 +443,7 @@ struct BusinessOverviewTab: View {
                                                 .font(.system(size: 16))
                                                 .foregroundColor(.white)
                                                 .frame(width: 32, height: 32)
-                                                .background(.yugiMocha)
+                                                .background(Color.yugiMocha)
                                                 .clipShape(Circle())
                                         }
                                     }
@@ -466,12 +466,12 @@ struct BusinessOverviewTab: View {
                         if showingEditMode {
                             Text("Tap the camera icon to update your profile image")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                                 .multilineTextAlignment(.center)
                         } else {
                             Text("Your profile image will be displayed on all your classes")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                                 .multilineTextAlignment(.center)
                         }
                     }
@@ -484,7 +484,7 @@ struct BusinessOverviewTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(.yugiMocha, lineWidth: 2)
+                        .stroke(Color.yugiMocha, lineWidth: 2)
                 )
                 
                 // Business Information Card
@@ -493,22 +493,22 @@ struct BusinessOverviewTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.1))
+                                .fill(Color.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "building.2.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Business Information")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Core details about your business")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                         }
                         
                         Spacer()
@@ -548,7 +548,7 @@ struct BusinessOverviewTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(.yugiMocha, lineWidth: 2)
+                        .stroke(Color.yugiMocha, lineWidth: 2)
                 )
                 
                 // Contact Information Card
@@ -557,22 +557,22 @@ struct BusinessOverviewTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.1))
+                                .fill(Color.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "envelope.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Contact Information")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("How customers can reach you")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                         }
                         
                         Spacer()
@@ -618,7 +618,7 @@ struct BusinessOverviewTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(.yugiMocha, lineWidth: 2)
+                        .stroke(Color.yugiMocha, lineWidth: 2)
                 )
                 
                 // Documents Section
@@ -626,19 +626,19 @@ struct BusinessOverviewTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.1))
+                                .fill(Color.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             Image(systemName: "doc.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Documents")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             Text("Your uploaded certificates")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                         }
                         Spacer()
                         
@@ -650,7 +650,7 @@ struct BusinessOverviewTab: View {
                             } label: {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 24))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                             }
                         }
                     }
@@ -747,7 +747,7 @@ struct BusinessOverviewTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(.yugiMocha, lineWidth: 2)
+                        .stroke(Color.yugiMocha, lineWidth: 2)
                 )
                 
                 // Save Button (only shown in edit mode)
@@ -764,8 +764,8 @@ struct BusinessOverviewTab: View {
                         .padding(.vertical, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(.yugiMocha)
-                                .shadow(color: .yugiMocha.opacity(0.3), radius: 8, x: 0, y: 4)
+                                .fill(Color.yugiMocha)
+                                .shadow(color: Color.yugiMocha.opacity(0.3), radius: 8, x: 0, y: 4)
                         )
                     }
                     .buttonStyle(.plain)
@@ -799,7 +799,7 @@ struct DocumentPreviewCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             if let image = image {
                 Button(action: { showPreview = true }) {
                     Image(uiImage: image)
@@ -828,7 +828,7 @@ struct DocumentPreviewCard: View {
             } else {
                 Text("Not uploaded")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.5))
+                    .foregroundColor(Color.yugiGray.opacity(0.5))
                     .padding(.vertical, 12)
             }
         }
@@ -853,22 +853,22 @@ struct BusinessSettingsTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.1))
+                                .fill(Color.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "gear")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Profile Settings")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Manage your account preferences")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                         }
                         
                         Spacer()
@@ -881,17 +881,17 @@ struct BusinessSettingsTab: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Push Notifications")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Receive updates about bookings and messages")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                             }
                             
                             Spacer()
                             
                             Toggle("", isOn: $notificationsEnabled)
-                                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                                .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                         }
                         .padding(.vertical, 8)
                         
@@ -914,7 +914,7 @@ struct BusinessSettingsTab: View {
                                 
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray.opacity(0.5))
+                                    .foregroundColor(Color.yugiGray.opacity(0.5))
                             }
                             .padding(.vertical, 8)
                         }
@@ -990,12 +990,12 @@ struct EditableProfileField: View {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray.opacity(0.6))
+                    .foregroundColor(Color.yugiGray.opacity(0.6))
                     .frame(width: 20)
                 
                 Text(title)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
                 
                 Spacer()
             }
@@ -1004,7 +1004,7 @@ struct EditableProfileField: View {
                 if isMultiline {
                     TextEditor(text: $value)
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                         .frame(minHeight: 80)
                         .padding(12)
                         .background(
@@ -1012,27 +1012,27 @@ struct EditableProfileField: View {
                                 .fill(Color.yugiCream.opacity(0.5))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                                 )
                         )
                 } else {
                     TextField("Enter \(title.lowercased())", text: $value)
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                         .padding(12)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.yugiCream.opacity(0.5))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                                 )
                         )
                 }
             } else {
                 Text(value.isEmpty ? "Not provided" : value)
                     .font(.system(size: 16))
-                    .foregroundColor(value.isEmpty ? .yugiGray.opacity(0.5) : .yugiGray)
+                    .foregroundColor(value.isEmpty ? Color.yugiGray.opacity(0.5) : Color.yugiGray)
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
@@ -1062,15 +1062,15 @@ struct DocumentUploadSheet: View {
                 VStack(spacing: 8) {
                     Image(systemName: documentType.icon)
                         .font(.system(size: 48))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Upload \(documentType.rawValue)")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Please upload a clear image or PDF of your \(documentType.rawValue.lowercased())")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                         .multilineTextAlignment(.center)
                 }
                 
@@ -1081,23 +1081,23 @@ struct DocumentUploadSheet: View {
                         HStack(spacing: 12) {
                             Image(systemName: "photo.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Upload Picture from Photo Library")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Select an image from your photo library")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                             }
                             
                             Spacer()
                             
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray.opacity(0.5))
+                                .foregroundColor(Color.yugiGray.opacity(0.5))
                         }
                         .padding(16)
                         .background(Color.white)
@@ -1113,23 +1113,23 @@ struct DocumentUploadSheet: View {
                         HStack(spacing: 12) {
                             Image(systemName: "folder.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Browse Files")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Select PDF or other document files")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                             }
                             
                             Spacer()
                             
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray.opacity(0.5))
+                                .foregroundColor(Color.yugiGray.opacity(0.5))
                         }
                         .padding(16)
                         .background(Color.white)
@@ -1144,7 +1144,7 @@ struct DocumentUploadSheet: View {
                     VStack(spacing: 12) {
                         Text("Preview")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Image(uiImage: image)
                             .resizable()
@@ -1156,16 +1156,16 @@ struct DocumentUploadSheet: View {
                     VStack(spacing: 12) {
                         Text("Selected File")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         HStack {
                             Image(systemName: "doc.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                             
                             Text(document.lastPathComponent)
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Spacer()
                         }
@@ -1198,7 +1198,7 @@ struct DocumentUploadSheet: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(
-                        (selectedImage != nil || selectedDocument != nil) && !isUploading ? .yugiMocha : Color.yugiGray.opacity(0.3)
+                        (selectedImage != nil || selectedDocument != nil) && !isUploading ? Color.yugiMocha : Color.yugiGray.opacity(0.3)
                     )
                     .cornerRadius(12)
                 }
@@ -1212,7 +1212,7 @@ struct DocumentUploadSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
             }
         }
@@ -1292,15 +1292,15 @@ struct DocumentViewerSheet: View {
                 VStack(spacing: 8) {
                     Image(systemName: documentType.icon)
                         .font(.system(size: 48))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text(documentType.rawValue)
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Document Preview")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                         .multilineTextAlignment(.center)
                 }
                 
@@ -1317,11 +1317,11 @@ struct DocumentViewerSheet: View {
                     VStack(spacing: 16) {
                         Image(systemName: "doc.fill")
                             .font(.system(size: 48))
-                            .foregroundColor(.yugiGray.opacity(0.5))
+                            .foregroundColor(Color.yugiGray.opacity(0.5))
                         
                         Text("Document not available")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                     }
                     .frame(maxHeight: 400)
                 }
@@ -1337,7 +1337,7 @@ struct DocumentViewerSheet: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(.yugiMocha)
+                        .background(Color.yugiMocha)
                         .cornerRadius(12)
                 }
             }
@@ -1349,7 +1349,7 @@ struct DocumentViewerSheet: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
             }
         }
@@ -1373,12 +1373,12 @@ struct DocumentManagementCard: View {
             // Icon
             ZStack {
                 Circle()
-                    .fill(.yugiMocha.opacity(0.1))
+                    .fill(Color.yugiMocha.opacity(0.1))
                     .frame(width: 48, height: 48)
                 
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
             }
             
             // Content
@@ -1386,7 +1386,7 @@ struct DocumentManagementCard: View {
                 HStack {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                         .lineLimit(1)
                     
                     Spacer()
@@ -1394,13 +1394,13 @@ struct DocumentManagementCard: View {
                     if isUploaded {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                     }
                 }
                 
                 Text(description)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
             }
@@ -1414,7 +1414,7 @@ struct DocumentManagementCard: View {
                     Button(action: onView) {
                         Image(systemName: "eye.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                     }
                     .buttonStyle(.plain)
                 } else {
@@ -1422,7 +1422,7 @@ struct DocumentManagementCard: View {
                     Button(action: onUpload) {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 18))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                     }
                     .buttonStyle(.plain)
                 }
@@ -1431,7 +1431,7 @@ struct DocumentManagementCard: View {
                 Button(action: onView) {
                     Image(systemName: "eye.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 .buttonStyle(.plain)
             }
@@ -1441,7 +1441,7 @@ struct DocumentManagementCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.yugiMocha.opacity(0.2), lineWidth: 1)
+                .stroke(Color.yugiMocha.opacity(0.2), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }

@@ -35,7 +35,7 @@ struct AIAnalysisView: View {
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(.yugiMocha, lineWidth: 2)
+                .stroke(Color.yugiMocha, lineWidth: 2)
         )
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
@@ -50,11 +50,11 @@ struct AIAnalysisView: View {
                         
                         Text("Location Updated!")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Text("AI data has been applied to this venue")
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.8))
+                            .foregroundColor(Color.yugiGray.opacity(0.8))
                             .multilineTextAlignment(.center)
                     }
                     .padding(24)
@@ -62,7 +62,7 @@ struct AIAnalysisView: View {
                     .cornerRadius(16)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(.yugiMocha, lineWidth: 2)
+                            .stroke(Color.yugiMocha, lineWidth: 2)
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 6)
                     .transition(.scale.combined(with: .opacity))
@@ -76,15 +76,15 @@ struct AIAnalysisView: View {
         VStack(spacing: 16) {
             Image(systemName: "brain.head.profile")
                 .font(.system(size: 40))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             
             Text("AI-Powered Venue Check")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             Text("Get real-time information about parking and baby changing facilities using AI")
                 .font(.system(size: 14))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
                 .multilineTextAlignment(.center)
             
             Button(action: startAnalysis) {
@@ -97,7 +97,7 @@ struct AIAnalysisView: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(.yugiMocha)
+                .background(Color.yugiMocha)
                 .cornerRadius(12)
             }
         }
@@ -109,28 +109,28 @@ struct AIAnalysisView: View {
             VStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .stroke(.yugiMocha.opacity(0.2), lineWidth: 6)
+                        .stroke(Color.yugiMocha.opacity(0.2), lineWidth: 6)
                         .frame(width: 60, height: 60)
                     
                     Circle()
                         .trim(from: 0, to: aiService.analysisProgress)
-                        .stroke(.yugiMocha, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .stroke(Color.yugiMocha, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .frame(width: 60, height: 60)
                         .rotationEffect(.degrees(-90))
                         .animation(.easeInOut(duration: 0.5), value: aiService.analysisProgress)
                     
                     Image(systemName: "brain.head.profile")
                         .font(.system(size: 20))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 
                 Text("AI is analysing venue...")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text("\(Int(aiService.analysisProgress * 100))%")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
             }
             
             // Analysis steps
@@ -172,14 +172,14 @@ struct AIAnalysisView: View {
                 
                 Text("Analysis Complete")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Spacer()
                 
                 Button(action: startAnalysis) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
             }
             
@@ -187,7 +187,7 @@ struct AIAnalysisView: View {
             HStack {
                 Text("Confidence:")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
                 
                 Text("\(Int(facilities.confidence * 100))%")
                     .font(.system(size: 14, weight: .semibold))
@@ -197,7 +197,7 @@ struct AIAnalysisView: View {
                 
                 Text("Sources: \(facilities.sources.joined(separator: ", "))")
                     .font(.system(size: 12))
-                    .foregroundColor(.yugiGray.opacity(0.6))
+                    .foregroundColor(Color.yugiGray.opacity(0.6))
             }
             
             // Results
@@ -233,7 +233,7 @@ struct AIAnalysisView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(.yugiMocha)
+                        .background(Color.yugiMocha)
                         .cornerRadius(8)
                 }
                 
@@ -243,10 +243,10 @@ struct AIAnalysisView: View {
                 }) {
                     Text("Save Venue Data")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(.yugiMocha.opacity(0.1))
+                        .background(Color.yugiMocha.opacity(0.1))
                         .cornerRadius(8)
                 }
             }
@@ -267,13 +267,13 @@ struct AIAnalysisView: View {
                     .padding(.vertical, 14)
                     .background(
                         LinearGradient(
-                            colors: [.yugiMocha, .yugiMocha.opacity(0.8)],
+                            colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
                     .cornerRadius(12)
-                    .shadow(color: .yugiMocha.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .shadow(color: Color.yugiMocha.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 .padding(.top, 8)
             }
@@ -349,7 +349,7 @@ struct AnalysisStep: View {
         if isCompleted {
             return .green
         } else if isActive {
-            return .yugiMocha
+            return Color.yugiMocha
         } else {
             return .gray.opacity(0.3)
         }
@@ -357,9 +357,9 @@ struct AnalysisStep: View {
     
     private var textColor: Color {
         if isCompleted || isActive {
-            return .yugiGray
+            return Color.yugiGray
         } else {
-            return .yugiGray.opacity(0.5)
+            return Color.yugiGray.opacity(0.5)
         }
     }
 }
@@ -373,17 +373,17 @@ struct FacilityResultRow: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text(value)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
                     .multilineTextAlignment(.leading)
             }
             
@@ -391,11 +391,11 @@ struct FacilityResultRow: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        .background(.yugiMocha.opacity(0.05))
+        .background(Color.yugiMocha.opacity(0.05))
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -413,18 +413,18 @@ struct AIAnalysisDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(location.name)
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Text(location.address.formatted)
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiGray.opacity(0.8))
+                            .foregroundColor(Color.yugiGray.opacity(0.8))
                     }
                     
                     // Confidence and sources
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Analysis Confidence")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         HStack {
                             Text("\(Int(facilities.confidence * 100))%")
@@ -434,21 +434,21 @@ struct AIAnalysisDetailView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("High confidence")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Based on \(facilities.sources.count) sources")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.yugiGray.opacity(0.6))
+                                    .foregroundColor(Color.yugiGray.opacity(0.6))
                             }
                             
                             Spacer()
                         }
                         .padding()
-                        .background(.yugiMocha.opacity(0.05))
+                        .background(Color.yugiMocha.opacity(0.05))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                     
@@ -456,7 +456,7 @@ struct AIAnalysisDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Facility Information")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         VStack(spacing: 12) {
                             DetailedFacilityCard(
@@ -488,7 +488,7 @@ struct AIAnalysisDetailView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Data Sources")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         VStack(spacing: 8) {
                             ForEach(facilities.sources, id: \.self) { source in
@@ -499,7 +499,7 @@ struct AIAnalysisDetailView: View {
                                     
                                     Text(source)
                                         .font(.system(size: 14))
-                                        .foregroundColor(.yugiGray)
+                                        .foregroundColor(Color.yugiGray)
                                     
                                     Spacer()
                                 }
@@ -507,11 +507,11 @@ struct AIAnalysisDetailView: View {
                             }
                         }
                         .padding()
-                        .background(.yugiMocha.opacity(0.05))
+                        .background(Color.yugiMocha.opacity(0.05))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                 }
@@ -556,14 +556,14 @@ struct DetailedFacilityCard: View {
                 
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Spacer()
             }
             
             Text(value)
                 .font(.system(size: 14))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
                 .multilineTextAlignment(.leading)
         }
         .padding()
@@ -571,7 +571,7 @@ struct DetailedFacilityCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }

@@ -15,7 +15,7 @@ struct YUGICategoryButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isSelected ? .yugiMocha : .white)
+                .foregroundColor(isSelected ? Color.yugiMocha : .white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
                 .background(
@@ -39,7 +39,6 @@ struct YUGISearchBar: View {
                 .textFieldStyle(.plain)
                 .autocapitalization(.none)
                 .foregroundColor(.white)
-                .yugiMocha(.white)
                 .tint(.white)
                 .font(.system(size: 16))
         }
@@ -83,7 +82,7 @@ struct ClassDiscoveryView: View {
     
     var body: some View {
         ZStack {
-            .yugiMocha
+            Color.yugiMocha
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -93,7 +92,7 @@ struct ClassDiscoveryView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(.yugiMocha, for: .navigationBar)
+        .toolbarBackground(Color.yugiMocha, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .sheet(isPresented: $showingBookingSheet) {
             if let class_ = selectedClassForBooking {
@@ -330,10 +329,9 @@ struct ClassDiscoveryView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
-        .background(.yugiMocha)
+        .background(Color.yugiMocha)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
-}
 
     // MARK: - Smart Search helpers
 
@@ -442,6 +440,8 @@ struct ClassDiscoveryView: View {
         return parts.isEmpty ? "Smart filters active" : parts.joined(separator: " · ")
     }
 
+
+}
 
 // MARK: - Doability Components
 
@@ -614,7 +614,7 @@ struct ClassCard: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [.yugiMocha.opacity(0.8), .yugiMocha.opacity(0.6)],
+                        colors: [Color.yugiMocha.opacity(0.8), Color.yugiMocha.opacity(0.6)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -647,11 +647,11 @@ struct ClassCard: View {
                         ForEach(badges, id: \.self) { badge in
                             Text(badge)
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                                 .padding(.horizontal, 10).padding(.vertical, 5)
-                                .background(.yugiMocha.opacity(0.1))
+                                .background(Color.yugiMocha.opacity(0.1))
                                 .cornerRadius(8)
-                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(.yugiMocha.opacity(0.25), lineWidth: 1))
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.yugiMocha.opacity(0.25), lineWidth: 1))
                         }
                     }
                     .padding(.horizontal, 2)
@@ -666,7 +666,7 @@ struct ClassCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(classItem.providerName ?? "Provider \(classItem.provider)")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Button(action: {
                     showingProviderProfile = true
@@ -677,10 +677,10 @@ struct ClassCard: View {
                         Text("View Profile")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(.yugiMocha.opacity(0.1))
+                    .background(Color.yugiMocha.opacity(0.1))
                     .cornerRadius(6)
                 }
                 .buttonStyle(.plain)
@@ -691,11 +691,11 @@ struct ClassCard: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text("£\(NSDecimalNumber(decimal: classItem.pricing.amount).intValue)")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 
                 Text("per session")
                     .font(.system(size: 12))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
             }
         }
     }
@@ -713,10 +713,10 @@ struct ClassCard: View {
                         Text("View in Maps")
                             .font(.system(size: 14, weight: .medium))
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(.yugiMocha.opacity(0.1))
+                    .background(Color.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                 }
                 
@@ -736,10 +736,10 @@ struct ClassCard: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(.yugiMocha.opacity(0.1))
+                    .background(Color.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                 }
                 
@@ -759,7 +759,7 @@ struct ClassCard: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .background(.yugiMocha)
+                .background(Color.yugiMocha)
                 .cornerRadius(10)
                 .frame(maxWidth: .infinity)
             }
@@ -865,10 +865,10 @@ struct ClassCardDetails: View {
                         Text(classItem.ageRange)
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(.yugiMocha.opacity(0.1))
+                    .background(Color.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                     
                     Spacer()
@@ -880,7 +880,7 @@ struct ClassCardDetails: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(classItem.description)
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                         .lineLimit(isDescriptionExpanded ? nil : 2)
                         .fixedSize(horizontal: false, vertical: true)
                     
@@ -898,7 +898,7 @@ struct ClassCardDetails: View {
                         }) {
                             Text(isDescriptionExpanded ? "Read less" : "Read more")
                                 .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         .buttonStyle(.plain)
                     }
@@ -918,7 +918,7 @@ struct ClassCardDetails: View {
                         .foregroundColor(forecast.lowercased().contains("rain") ? Color(hex: "#5B8DB8") : Color(hex: "#E8A045"))
                     Text(forecast)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
@@ -936,9 +936,9 @@ struct ClassCardDetails: View {
                 if enrichment?.hasData == true {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 10)).foregroundColor(.yugiMocha.opacity(0.7))
+                            .font(.system(size: 10)).foregroundColor(Color.yugiMocha.opacity(0.7))
                         Text(enrichment!.sourceLabel)
-                            .font(.system(size: 11)).foregroundColor(.yugiMocha.opacity(0.7))
+                            .font(.system(size: 11)).foregroundColor(Color.yugiMocha.opacity(0.7))
                     }
                 }
                 
@@ -949,7 +949,7 @@ struct ClassCardDetails: View {
                             HStack(spacing: 6) {
                                 Image(systemName: station.type == "tube" ? "tram.fill" : station.type == "rail" ? "train.side.front.car" : "bus.fill")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                                     .frame(width: 16)
                                 if let dist = station.distance {
                                     Text("\(station.name) (\(dist)m)")
@@ -958,7 +958,7 @@ struct ClassCardDetails: View {
                                 }
                             }
                             .font(.system(size: 13))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         }
                     }
                 }
@@ -988,7 +988,7 @@ struct ClassCardButton: View {
     private var buttonBackground: LinearGradient {
         if classItem.isAvailable {
             return LinearGradient(
-                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                 startPoint: .leading,
                 endPoint: .trailing
             )
@@ -1042,13 +1042,13 @@ struct ClassDetailRow: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(width: 20)
                 .padding(.top, 2) // Align icon with first line of text
             
             Text(text)
                 .font(.system(size: 14, weight: .regular))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
                 .lineLimit(isAddress ? nil : 2) // No limit for addresses, 2 lines for others
                 .fixedSize(horizontal: false, vertical: true)
             
@@ -1103,7 +1103,7 @@ struct LocationErrorView: View {
             
             Button("Enable Location", action: retry)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .padding(.horizontal, 32)
                 .padding(.vertical, 14)
                 .background(Color.white)

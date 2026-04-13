@@ -298,7 +298,7 @@ struct ProviderDashboardScreen: View {
                 }
                 .padding()
             }
-            .background(.yugiMocha.ignoresSafeArea())
+            .background(Color.yugiMocha.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .sheet(isPresented: $showingHelpSupport) {
@@ -934,22 +934,22 @@ struct ProviderProfileSheet: View {
                         // Profile Avatar
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.2))
+                                .fill(Color.yugiMocha.opacity(0.2))
                                 .frame(width: 80, height: 80)
                             
                             Image(systemName: "building.2.fill")
                                 .font(.system(size: 32))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         
                         VStack(spacing: 8) {
                             Text(businessName)
                                 .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Provider Account")
                                 .font(.system(size: 16))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                         }
                     }
                     .padding(.top, 20)
@@ -958,7 +958,7 @@ struct ProviderProfileSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Account Information")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         VStack(spacing: 12) {
                             ProviderProfileInfoRow(
@@ -995,7 +995,7 @@ struct ProviderProfileSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Account")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Button(action: {
                             showingLogoutConfirmation = true
@@ -1040,11 +1040,11 @@ struct ProviderProfileSheet: View {
                     VStack(spacing: 8) {
                         Text("YUGI")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                         
                         Text("Version 1.0.0")
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.5))
+                            .foregroundColor(Color.yugiGray.opacity(0.5))
                     }
                     .padding(.top, 20)
                     .padding(.bottom, 40)
@@ -1058,7 +1058,7 @@ struct ProviderProfileSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
             }
             .alert("Sign Out", isPresented: $showingLogoutConfirmation) {
@@ -1095,17 +1095,17 @@ struct ProviderProfileInfoRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                 
                 Text(value)
                     .font(.system(size: 16))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
             }
             
             Spacer()
@@ -1122,11 +1122,11 @@ struct AcceptedTermsView: View {
             VStack(spacing: 20) {
                 Text("Accepted Terms")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text("Terms and conditions accepted...")
                     .font(.system(size: 16))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                 
                 Spacer()
             }
@@ -1137,7 +1137,7 @@ struct AcceptedTermsView: View {
                     Button("Back") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
             }
         }
@@ -1152,11 +1152,11 @@ struct ProviderGuidelinesScreen: View {
             VStack(spacing: 20) {
                 Text("Provider Guidelines")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text("Guidelines and policies...")
                     .font(.system(size: 16))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                 
                 Spacer()
             }
@@ -1205,7 +1205,7 @@ struct TermsRequiredCard: View {
                     Text("Read & Accept Terms")
                         .font(.system(size: 18, weight: .semibold))
                 }
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(Color.white)

@@ -165,7 +165,7 @@ struct ProviderClassSearchView: View {
                     Button("Back") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -173,7 +173,7 @@ struct ProviderClassSearchView: View {
                         showingFilters = true
                     } label: {
                         Image(systemName: "slider.horizontal.3")
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                     }
                 }
             }
@@ -210,7 +210,7 @@ struct ProviderClassSearchView: View {
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -222,7 +222,7 @@ struct ProviderClassSearchView: View {
             // Search Bar
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.yugiGray.opacity(0.6))
+                    .foregroundColor(Color.yugiGray.opacity(0.6))
                 
                 TextField("Search classes or providers...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
@@ -232,7 +232,7 @@ struct ProviderClassSearchView: View {
                         searchText = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.yugiGray.opacity(0.6))
+                            .foregroundColor(Color.yugiGray.opacity(0.6))
                     }
                 }
             }
@@ -247,7 +247,7 @@ struct ProviderClassSearchView: View {
                 HStack {
                     Text("Filtered by: \(filterDescription)")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Spacer()
                     
@@ -256,7 +256,7 @@ struct ProviderClassSearchView: View {
                         selectedLocation = ""
                     }
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
                 .padding(.horizontal, 4)
             }
@@ -313,11 +313,11 @@ struct ProviderSearchClassCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(classItem.name)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text(classItem.category.displayName)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 
                 Spacer()
@@ -326,7 +326,7 @@ struct ProviderSearchClassCard: View {
             // Description
             Text(classItem.description)
                 .font(.system(size: 14))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
                 .lineLimit(2)
             
             // Provider Info
@@ -334,11 +334,11 @@ struct ProviderSearchClassCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("by \(classItem.providerName ?? "Provider \(classItem.provider)")")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text(classItem.location?.name ?? "Location TBD")
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -346,7 +346,7 @@ struct ProviderSearchClassCard: View {
                 // Price
                 Text("£\(String(format: "%.2f", Double(truncating: classItem.pricing.amount as NSDecimalNumber)))")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
             }
             
             // Schedule and Capacity
@@ -354,11 +354,11 @@ struct ProviderSearchClassCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(formatSchedule())
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                     
                     Text("\(classItem.currentEnrollment)/\(classItem.maxCapacity) booked")
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -372,7 +372,7 @@ struct ProviderSearchClassCard: View {
                         .padding(.vertical, 8)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(classItem.isAvailable ? .yugiMocha : Color.gray)
+                                .fill(classItem.isAvailable ? Color.yugiMocha : Color.gray)
                         )
                 }
                 .disabled(!classItem.isAvailable)
@@ -401,22 +401,22 @@ struct EmptySearchView: View {
         VStack(spacing: 20) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(.yugiGray.opacity(0.3))
+                .foregroundColor(Color.yugiGray.opacity(0.3))
             
             VStack(spacing: 8) {
                 Text("No classes found")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 if !searchText.isEmpty || selectedCategory != nil {
                     Text("Try adjusting your search or filters")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                         .multilineTextAlignment(.center)
                 } else {
                     Text("No classes are currently available")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                         .multilineTextAlignment(.center)
                 }
             }
@@ -437,13 +437,13 @@ struct ProviderFilterSheet: View {
             VStack(spacing: 24) {
                 Text("Filter Classes")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 VStack(alignment: .leading, spacing: 16) {
                     // Category Filter
                     Text("Category")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     VStack(spacing: 12) {
                         ForEach(ClassCategory.allCases, id: \.self) { category in
@@ -457,13 +457,13 @@ struct ProviderFilterSheet: View {
                                 HStack {
                                     Text(category.displayName)
                                         .font(.system(size: 16))
-                                        .foregroundColor(.yugiGray)
+                                        .foregroundColor(Color.yugiGray)
                                     
                                     Spacer()
                                     
                                     if selectedCategory == category {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.yugiMocha)
+                                            .foregroundColor(Color.yugiMocha)
                                     } else {
                                         Circle()
                                             .stroke(Color.yugiGray.opacity(0.3), lineWidth: 2)
@@ -473,11 +473,11 @@ struct ProviderFilterSheet: View {
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(selectedCategory == category ? .yugiMocha.opacity(0.05) : Color.white)
+                                        .fill(selectedCategory == category ? Color.yugiMocha.opacity(0.05) : Color.white)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(selectedCategory == category ? .yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
+                                        .stroke(selectedCategory == category ? Color.yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
                                 )
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -488,7 +488,7 @@ struct ProviderFilterSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Location")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         TextField("Enter city or location", text: $selectedLocation)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -504,7 +504,7 @@ struct ProviderFilterSheet: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(.yugiMocha)
+                .background(Color.yugiMocha)
                 .cornerRadius(12)
             }
             .padding()
@@ -514,7 +514,7 @@ struct ProviderFilterSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
             }
         }
@@ -536,15 +536,15 @@ struct ProviderBookingSheet: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(classItem.name)
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("by \(classItem.providerName ?? "Provider \(classItem.provider)")")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     
                     Text("£\(String(format: "%.2f", Double(truncating: classItem.pricing.amount as NSDecimalNumber))) per session")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
@@ -552,19 +552,19 @@ struct ProviderBookingSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Booking Details")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     // Number of Participants
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Number of Participants")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Stepper(value: $numberOfParticipants, in: 1...5) {
                             HStack {
                                 Text("\(numberOfParticipants) participant\(numberOfParticipants == 1 ? "" : "s")")
                                     .font(.system(size: 16))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 Spacer()
                             }
                         }
@@ -573,7 +573,7 @@ struct ProviderBookingSheet: View {
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                     
@@ -581,7 +581,7 @@ struct ProviderBookingSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Special Requirements (Optional)")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         TextField("Any special needs or requests...", text: $specialRequirements, axis: .vertical)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -609,7 +609,7 @@ struct ProviderBookingSheet: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(.yugiMocha)
+                    .background(Color.yugiMocha)
                     .cornerRadius(12)
                 }
                 .disabled(isBooking)
@@ -622,7 +622,7 @@ struct ProviderBookingSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
             }
             .alert("Booking Successful!", isPresented: $showingSuccessAlert) {

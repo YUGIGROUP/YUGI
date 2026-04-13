@@ -24,7 +24,7 @@ struct HelpSupportScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -56,22 +56,22 @@ struct HelpSupportScreen: View {
             VStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(.yugiMocha.opacity(0.1))
+                        .fill(Color.yugiMocha.opacity(0.1))
                         .frame(width: 80, height: 80)
                     
                     Image(systemName: "envelope.fill")
                         .font(.system(size: 32))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 
                 VStack(spacing: 8) {
                     Text("Email Support")
                         .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Send us a message and we'll get back to you within 24 hours")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                         .multilineTextAlignment(.center)
                 }
             }
@@ -92,7 +92,7 @@ struct HelpSupportScreen: View {
                 .padding(.vertical, 16)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -106,7 +106,7 @@ struct HelpSupportScreen: View {
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(.yugiMocha, lineWidth: 2)
+                .stroke(Color.yugiMocha, lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
     }

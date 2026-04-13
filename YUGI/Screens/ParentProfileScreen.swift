@@ -35,7 +35,7 @@ struct ParentProfileScreen: View {
             }
             .background(Color.yugiCream.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.yugiMocha, for: .navigationBar)
+            .toolbarBackground(Color.yugiMocha, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -73,22 +73,22 @@ struct ParentProfileScreen: View {
             // Profile Image
             ZStack {
                 Circle()
-                    .fill(.yugiMocha.opacity(0.1))
+                    .fill(Color.yugiMocha.opacity(0.1))
                     .frame(width: 100, height: 100)
                 
                 Text(String(fullName.prefix(1)))
                     .font(.system(size: 40, weight: .bold))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
             }
             
             VStack(spacing: 4) {
                 Text(fullName)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text("Parent Account")
                     .font(.system(size: 16))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
             }
             
             Button(action: {
@@ -99,7 +99,7 @@ struct ParentProfileScreen: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(.yugiMocha)
+                    .background(Color.yugiMocha)
                     .cornerRadius(8)
             }
         }
@@ -113,7 +113,7 @@ struct ParentProfileScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Account Information")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             VStack(spacing: 12) {
                 ProfileInfoRow(
@@ -147,7 +147,7 @@ struct ParentProfileScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Payment & Billing")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             VStack(spacing: 12) {
                 ProfileInfoRow(
@@ -175,7 +175,7 @@ struct ParentProfileScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Preferences")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             VStack(spacing: 12) {
                 ProfileActionRow(
@@ -212,7 +212,7 @@ struct ParentProfileScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Support & Legal")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             VStack(spacing: 12) {
                 ProfileActionRow(
@@ -264,17 +264,17 @@ struct ProfileInfoRow: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(width: 24)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                 
                 Text(value)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
             }
             
             Spacer()
@@ -298,17 +298,17 @@ struct ProfileActionRow: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 18))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -318,13 +318,13 @@ struct ProfileActionRow: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 4)
-                        .background(.yugiMocha)
+                        .background(Color.yugiMocha)
                         .cornerRadius(4)
                 }
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.5))
+                    .foregroundColor(Color.yugiGray.opacity(0.5))
             }
             .padding()
             .background(Color.white)
@@ -365,7 +365,7 @@ struct EditProfileScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -378,7 +378,7 @@ struct EditProfileScreen: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Full Name")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             YUGITextField(
                                 text: $tempFullName,
@@ -391,7 +391,7 @@ struct EditProfileScreen: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Email Address")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             YUGITextField(
                                 text: $tempEmail,
@@ -405,7 +405,7 @@ struct EditProfileScreen: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Phone Number")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             YUGITextField(
                                 text: $tempPhoneNumber,
@@ -422,7 +422,7 @@ struct EditProfileScreen: View {
             }
             .background(Color.yugiCream.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.yugiMocha, for: .navigationBar)
+            .toolbarBackground(Color.yugiMocha, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {

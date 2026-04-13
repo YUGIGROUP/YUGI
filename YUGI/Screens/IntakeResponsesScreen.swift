@@ -22,10 +22,10 @@ struct IntakeResponsesScreen: View {
                         VStack(spacing: 12) {
                             Image(systemName: "exclamationmark.triangle")
                                 .font(.system(size: 36))
-                                .foregroundColor(.yugiGray.opacity(0.4))
+                                .foregroundColor(Color.yugiGray.opacity(0.4))
                             Text(error)
                                 .font(.system(size: 15))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
@@ -33,13 +33,13 @@ struct IntakeResponsesScreen: View {
                         VStack(spacing: 12) {
                             Image(systemName: "list.clipboard")
                                 .font(.system(size: 48))
-                                .foregroundColor(.yugiGray.opacity(0.3))
+                                .foregroundColor(Color.yugiGray.opacity(0.3))
                             Text("No responses yet")
                                 .font(.system(size: 17, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                             Text("Responses will appear here once parents submit the intake form after booking.")
                                 .font(.system(size: 13))
-                                .foregroundColor(.yugiGray.opacity(0.45))
+                                .foregroundColor(Color.yugiGray.opacity(0.45))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 40)
                         }
@@ -58,7 +58,7 @@ struct IntakeResponsesScreen: View {
             .navigationTitle("Intake Responses")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.yugiMocha, for: .navigationBar)
+            .toolbarBackground(Color.yugiMocha, for: .navigationBar)
             .onAppear { Task { await loadResponses() } }
         }
     }
@@ -100,15 +100,15 @@ private struct ResponseCard: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(displayName)
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         Text("\(response.answers.count) answer\(response.answers.count == 1 ? "" : "s")")
                             .font(.system(size: 12))
-                            .foregroundColor(.yugiGray.opacity(0.55))
+                            .foregroundColor(Color.yugiGray.opacity(0.55))
                     }
                     Spacer()
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.4))
+                        .foregroundColor(Color.yugiGray.opacity(0.4))
                 }
                 .padding()
             }
@@ -123,10 +123,10 @@ private struct ResponseCard: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(answer.questionText)
                                 .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.75))
+                                .foregroundColor(Color.yugiGray.opacity(0.75))
                             Text(answer.answer.isEmpty ? "—" : answer.answer)
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                         }
                     }
                 }

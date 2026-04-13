@@ -17,7 +17,7 @@ struct YUGITextField: View {
         HStack {
             if let icon = icon {
                 Image(systemName: icon)
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .frame(width: 24)
             }
             
@@ -25,7 +25,7 @@ struct YUGITextField: View {
                 .keyboardType(keyboardType)
                 .autocapitalization(.none)
                 .autocorrectionDisabled()
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
         }
         .padding()
         .background(Color.white)

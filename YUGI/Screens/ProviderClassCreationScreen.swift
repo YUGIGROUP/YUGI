@@ -88,11 +88,11 @@ struct ProviderClassCreationScreen: View {
             HStack(spacing: 8) {
                 ForEach(0..<steps.count, id: \.self) { index in
                     Circle()
-                        .fill(index <= currentStep ? .yugiMocha : Color.yugiGray.opacity(0.3))
+                        .fill(index <= currentStep ? Color.yugiMocha : Color.yugiGray.opacity(0.3))
                         .frame(width: 12, height: 12)
                         .overlay(
                             Circle()
-                                .stroke(.yugiMocha, lineWidth: index == currentStep ? 2 : 0)
+                                .stroke(Color.yugiMocha, lineWidth: index == currentStep ? 2 : 0)
                         )
                 }
             }
@@ -100,11 +100,11 @@ struct ProviderClassCreationScreen: View {
             // Step title
             Text(steps[currentStep])
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             // Progress bar
             ProgressView(value: Double(currentStep + 1), total: Double(steps.count))
-                .progressViewStyle(LinearProgressViewStyle(tint: .yugiMocha))
+                .progressViewStyle(LinearProgressViewStyle(tint: Color.yugiMocha))
                 .scaleEffect(y: 2)
         }
         .padding()
@@ -119,11 +119,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "building.2.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Class Image")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(spacing: 12) {
@@ -143,22 +143,22 @@ struct ProviderClassCreationScreen: View {
                             }
                     } else {
                         Circle()
-                            .fill(.yugiMocha.opacity(0.1))
+                            .fill(Color.yugiMocha.opacity(0.1))
                             .frame(width: 80, height: 80)
                             .overlay(
                                 Image(systemName: "person.fill")
                                     .font(.system(size: 32))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                             )
                     }
                     
                     Text("Your Business Image")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Your class will display with your business profile image.")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                         .multilineTextAlignment(.center)
                 }
                 .frame(height: 200)
@@ -167,7 +167,7 @@ struct ProviderClassCreationScreen: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
             }
             .onAppear {
@@ -197,11 +197,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "textformat")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Class Name")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 YUGITextField(
@@ -215,11 +215,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "tag.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Category")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 Picker("Category", selection: $classData.category) {
@@ -228,7 +228,7 @@ struct ProviderClassCreationScreen: View {
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-                .yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
+                Color.yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
                 .colorScheme(.light)
                 .frame(alignment: .leading)
                 .padding()
@@ -236,7 +236,7 @@ struct ProviderClassCreationScreen: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
             }
             
@@ -245,11 +245,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "text.quote")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Description")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 YUGITextEditor(
@@ -264,11 +264,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "person.3.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Age Range")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 YUGITextField(
@@ -282,11 +282,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "person.2.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Tickets")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(alignment: .leading, spacing: 16) {
@@ -295,7 +295,7 @@ struct ProviderClassCreationScreen: View {
                         HStack {
                             Text("Individual Children")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             InfoButton(
                                 title: "Individual Tickets",
@@ -309,14 +309,14 @@ struct ProviderClassCreationScreen: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        .yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
+                        Color.yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
                         .colorScheme(.light)
                         .padding()
                         .background(Color.white)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                     
@@ -325,7 +325,7 @@ struct ProviderClassCreationScreen: View {
                         HStack {
                             Text("Siblings")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             InfoButton(
                                 title: "Sibling Tickets",
@@ -339,14 +339,14 @@ struct ProviderClassCreationScreen: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        .yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
+                        Color.yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
                         .colorScheme(.light)
                         .padding()
                         .background(Color.white)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                     
@@ -355,7 +355,7 @@ struct ProviderClassCreationScreen: View {
                         HStack {
                             Text("Twins")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             InfoButton(
                                 title: "Twin Tickets",
@@ -369,14 +369,14 @@ struct ProviderClassCreationScreen: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        .yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
+                        Color.yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
                         .colorScheme(.light)
                         .padding()
                         .background(Color.white)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                     
@@ -385,7 +385,7 @@ struct ProviderClassCreationScreen: View {
                         HStack {
                             Text("Total Child Spots:")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Spacer()
                             
@@ -398,7 +398,7 @@ struct ProviderClassCreationScreen: View {
                             HStack {
                                 Text("Expected Adults:")
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 InfoButton(
                                     title: "Expected Adults",
@@ -410,7 +410,7 @@ struct ProviderClassCreationScreen: View {
                             
                             Text("\(classData.expectedAdults)")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                     }
                     .padding()
@@ -424,20 +424,20 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "creditcard.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Pricing")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(spacing: 16) {
                     // Free Class Toggle
                     HStack {
                         Toggle("Free Class", isOn: $classData.isFree)
-                            .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                            .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                     }
@@ -446,7 +446,7 @@ struct ProviderClassCreationScreen: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                            .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                     )
                     
                     // Price Input (only show if not free)
@@ -456,16 +456,16 @@ struct ProviderClassCreationScreen: View {
                             HStack {
                                 Text("£")
                                     .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 TextField("0.00", value: $classData.price, format: .number)
                                     .keyboardType(.decimalPad)
                                     .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("per ticket")
                                     .font(.system(size: 16))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                                 
                                 Spacer()
                             }
@@ -474,7 +474,7 @@ struct ProviderClassCreationScreen: View {
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                    .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                             )
                             
                             // Adult Pricing Options
@@ -486,9 +486,9 @@ struct ProviderClassCreationScreen: View {
                                     }) {
                                         HStack {
                                             Image(systemName: classData.adultsFree ? "checkmark.circle.fill" : "circle")
-                                                .foregroundColor(classData.adultsFree ? .yugiMocha : .gray)
+                                                .foregroundColor(classData.adultsFree ? Color.yugiMocha : .gray)
                                             Text("Adults are free")
-                                                .foregroundColor(.yugiGray)
+                                                .foregroundColor(Color.yugiGray)
                                             Spacer()
                                         }
                                     }
@@ -502,9 +502,9 @@ struct ProviderClassCreationScreen: View {
                                     }) {
                                         HStack {
                                             Image(systemName: !classData.adultsFree ? "checkmark.circle.fill" : "circle")
-                                                .foregroundColor(!classData.adultsFree ? .yugiMocha : .gray)
+                                                .foregroundColor(!classData.adultsFree ? Color.yugiMocha : .gray)
                                             Text("Adults pay different price")
-                                                .foregroundColor(.yugiGray)
+                                                .foregroundColor(Color.yugiGray)
                                             Spacer()
                                         }
                                     }
@@ -514,12 +514,12 @@ struct ProviderClassCreationScreen: View {
                                         HStack {
                                             Text("£")
                                                 .font(.system(size: 14, weight: .medium))
-                                                .foregroundColor(.yugiGray)
+                                                .foregroundColor(Color.yugiGray)
                                             
                                             TextField("0.00", value: $classData.adultPrice, format: .number)
                                                 .keyboardType(.decimalPad)
                                                 .font(.system(size: 14, weight: .medium))
-                                                .foregroundColor(.yugiGray)
+                                                .foregroundColor(Color.yugiGray)
                                                 .frame(width: 60)
                                         }
                                         .padding(.horizontal, 8)
@@ -528,7 +528,7 @@ struct ProviderClassCreationScreen: View {
                                         .cornerRadius(8)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
-                                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                                         )
                                     }
                                 }
@@ -543,7 +543,7 @@ struct ProviderClassCreationScreen: View {
                                     HStack {
                                         Text("Sibling Pricing")
                                             .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                         
                                         InfoButton(
                                             title: "Sibling Pricing",
@@ -556,17 +556,17 @@ struct ProviderClassCreationScreen: View {
                                     HStack {
                                         Text("£")
                                             .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                         
                                         TextField("0.00", value: $classData.siblingPrice, format: .number)
                                             .keyboardType(.decimalPad)
                                             .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                             .frame(width: 80)
                                         
                                         Text("for siblings (2 children)")
                                             .font(.system(size: 14))
-                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                            .foregroundColor(Color.yugiGray.opacity(0.7))
                                         
                                         Spacer()
                                     }
@@ -576,7 +576,7 @@ struct ProviderClassCreationScreen: View {
                                     .cornerRadius(8)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)
-                                            .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                            .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                                     )
                                 }
                                 .padding()
@@ -590,7 +590,7 @@ struct ProviderClassCreationScreen: View {
                                     HStack {
                                         Text("Twin Pricing")
                                             .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                         
                                         InfoButton(
                                             title: "Twin Pricing",
@@ -603,17 +603,17 @@ struct ProviderClassCreationScreen: View {
                                     HStack {
                                         Text("£")
                                             .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                         
                                         TextField("0.00", value: $classData.twinPrice, format: .number)
                                             .keyboardType(.decimalPad)
                                             .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                             .frame(width: 80)
                                         
                                         Text("for twins (2 children)")
                                             .font(.system(size: 14))
-                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                            .foregroundColor(Color.yugiGray.opacity(0.7))
                                         
                                         Spacer()
                                     }
@@ -623,7 +623,7 @@ struct ProviderClassCreationScreen: View {
                                     .cornerRadius(8)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)
-                                            .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                            .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                                     )
                                 }
                                 .padding()
@@ -644,11 +644,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "calendar")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Schedule")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(spacing: 16) {
@@ -656,7 +656,7 @@ struct ProviderClassCreationScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Class Dates")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         ForEach(classData.classDates) { classDate in
                             HStack {
@@ -669,7 +669,7 @@ struct ProviderClassCreationScreen: View {
                                     }
                                 ), displayedComponents: .date)
                                     .labelsHidden()
-                                    .yugiMocha(.yugiMocha)
+                                    Color.yugiMocha(Color.yugiMocha)
                                 
                                 Spacer()
                                 
@@ -688,7 +688,7 @@ struct ProviderClassCreationScreen: View {
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                    .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                             )
                         }
                         
@@ -701,9 +701,9 @@ struct ProviderClassCreationScreen: View {
                                 Text("Add Date")
                                     .font(.system(size: 16, weight: .medium))
                             }
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                             .padding()
-                            .background(.yugiMocha.opacity(0.1))
+                            .background(Color.yugiMocha.opacity(0.1))
                             .cornerRadius(12)
                         }
                     }
@@ -712,7 +712,7 @@ struct ProviderClassCreationScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Time Slots")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         ForEach(classData.timeSlots) { timeSlot in
                             TimeSlotRow(
@@ -741,9 +741,9 @@ struct ProviderClassCreationScreen: View {
                                 Text("Add Time Slot")
                                     .font(.system(size: 16, weight: .medium))
                             }
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                             .padding()
-                            .background(.yugiMocha.opacity(0.1))
+                            .background(Color.yugiMocha.opacity(0.1))
                             .cornerRadius(12)
                         }
                     }
@@ -752,7 +752,7 @@ struct ProviderClassCreationScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Duration (minutes)")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         HStack {
                             Stepper("", value: $classData.duration, in: 15...180, step: 15)
@@ -760,7 +760,7 @@ struct ProviderClassCreationScreen: View {
                             
                             Text("\(classData.duration) minutes")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Spacer()
                         }
@@ -769,7 +769,7 @@ struct ProviderClassCreationScreen: View {
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                 }
@@ -787,11 +787,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "location.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Location")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(spacing: 16) {
@@ -799,7 +799,7 @@ struct ProviderClassCreationScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Venue Name")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         YUGITextField(
                             text: $classData.venueName,
@@ -811,7 +811,7 @@ struct ProviderClassCreationScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Street Address")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         YUGITextField(
                             text: $classData.streetAddress,
@@ -823,7 +823,7 @@ struct ProviderClassCreationScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("City")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         YUGITextField(
                             text: $classData.city,
@@ -835,7 +835,7 @@ struct ProviderClassCreationScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Postal Code")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         YUGITextField(
                             text: $classData.postalCode,
@@ -854,11 +854,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "bag.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("What to Bring")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 YUGITextEditor(
@@ -873,11 +873,11 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Special Requirements")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 YUGITextEditor(
@@ -892,24 +892,24 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "list.clipboard.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     Text("Intake Questions")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     Spacer()
                     Button {
                         classData.intakeQuestions.append(IntakeQuestion())
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                     }
                 }
 
                 if classData.intakeQuestions.isEmpty {
                     Text("No questions added. Tap + to add a question parents will answer after booking.")
                         .font(.system(size: 13))
-                        .foregroundColor(.yugiGray.opacity(0.55))
+                        .foregroundColor(Color.yugiGray.opacity(0.55))
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach($classData.intakeQuestions) { $question in
@@ -929,70 +929,70 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "doc.text.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Review Summary")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Image(systemName: "textformat")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         Text("Class Name")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                         
                         Text(classData.className)
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                     
                     HStack {
                         Image(systemName: "tag.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         Text("Category")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                         
                         Text(classData.category.displayName)
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                     
                     HStack {
                         Image(systemName: "person.3.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         Text("Age Range")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                         
                         Text(classData.ageRange)
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                     
                     HStack {
                         Image(systemName: "person.2.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         Text("Child Spots")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                         
@@ -1000,21 +1000,21 @@ struct ProviderClassCreationScreen: View {
                             if classData.individualChildSpots.numericValue ?? 0 > 0 {
                                 Text("Individual: \(classData.individualChildSpots.displayName)")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                             if classData.siblingPairs.numericValue ?? 0 > 0 {
                                 Text("Sibling Pairs: \(classData.siblingPairs.displayName)")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text("Total: \(classData.totalChildSpots) child spots")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Expected: \(classData.expectedAdults) adults")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                             }
                         }
                     }
@@ -1022,11 +1022,11 @@ struct ProviderClassCreationScreen: View {
                     HStack {
                         Image(systemName: "calendar")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         Text("Schedule")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                         
@@ -1035,14 +1035,14 @@ struct ProviderClassCreationScreen: View {
                             if !classData.classDates.isEmpty {
                                 Text("Dates: \(classData.formatDates(classData.classDates))")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                             
                             // Show actual times
                             if !classData.timeSlots.isEmpty {
                                 Text("Times: \(classData.formatTimes(classData.timeSlots))")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                         }
                     }
@@ -1050,28 +1050,28 @@ struct ProviderClassCreationScreen: View {
                     HStack {
                         Image(systemName: "creditcard.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         Text("Pricing")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                         
                         if classData.isFree {
                             Text("Free")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                         } else {
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text("£\(classData.price, specifier: "%.2f") per ticket")
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 if classData.siblingPairs.numericValue ?? 0 > 0 {
                                     Text("Siblings: £\(classData.siblingPrice, specifier: "%.2f")")
                                         .font(.system(size: 12))
-                                        .foregroundColor(.yugiGray.opacity(0.7))
+                                        .foregroundColor(Color.yugiGray.opacity(0.7))
                                 }
                                 
                                 
@@ -1079,14 +1079,14 @@ struct ProviderClassCreationScreen: View {
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("Total Cost Breakdown:")
                                         .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(.yugiGray)
+                                        .foregroundColor(Color.yugiGray)
                                     
                                     if classData.individualChildSpots.numericValue ?? 0 > 0 {
                                         let individualSpots = classData.individualChildSpots.numericValue ?? 0
                                         let individualCost = Double(individualSpots) * classData.price
                                         Text("\(individualSpots) individual: £\(individualCost, specifier: "%.2f")")
                                             .font(.system(size: 10))
-                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                            .foregroundColor(Color.yugiGray.opacity(0.7))
                                     }
                                     
                                     if classData.siblingPairs.numericValue ?? 0 > 0 {
@@ -1094,7 +1094,7 @@ struct ProviderClassCreationScreen: View {
                                         let siblingCost = Double(siblingPairs) * classData.siblingPrice
                                         Text("\(siblingPairs) sibling pair(s): £\(siblingCost, specifier: "%.2f")")
                                             .font(.system(size: 10))
-                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                            .foregroundColor(Color.yugiGray.opacity(0.7))
                                     }
                                     
                                     if classData.twinPairs.numericValue ?? 0 > 0 {
@@ -1102,7 +1102,7 @@ struct ProviderClassCreationScreen: View {
                                         let twinCost = Double(twinPairs) * classData.twinPrice
                                         Text("\(twinPairs) twin pair(s): £\(twinCost, specifier: "%.2f")")
                                             .font(.system(size: 10))
-                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                            .foregroundColor(Color.yugiGray.opacity(0.7))
                                     }
                                     
                                     // Adult pricing breakdown
@@ -1111,22 +1111,22 @@ struct ProviderClassCreationScreen: View {
                                         let adultCost = Double(totalTickets) * classData.adultPrice
                                         Text("\(totalTickets) adult(s): £\(adultCost, specifier: "%.2f")")
                                             .font(.system(size: 10))
-                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                            .foregroundColor(Color.yugiGray.opacity(0.7))
                                     }
                                     
                                     Text("Total: £\(classData.totalCost, specifier: "%.2f")")
                                         .font(.system(size: 12, weight: .semibold))
-                                        .foregroundColor(.yugiMocha)
+                                        .foregroundColor(Color.yugiMocha)
                                 }
                                 
                                 if classData.adultsFree {
                                     Text("Adults are free")
                                         .font(.system(size: 12))
-                                        .foregroundColor(.yugiGray.opacity(0.7))
+                                        .foregroundColor(Color.yugiGray.opacity(0.7))
                                 } else {
                                     Text("Adults: £\(classData.adultPrice, specifier: "%.2f") per adult")
                                         .font(.system(size: 12))
-                                        .foregroundColor(.yugiGray.opacity(0.7))
+                                        .foregroundColor(Color.yugiGray.opacity(0.7))
                                 }
                             }
                         }
@@ -1141,37 +1141,37 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "location.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Location")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
                     if !classData.venueName.isEmpty {
                         Text("Venue: \(classData.venueName)")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                     
                     if !classData.streetAddress.isEmpty || !classData.city.isEmpty {
                         let address = [classData.streetAddress, classData.city, classData.postalCode].filter { !$0.isEmpty }.joined(separator: ", ")
                         Text("Address: \(address)")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                     
                     if classData.latitude != 0.0 && classData.longitude != 0.0 {
                         Text("Coordinates: \(classData.latitude, specifier: "%.6f"), \(classData.longitude, specifier: "%.6f")")
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                     }
                     
                     if classData.venueName.isEmpty && classData.streetAddress.isEmpty && classData.city.isEmpty {
                         Text("Location: Not specified")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                 }
             }
@@ -1181,25 +1181,25 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "bag.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("What to Bring")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
                     if !classData.whatToBring.isEmpty {
                         Text("What to Bring:")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         Text(classData.whatToBring)
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                     } else {
                         Text("No items specified for parents to bring.")
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                     }
                 }
             }
@@ -1209,25 +1209,25 @@ struct ProviderClassCreationScreen: View {
                 HStack {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text("Special Requirements")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
                     if !classData.specialRequirements.isEmpty {
                         Text("Special Requirements:")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         Text(classData.specialRequirements)
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                     } else {
                         Text("No special requirements or notes.")
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                     }
                 }
             }
@@ -1244,7 +1244,7 @@ struct ProviderClassCreationScreen: View {
                 }) {
                     Text("Previous")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -1252,7 +1252,7 @@ struct ProviderClassCreationScreen: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
             }
             
@@ -1262,7 +1262,7 @@ struct ProviderClassCreationScreen: View {
                 }) {
                     Text("Next")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -1270,7 +1270,7 @@ struct ProviderClassCreationScreen: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
             } else {
                 Button(action: {
@@ -1291,7 +1291,7 @@ struct ProviderClassCreationScreen: View {
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(.yugiMocha)
+                        .background(Color.yugiMocha)
                         .cornerRadius(12)
                 }
                 .padding(.top)
@@ -1493,7 +1493,7 @@ struct TimeSlotRow: View {
         HStack {
             DatePicker("", selection: $timeSlot.startTime, displayedComponents: .hourAndMinute)
                 .labelsHidden()
-                .yugiMocha(.yugiMocha)
+                Color.yugiMocha(Color.yugiMocha)
             
             Spacer()
             
@@ -1508,7 +1508,7 @@ struct TimeSlotRow: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -1548,7 +1548,7 @@ struct SuccessPopup: View {
             VStack(spacing: 20) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 60))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 
                 Text(title)
                     .font(.title2)
@@ -1564,7 +1564,7 @@ struct SuccessPopup: View {
                     onContinue()
                 }
                 .padding()
-                .background(.yugiMocha)
+                .background(Color.yugiMocha)
                 .foregroundColor(.white)
                 .cornerRadius(8)
             }
@@ -1626,24 +1626,24 @@ struct IntakeQuestionEditor: View {
             HStack(spacing: 12) {
                 Text("Answer type")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                 Picker("", selection: $question.answerType) {
                     ForEach(IntakeQuestion.AnswerType.allCases, id: \.self) { type in
                         Text(type.displayName).tag(type)
                     }
                 }
                 .pickerStyle(.segmented)
-                .yugiMocha(.yugiMocha)
+                Color.yugiMocha(Color.yugiMocha)
             }
 
             // Required toggle
             HStack {
                 Text("Required")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                 Spacer()
                 Toggle("", isOn: $question.isRequired)
-                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                    .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                     .labelsHidden()
             }
 
@@ -1654,14 +1654,14 @@ struct IntakeQuestionEditor: View {
                         HStack {
                             Text("• \(question.options[i])")
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             Spacer()
                             Button {
                                 question.options.remove(at: i)
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.4))
+                                    .foregroundColor(Color.yugiGray.opacity(0.4))
                             }
                         }
                     }
@@ -1672,7 +1672,7 @@ struct IntakeQuestionEditor: View {
                             .padding(8)
                             .background(Color.white)
                             .cornerRadius(8)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(.yugiMocha.opacity(0.3), lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1))
                         Button {
                             let trimmed = newOption.trimmingCharacters(in: .whitespaces)
                             if !trimmed.isEmpty {
@@ -1682,7 +1682,7 @@ struct IntakeQuestionEditor: View {
                         } label: {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         .disabled(newOption.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
@@ -1692,7 +1692,7 @@ struct IntakeQuestionEditor: View {
         .padding()
         .background(Color.white)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(.yugiMocha.opacity(0.25), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.yugiMocha.opacity(0.25), lineWidth: 1))
     }
 }
 

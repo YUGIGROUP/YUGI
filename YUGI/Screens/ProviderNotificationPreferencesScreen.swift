@@ -19,17 +19,17 @@ struct ProviderNotificationPreferencesScreen: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Notifications")
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Enable all notifications")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                             }
                             
                             Spacer()
                             
                             Toggle("", isOn: $preferences.isEnabled)
-                                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                                .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                         }
                         .padding(16)
                         .background(Color.white)
@@ -42,7 +42,7 @@ struct ProviderNotificationPreferencesScreen: View {
                         VStack(spacing: 16) {
                             Text("Notification Types")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
                             VStack(spacing: 0) {
@@ -88,7 +88,7 @@ struct ProviderNotificationPreferencesScreen: View {
                         VStack(spacing: 16) {
                             Text("Delivery Methods")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
                             VStack(spacing: 0) {
@@ -136,17 +136,17 @@ struct ProviderNotificationPreferencesScreen: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Quiet Hours")
                                         .font(.system(size: 18, weight: .semibold))
-                                        .foregroundColor(.yugiGray)
+                                        .foregroundColor(Color.yugiGray)
                                     
                                     Text("Pause notifications during specific hours")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.yugiGray.opacity(0.7))
+                                        .foregroundColor(Color.yugiGray.opacity(0.7))
                                 }
                                 
                                 Spacer()
                                 
                                 Toggle("", isOn: $preferences.quietHoursEnabled)
-                                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                                    .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                             }
                             .padding(16)
                             .background(Color.white)
@@ -158,7 +158,7 @@ struct ProviderNotificationPreferencesScreen: View {
                                     HStack {
                                         Text("Start Time")
                                             .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                         
                                         Spacer()
                                         
@@ -169,7 +169,7 @@ struct ProviderNotificationPreferencesScreen: View {
                                     HStack {
                                         Text("End Time")
                                             .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                         
                                         Spacer()
                                         
@@ -197,7 +197,7 @@ struct ProviderNotificationPreferencesScreen: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -205,7 +205,7 @@ struct ProviderNotificationPreferencesScreen: View {
                         notificationService.updatePreferences(preferences)
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .fontWeight(.semibold)
                 }
             }
@@ -223,17 +223,17 @@ struct NotificationTypeRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text(subtitle)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
             }
             
             Spacer()
             
             Toggle("", isOn: $isOn)
-                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
         }
         .padding(16)
     }

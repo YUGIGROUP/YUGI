@@ -44,11 +44,11 @@ struct UserTypeSelectionScreen: View {
         VStack(spacing: 16) {
             Text("Welcome to YUGI!")
                 .font(.system(size: 32, weight: .bold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             Text("How will you use YUGI?")
                 .font(.system(size: 17))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
         }
         .padding(.top, 48)
         .padding(.horizontal)
@@ -71,15 +71,15 @@ struct UserTypeSelectionScreen: View {
             HStack(spacing: 16) {
                 Image(systemName: selectedUserType == type ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 24))
-                    .foregroundColor(selectedUserType == type ? .yugiOrange : .yugiGray.opacity(0.6))
+                    .foregroundColor(selectedUserType == type ? Color.yugiOrange : Color.yugiGray.opacity(0.6))
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(type.displayName)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     Text(type.description)
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                         .multilineTextAlignment(.leading)
                 }
                 

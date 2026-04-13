@@ -42,7 +42,7 @@ struct AddChildScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -55,9 +55,9 @@ struct AddChildScreen: View {
                             if let child = childToEdit {
                                 Text("Editing child: \(child.name)")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                     .padding()
-                                    .background(.yugiMocha.opacity(0.1))
+                                    .background(Color.yugiMocha.opacity(0.1))
                                     .cornerRadius(8)
                             }
                             
@@ -65,7 +65,7 @@ struct AddChildScreen: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Child's Name")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             YUGITextField(
                                 text: $childName,
@@ -78,7 +78,7 @@ struct AddChildScreen: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Date of Birth")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
@@ -122,7 +122,7 @@ struct AddChildScreen: View {
                             .padding(.vertical, 16)
                             .background(
                                 LinearGradient(
-                                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                                    gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )

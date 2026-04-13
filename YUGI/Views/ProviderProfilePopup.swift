@@ -16,7 +16,7 @@ struct ProviderProfilePopup: View {
     var body: some View {
         ZStack {
             // Full background
-            .yugiMocha
+            Color.yugiMocha
                 .ignoresSafeArea()
             
             VStack {
@@ -180,7 +180,7 @@ struct ProviderProfilePopup: View {
                             .padding(20)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(.yugiMocha)
+                                    .fill(Color.yugiMocha)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16)
                                             .stroke(Color.white, lineWidth: 2)
@@ -244,7 +244,7 @@ struct ProviderProfilePopup: View {
                             .padding(20)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(.yugiMocha)
+                                    .fill(Color.yugiMocha)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16)
                                             .stroke(Color.white, lineWidth: 2)

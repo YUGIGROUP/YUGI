@@ -12,7 +12,7 @@ struct ConsentScreen: View {
                 VStack(spacing: 0) {
                     // Accent bar
                     LinearGradient(
-                        colors: [.yugiMocha, .yugiMocha.opacity(0.7)],
+                        colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.7)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -23,24 +23,24 @@ struct ConsentScreen: View {
                         VStack(spacing: 20) {
                             ZStack {
                                 Circle()
-                                    .fill(.yugiMocha.opacity(0.1))
+                                    .fill(Color.yugiMocha.opacity(0.1))
                                     .frame(width: 96, height: 96)
                                 Image(systemName: "chart.bar.fill")
                                     .font(.system(size: 44))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                             }
                             .padding(.top, 40)
 
                             Text("Help us improve YUGI for you")
                                 .font(.system(size: 26, weight: .bold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                                 .multilineTextAlignment(.center)
                         }
 
                         // Explanation
                         Text("YUGI can learn from how you use the app to give you better recommendations. This includes which classes you view, what you search for, and your general area when browsing. This data stays within YUGI and is never shared with third parties or advertisers.")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiGray.opacity(0.85))
+                            .foregroundColor(Color.yugiGray.opacity(0.85))
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
                             .padding(.horizontal, 8)
@@ -69,7 +69,7 @@ struct ConsentScreen: View {
                                     .padding(.vertical, 16)
                                     .background(
                                         LinearGradient(
-                                            colors: [.yugiMocha, .yugiMocha.opacity(0.85)],
+                                            colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.85)],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
@@ -84,13 +84,13 @@ struct ConsentScreen: View {
                             }) {
                                 Text("No thanks")
                                     .font(.system(size: 17, weight: .semibold))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
                                     .background(Color.white)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(.yugiMocha, lineWidth: 1.5)
+                                            .stroke(Color.yugiMocha, lineWidth: 1.5)
                                     )
                                     .cornerRadius(12)
                             }
@@ -101,7 +101,7 @@ struct ConsentScreen: View {
                         Button(action: { showingPrivacyPolicy = true }) {
                             Text("Read our full Privacy Policy")
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                                 .underline()
                         }
                         .padding(.bottom, 40)
@@ -124,11 +124,11 @@ private struct ConsentTrackingItem: View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 15))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(width: 22)
             Text(text)
                 .font(.system(size: 15))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             Spacer()
         }
     }

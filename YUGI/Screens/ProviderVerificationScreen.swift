@@ -8,7 +8,7 @@ struct ProviderVerificationScreen: View {
     var body: some View {
         ZStack {
                 // Background
-                .yugiMocha
+                Color.yugiMocha
                     .ignoresSafeArea()
                 
                 // Animated background elements

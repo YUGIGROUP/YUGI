@@ -11,7 +11,7 @@ struct InfoButton: View {
         }) {
             Image(systemName: "info.circle")
                 .font(.system(size: 16))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
         }
         .alert(title, isPresented: $showInfo) {
             Button("Got it", role: .cancel) { }
@@ -32,7 +32,7 @@ struct InfoButtonWithSheet: View {
         }) {
             Image(systemName: "info.circle")
                 .font(.system(size: 16))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
         }
         .sheet(isPresented: $showInfo) {
             InfoSheetView(title: title, message: message)

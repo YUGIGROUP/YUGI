@@ -53,7 +53,7 @@ struct ProviderNotificationsScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -88,7 +88,7 @@ struct ProviderNotificationsScreen: View {
             }
             .background(Color.yugiCream.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.yugiMocha, for: .navigationBar)
+            .toolbarBackground(Color.yugiMocha, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -119,16 +119,16 @@ struct ProviderNotificationsScreen: View {
             
             Image(systemName: "bell.slash")
                 .font(.system(size: 64))
-                .foregroundColor(.yugiGray.opacity(0.3))
+                .foregroundColor(Color.yugiGray.opacity(0.3))
             
             VStack(spacing: 8) {
                 Text("No Notifications")
                     .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text("You're all caught up! We'll notify you about bookings, payments, and important updates.")
                     .font(.system(size: 16))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             }
@@ -214,17 +214,17 @@ struct ProviderNotificationTabButton: View {
             VStack(spacing: 4) {
                 Text(title)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(isSelected ? .yugiMocha : .yugiGray)
+                    .foregroundColor(isSelected ? Color.yugiMocha : Color.yugiGray)
                 
                 Text("\(count)")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(isSelected ? .yugiMocha : .yugiGray.opacity(0.7))
+                    .foregroundColor(isSelected ? Color.yugiMocha : Color.yugiGray.opacity(0.7))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .background(
                 Rectangle()
-                    .fill(isSelected ? .yugiMocha.opacity(0.1) : Color.clear)
+                    .fill(isSelected ? Color.yugiMocha.opacity(0.1) : Color.clear)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -257,35 +257,35 @@ struct ProviderNotificationRow: View {
                     HStack {
                         Text(notification.title)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                             .lineLimit(1)
                         
                         Spacer()
                         
                         if !notification.isRead {
                             Circle()
-                                .fill(.yugiMocha)
+                                .fill(Color.yugiMocha)
                                 .frame(width: 8, height: 8)
                         }
                     }
                     
                     Text(notification.message)
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                     
                     HStack {
                         Text(formatDate(notification.date))
                             .font(.system(size: 12))
-                            .foregroundColor(.yugiGray.opacity(0.6))
+                            .foregroundColor(Color.yugiGray.opacity(0.6))
                         
                         Spacer()
                         
                         if let actionType = notification.actionType, actionType != .none {
                             Text(actionType.displayName)
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                     }
                 }
@@ -303,7 +303,7 @@ struct ProviderNotificationRow: View {
             .padding(16)
             .background(
                 Rectangle()
-                    .fill(notification.isRead ? Color.white : .yugiMocha.opacity(0.05))
+                    .fill(notification.isRead ? Color.white : Color.yugiMocha.opacity(0.05))
             )
             
             Divider()

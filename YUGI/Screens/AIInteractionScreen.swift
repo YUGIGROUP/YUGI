@@ -146,7 +146,7 @@ struct AIInteractionScreen: View {
     var body: some View {
         ZStack {
             // Background
-            .yugiMocha
+            Color.yugiMocha
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -158,7 +158,7 @@ struct AIInteractionScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Find Classes")
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(.yugiMocha, for: .navigationBar)
+        .toolbarBackground(Color.yugiMocha, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -205,7 +205,7 @@ private struct QuickActionsBar: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .background(.yugiMocha.opacity(0.8))
+        .background(Color.yugiMocha.opacity(0.8))
     }
 }
 
@@ -279,13 +279,13 @@ private struct InputBar: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .font(.roboto(size: 16))
                     .disabled(viewModel.isTyping)
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 
                 SendButton(viewModel: viewModel)
             }
             .padding()
         }
-        .background(.yugiMocha)
+        .background(Color.yugiMocha)
     }
 }
 
@@ -315,7 +315,7 @@ struct QuickActionButton: View {
         Button(action: action) {
             Text(title)
                 .font(.roboto(size: 14))
-                .foregroundColor(isSelected ? .yugiMocha : .white)
+                .foregroundColor(isSelected ? Color.yugiMocha : .white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(

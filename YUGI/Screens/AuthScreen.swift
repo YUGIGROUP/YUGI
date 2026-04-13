@@ -23,11 +23,11 @@ struct AuthScreen: View {
                 VStack(spacing: 16) {
                     Text("Welcome Back")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Sign in to continue")
                         .font(.system(size: 17))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                 }
                 .padding(.top, 48)
                 
@@ -37,7 +37,7 @@ struct AuthScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Email")
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         TextField("Enter your email", text: $email)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -49,7 +49,7 @@ struct AuthScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Password")
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         HStack {
                             if isShowingPassword {
@@ -62,7 +62,7 @@ struct AuthScreen: View {
                                 isShowingPassword.toggle()
                             }) {
                                 Image(systemName: isShowingPassword ? "eye.slash.fill" : "eye.fill")
-                                    .foregroundColor(.yugiGray.opacity(0.6))
+                                    .foregroundColor(Color.yugiGray.opacity(0.6))
                             }
                         }
                         .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -71,7 +71,7 @@ struct AuthScreen: View {
                     // Remember Me Toggle
                     HStack {
                         Toggle("Remember Me", isOn: $biometricService.isRememberMeEnabled)
-                            .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                            .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                             .onChange(of: biometricService.isRememberMeEnabled) { _, newValue in
                                 biometricService.setRememberMeEnabled(newValue)
                             }
@@ -97,7 +97,7 @@ struct AuthScreen: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(.yugiMocha)
+                            .fill(Color.yugiMocha)
                     )
                 }
                 .padding(.horizontal)
@@ -108,18 +108,18 @@ struct AuthScreen: View {
                     shouldNavigateToForgotPassword = true
                 }
                 .font(.system(size: 15))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .fontWeight(.medium)
                 .padding(.top, 8)
                 
                 // Sign Up Link
                 HStack {
                     Text("Don't have an account?")
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     Button("Sign Up") {
                         shouldNavigateToSignUp = true
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .fontWeight(.semibold)
                 }
                 .font(.system(size: 15))

@@ -33,7 +33,7 @@ struct TermsPrivacyScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -70,7 +70,7 @@ struct TermsPrivacyScreen: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(.yugiMocha)
+                .background(Color.yugiMocha)
                 
                 // Content
                 TabView(selection: $selectedTab) {
@@ -133,11 +133,11 @@ struct TermsOfServiceView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Last Updated: \(userType == .provider ? "October 15, 2025" : "October 15, 2025")")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                     
                     Text(userType == .provider ? "Provider Terms & Conditions" : "Parent/Guardian Terms & Conditions")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 if userType == .provider {
@@ -319,18 +319,18 @@ struct TermsOfServiceView: View {
                             }) {
                                 Image(systemName: hasAcceptedTerms ? "checkmark.square.fill" : "square")
                                     .font(.system(size: 24))
-                                    .foregroundColor(hasAcceptedTerms ? .yugiMocha : .yugiGray.opacity(0.6))
+                                    .foregroundColor(hasAcceptedTerms ? Color.yugiMocha : Color.yugiGray.opacity(0.6))
                             }
                             .buttonStyle(.plain)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("I acknowledge and agree")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("I have read, understood, and agree to the Parent/Guardian Terms & Conditions above. I understand that I must accept these terms before I can start booking classes on the YUGI platform.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.8))
+                                    .foregroundColor(Color.yugiGray.opacity(0.8))
                                     .multilineTextAlignment(.leading)
                             }
                             
@@ -362,7 +362,7 @@ struct TermsOfServiceView: View {
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(hasAcceptedTerms ? .yugiMocha : Color.yugiGray.opacity(0.3))
+                                    .fill(hasAcceptedTerms ? Color.yugiMocha : Color.yugiGray.opacity(0.3))
                             )
                         }
                         .disabled(!hasAcceptedTerms)
@@ -383,7 +383,7 @@ struct PrivacyPolicyView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("YUGI Group Limited - Privacy Policy")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 TermsLegalSection(
@@ -469,11 +469,11 @@ struct TermsLegalSection: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             Text(content)
                 .font(.system(size: 16))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
                 .lineSpacing(4)
         }
         .padding()
@@ -516,7 +516,7 @@ struct TermsAgreementScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -553,7 +553,7 @@ struct TermsAgreementScreen: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(.yugiMocha)
+                .background(Color.yugiMocha)
                 
                 // Content
                 TabView(selection: $selectedTab) {
@@ -565,11 +565,11 @@ struct TermsAgreementScreen: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("Last Updated: October 15, 2025")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.yugiGray.opacity(0.7))
+                                        .foregroundColor(Color.yugiGray.opacity(0.7))
                                     
                                     Text("Parent/Guardian Terms & Conditions")
                                         .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(.yugiGray)
+                                        .foregroundColor(Color.yugiGray)
                                 }
                             
                             // About YUGI
@@ -682,18 +682,18 @@ struct TermsAgreementScreen: View {
                                     }) {
                                         Image(systemName: hasAcceptedTerms ? "checkmark.square.fill" : "square")
                                             .font(.system(size: 24))
-                                            .foregroundColor(hasAcceptedTerms ? .yugiMocha : .yugiGray.opacity(0.6))
+                                            .foregroundColor(hasAcceptedTerms ? Color.yugiMocha : Color.yugiGray.opacity(0.6))
                                     }
                                     .buttonStyle(.plain)
                                     
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("I acknowledge and agree")
                                             .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                         
                                         Text("I have read, understood, and agree to the Terms & Conditions and Privacy Policy above. I understand that I must accept these terms before I can start booking classes on the YUGI platform.")
                                             .font(.system(size: 14))
-                                            .foregroundColor(.yugiGray.opacity(0.8))
+                                            .foregroundColor(Color.yugiGray.opacity(0.8))
                                             .multilineTextAlignment(.leading)
                                     }
                                     
@@ -723,7 +723,7 @@ struct TermsAgreementScreen: View {
                                     .padding()
                                     .background(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .fill(hasAcceptedTerms ? .yugiMocha : Color.yugiGray.opacity(0.3))
+                                            .fill(hasAcceptedTerms ? Color.yugiMocha : Color.yugiGray.opacity(0.3))
                                     )
                                 }
                                 .disabled(!hasAcceptedTerms)
@@ -744,7 +744,7 @@ struct TermsAgreementScreen: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("YUGI Group Limited - Privacy Policy")
                                         .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(.yugiGray)
+                                        .foregroundColor(Color.yugiGray)
                                 }
                                 
                                 TermsLegalSection(

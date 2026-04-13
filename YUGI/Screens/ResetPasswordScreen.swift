@@ -23,11 +23,11 @@ struct ResetPasswordScreen: View {
                 VStack(spacing: 16) {
                     Text("Set New Password")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Enter your new password below")
                         .font(.system(size: 17))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                         .multilineTextAlignment(.center)
                 }
                 .padding(.top, 48)
@@ -38,7 +38,7 @@ struct ResetPasswordScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("New Password")
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         HStack {
                             if isShowingPassword {
@@ -58,7 +58,7 @@ struct ResetPasswordScreen: View {
                                 isShowingPassword.toggle()
                             }) {
                                 Image(systemName: isShowingPassword ? "eye.slash.fill" : "eye.fill")
-                                    .foregroundColor(.yugiGray.opacity(0.6))
+                                    .foregroundColor(Color.yugiGray.opacity(0.6))
                             }
                         }
                     }
@@ -67,7 +67,7 @@ struct ResetPasswordScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Confirm Password")
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         HStack {
                             if isShowingConfirmPassword {
@@ -87,7 +87,7 @@ struct ResetPasswordScreen: View {
                                 isShowingConfirmPassword.toggle()
                             }) {
                                 Image(systemName: isShowingConfirmPassword ? "eye.slash.fill" : "eye.fill")
-                                    .foregroundColor(.yugiGray.opacity(0.6))
+                                    .foregroundColor(Color.yugiGray.opacity(0.6))
                             }
                         }
                     }
@@ -98,7 +98,7 @@ struct ResetPasswordScreen: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Password Requirements:")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         PasswordRequirementRow(
@@ -137,7 +137,7 @@ struct ResetPasswordScreen: View {
                     .padding()
                     .background(
                         LinearGradient(
-                            gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                            gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -151,7 +151,7 @@ struct ResetPasswordScreen: View {
         }
         .background(Color.yugiCream.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.yugiMocha, for: .navigationBar)
+        .toolbarBackground(Color.yugiMocha, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
@@ -236,11 +236,11 @@ struct PasswordRequirementRow: View {
         HStack(spacing: 8) {
             Image(systemName: isMet ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 12))
-                .foregroundColor(isMet ? .green : .yugiGray.opacity(0.5))
+                .foregroundColor(isMet ? .green : Color.yugiGray.opacity(0.5))
             
             Text(text)
                 .font(.system(size: 13))
-                .foregroundColor(isMet ? .yugiGray : .yugiGray.opacity(0.6))
+                .foregroundColor(isMet ? Color.yugiGray : Color.yugiGray.opacity(0.6))
         }
     }
 }

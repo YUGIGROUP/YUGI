@@ -29,7 +29,7 @@ struct NotificationPreferencesScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -81,23 +81,23 @@ struct NotificationPreferencesScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Notifications")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Enable Notifications")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Receive notifications about bookings, payments, and class updates")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
                 
                 Toggle("", isOn: $preferences.isEnabled)
-                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                    .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
             }
             .padding()
             .background(Color.white)
@@ -120,7 +120,7 @@ struct NotificationPreferencesScreen: View {
             .padding(.vertical, 16)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                    gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )

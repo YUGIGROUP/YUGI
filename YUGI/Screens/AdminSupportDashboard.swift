@@ -37,7 +37,7 @@ struct AdminSupportDashboard: View {
                                     .scaleEffect(1.2)
                                 Text("Loading support messages...")
                                     .font(.system(size: 16))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                             .padding(.vertical, 40)
                         } else if let error = viewModel.error {
@@ -47,10 +47,10 @@ struct AdminSupportDashboard: View {
                                     .foregroundColor(.red)
                                 Text("Error loading messages")
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 Text(error)
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                                     .multilineTextAlignment(.center)
                             }
                             .padding(.vertical, 40)
@@ -61,10 +61,10 @@ struct AdminSupportDashboard: View {
                                     .foregroundColor(.green)
                                 Text("No pending messages")
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 Text("All support messages have been resolved")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                                     .multilineTextAlignment(.center)
                             }
                             .padding(.vertical, 40)
@@ -117,11 +117,11 @@ struct SupportMessageCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(message.userName ?? "Anonymous")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text(message.userEmail ?? "No email provided")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -131,13 +131,13 @@ struct SupportMessageCard: View {
             
             Text(message.message)
                 .font(.system(size: 14))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
                 .lineLimit(3)
             
             HStack {
                 Text(formatDate(message.timestamp))
                     .font(.system(size: 12))
-                    .foregroundColor(.yugiGray.opacity(0.6))
+                    .foregroundColor(Color.yugiGray.opacity(0.6))
                 
                 Spacer()
                 
@@ -146,7 +146,7 @@ struct SupportMessageCard: View {
                         showingDetails = true
                     }
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiOrange)
+                    .foregroundColor(Color.yugiOrange)
                     
                     Button("Resolve") {
                         onResolve()
@@ -199,17 +199,17 @@ struct SupportMessageDetailView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("From")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text(message.userName ?? "Anonymous")
                                 .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             if let email = message.userEmail {
                                 Text(email)
                                     .font(.system(size: 16))
-                                    .foregroundColor(.yugiOrange)
+                                    .foregroundColor(Color.yugiOrange)
                             }
                         }
                         .padding(16)
@@ -222,7 +222,7 @@ struct SupportMessageDetailView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Category")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         CategoryBadge(category: message.category)
                             .padding(16)
@@ -235,11 +235,11 @@ struct SupportMessageDetailView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Message")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Text(message.message)
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                             .padding(16)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.white)
@@ -251,11 +251,11 @@ struct SupportMessageDetailView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Received")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Text(formatDate(message.timestamp))
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                             .padding(16)
                             .background(Color.white)
                             .cornerRadius(12)

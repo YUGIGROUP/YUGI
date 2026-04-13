@@ -34,9 +34,9 @@ struct ProviderPaymentSettingsScreen: View {
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            .yugiMocha,
-                            .yugiMocha.opacity(0.9),
-                            .yugiMocha.opacity(0.8)
+                            Color.yugiMocha,
+                            Color.yugiMocha.opacity(0.9),
+                            Color.yugiMocha.opacity(0.8)
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -99,22 +99,22 @@ struct PayoutsTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.1))
+                                .fill(Color.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "banknote.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Earnings Overview")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("After 10% YUGI commission")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                         }
                         
                         Spacer()
@@ -126,15 +126,15 @@ struct PayoutsTab: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Available for Withdrawal")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                                 
                                 Text("£\(String(format: "%.2f", availableBalance))")
                                     .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Accumulated earnings")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.yugiGray.opacity(0.6))
+                                    .foregroundColor(Color.yugiGray.opacity(0.6))
                             }
                             
                             Divider()
@@ -144,15 +144,15 @@ struct PayoutsTab: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Pending")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                                 
                                 Text("£\(String(format: "%.2f", heldFunds))")
                                     .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                                 
                                 Text("72-hour holding period")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.yugiGray.opacity(0.6))
+                                    .foregroundColor(Color.yugiGray.opacity(0.6))
                             }
                             
                             Spacer()
@@ -163,13 +163,13 @@ struct PayoutsTab: View {
                             HStack {
                                 Text("Total Bookings")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                                 
                                 Spacer()
                                 
                                 Text("£\(String(format: "%.2f", totalEarnings))")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                             
                             Divider()
@@ -177,14 +177,14 @@ struct PayoutsTab: View {
                             HStack {
                                 Text("Your Earnings")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Spacer()
                                 
                                 HStack(spacing: 4) {
                                     Text("£\(String(format: "%.2f", availableBalance))")
                                         .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.yugiMocha)
+                                        .foregroundColor(Color.yugiMocha)
                                     
                                     Text("-10%")
                                         .font(.system(size: 12, weight: .medium))
@@ -205,7 +205,7 @@ struct PayoutsTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(.yugiMocha, lineWidth: 2)
+                        .stroke(Color.yugiMocha, lineWidth: 2)
                 )
                 
                 // Bank Accounts Section
@@ -213,22 +213,22 @@ struct PayoutsTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.1))
+                                .fill(Color.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "building.columns.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Bank Accounts")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Where your earnings are sent")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                         }
                         
                         Spacer()
@@ -238,7 +238,7 @@ struct PayoutsTab: View {
                         } label: {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 24))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                     }
                     
@@ -247,16 +247,16 @@ struct PayoutsTab: View {
                         VStack(spacing: 16) {
                             Image(systemName: "building.columns")
                                 .font(.system(size: 48))
-                                .foregroundColor(.yugiGray.opacity(0.4))
+                                .foregroundColor(Color.yugiGray.opacity(0.4))
                             
                             VStack(spacing: 8) {
                                 Text("No Bank Accounts")
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Add your first bank account to receive payouts")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                                     .multilineTextAlignment(.center)
                             }
                         }
@@ -284,7 +284,7 @@ struct PayoutsTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(.yugiMocha, lineWidth: 2)
+                        .stroke(Color.yugiMocha, lineWidth: 2)
                 )
                 
                 // Quick Actions
@@ -292,22 +292,22 @@ struct PayoutsTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(.yugiMocha.opacity(0.1))
+                                .fill(Color.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "clock.arrow.circlepath")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Quick Actions")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Manage your payouts and history")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.6))
+                                .foregroundColor(Color.yugiGray.opacity(0.6))
                         }
                         
                         Spacer()
@@ -351,7 +351,7 @@ struct PayoutsTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(.yugiMocha, lineWidth: 2)
+                        .stroke(Color.yugiMocha, lineWidth: 2)
                 )
             }
             .padding(.horizontal, 20)
@@ -665,12 +665,12 @@ struct BankAccountCard: View {
             // Bank Icon
             ZStack {
                 Circle()
-                    .fill(.yugiMocha.opacity(0.1))
+                    .fill(Color.yugiMocha.opacity(0.1))
                     .frame(width: 48, height: 48)
                 
                 Image(systemName: "building.columns.fill")
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
             }
             
             // Account Details
@@ -678,7 +678,7 @@ struct BankAccountCard: View {
                 HStack {
                     Text(account.accountName)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     if account.isDefault {
                         Text("Default")
@@ -686,7 +686,7 @@ struct BankAccountCard: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(.yugiMocha)
+                            .background(Color.yugiMocha)
                             .cornerRadius(8)
                     }
                     
@@ -695,7 +695,7 @@ struct BankAccountCard: View {
                 
                 Text("\(account.bankName) • \(account.accountNumber) • \(account.sortCode)")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
             }
             
             Spacer()
@@ -716,7 +716,7 @@ struct BankAccountCard: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .font(.system(size: 20))
-                    .foregroundColor(.yugiGray.opacity(0.6))
+                    .foregroundColor(Color.yugiGray.opacity(0.6))
             }
         }
         .padding(16)
@@ -724,7 +724,7 @@ struct BankAccountCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -741,24 +741,24 @@ struct QuickActionRow: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(isEnabled ? .yugiMocha : .yugiGray.opacity(0.4))
+                    .foregroundColor(isEnabled ? Color.yugiMocha : Color.yugiGray.opacity(0.4))
                     .frame(width: 24, height: 24)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(isEnabled ? .yugiGray : .yugiGray.opacity(0.4))
+                        .foregroundColor(isEnabled ? Color.yugiGray : Color.yugiGray.opacity(0.4))
                     
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(isEnabled ? .yugiGray.opacity(0.7) : .yugiGray.opacity(0.3))
+                        .foregroundColor(isEnabled ? Color.yugiGray.opacity(0.7) : Color.yugiGray.opacity(0.3))
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(isEnabled ? .yugiGray.opacity(0.5) : .yugiGray.opacity(0.2))
+                    .foregroundColor(isEnabled ? Color.yugiGray.opacity(0.5) : Color.yugiGray.opacity(0.2))
             }
             .padding(16)
             .background(Color.yugiCream.opacity(0.4))
@@ -795,11 +795,11 @@ struct AddBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Add Bank Account")
                                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Enter your bank account details")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                         }
                         
                         Spacer()
@@ -817,7 +817,7 @@ struct AddBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Account Name")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("e.g., Main Business Account", text: $accountName)
                                 .textFieldStyle(CustomTextFieldStyle())
@@ -827,7 +827,7 @@ struct AddBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Bank Name")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("e.g., Barclays Bank", text: $bankName)
                                 .textFieldStyle(CustomTextFieldStyle())
@@ -837,7 +837,7 @@ struct AddBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Account Number")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("8 digits", text: $accountNumber)
                                 .textFieldStyle(CustomTextFieldStyle())
@@ -848,7 +848,7 @@ struct AddBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Sort Code")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("XX-XX-XX", text: $sortCode)
                                 .textFieldStyle(CustomTextFieldStyle())
@@ -860,17 +860,17 @@ struct AddBankAccountSheet: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Set as Default Account")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("This account will be used for all payouts")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                             }
                             
                             Spacer()
                             
                             Toggle("", isOn: $isDefault)
-                                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                                .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                         }
                         .padding(16)
                         .background(Color.yugiCream.opacity(0.4))
@@ -881,20 +881,20 @@ struct AddBankAccountSheet: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "info.circle.fill")
                                     .font(.system(size: 20))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                                 
                                 Text("Security Notice")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                             
                             Text("Your bank details are encrypted and stored securely. We use industry-standard security measures to protect your information.")
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                                 .lineLimit(nil)
                         }
                         .padding(16)
-                        .background(.yugiMocha.opacity(0.1))
+                        .background(Color.yugiMocha.opacity(0.1))
                         .cornerRadius(12)
                     }
                     .padding(.horizontal, 24)
@@ -908,7 +908,7 @@ struct AddBankAccountSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -916,7 +916,7 @@ struct AddBankAccountSheet: View {
                         saveBankAccount()
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .disabled(!isFormValid)
                 }
             }
@@ -987,11 +987,11 @@ struct PayoutHistoryScreen: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Payout History")
                                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("All your past transfers")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                         }
                         
                         Spacer()
@@ -1000,11 +1000,11 @@ struct PayoutHistoryScreen: View {
                         VStack(alignment: .trailing, spacing: 4) {
                             Text("Total Transferred")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                             
                             Text("£\(String(format: "%.2f", totalTransferred))")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                         }
                     }
                 }
@@ -1034,7 +1034,7 @@ struct PayoutHistoryScreen: View {
                     HStack(spacing: 12) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 16))
-                            .foregroundColor(.yugiGray.opacity(0.6))
+                            .foregroundColor(Color.yugiGray.opacity(0.6))
                         
                         TextField("Search transfers...", text: $searchText)
                             .font(.system(size: 16))
@@ -1045,7 +1045,7 @@ struct PayoutHistoryScreen: View {
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 16))
-                                    .foregroundColor(.yugiGray.opacity(0.6))
+                                    .foregroundColor(Color.yugiGray.opacity(0.6))
                             }
                         }
                     }
@@ -1065,23 +1065,23 @@ struct PayoutHistoryScreen: View {
                     Spacer()
                     ProgressView()
                         .scaleEffect(1.2)
-                        .progressViewStyle(CircularProgressViewStyle(tint: .yugiMocha))
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.yugiMocha))
                     Spacer()
                 } else if filteredPayouts.isEmpty {
                     // Empty State
                     VStack(spacing: 20) {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 64))
-                            .foregroundColor(.yugiGray.opacity(0.4))
+                            .foregroundColor(Color.yugiGray.opacity(0.4))
                         
                         VStack(spacing: 8) {
                             Text("No Transfers Yet")
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Your payout history will appear here once you receive transfers")
                                 .font(.system(size: 16))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                                 .multilineTextAlignment(.center)
                         }
                     }
@@ -1106,7 +1106,7 @@ struct PayoutHistoryScreen: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1115,7 +1115,7 @@ struct PayoutHistoryScreen: View {
                     } label: {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                     }
                 }
             }
@@ -1233,7 +1233,7 @@ enum PayoutStatus: String, CaseIterable {
     var color: Color {
         switch self {
         case .completed: return .green
-        case .pending: return .yugiMocha
+        case .pending: return Color.yugiMocha
         case .failed: return .red
         }
     }
@@ -1270,15 +1270,15 @@ struct FilterPill: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isSelected ? .white : .yugiGray)
+                .foregroundColor(isSelected ? .white : Color.yugiGray)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? .yugiMocha : Color.clear)
+                        .fill(isSelected ? Color.yugiMocha : Color.clear)
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
-                                .stroke(.yugiMocha, lineWidth: isSelected ? 0 : 1)
+                                .stroke(Color.yugiMocha, lineWidth: isSelected ? 0 : 1)
                         )
                 )
         }
@@ -1296,11 +1296,11 @@ struct PayoutTransferCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(payout.description)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text(payout.referenceNumber)
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -1308,7 +1308,7 @@ struct PayoutTransferCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("£\(String(format: "%.2f", payout.amount))")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     HStack(spacing: 6) {
                         Image(systemName: payout.status.icon)
@@ -1329,11 +1329,11 @@ struct PayoutTransferCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Bank Account")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                     
                     Text(payout.bankAccount)
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
                 
                 Spacer()
@@ -1341,11 +1341,11 @@ struct PayoutTransferCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Date")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                     
                     Text(formatDate(payout.date))
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                 }
             }
         }
@@ -1410,11 +1410,11 @@ struct EditBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Edit Bank Account")
                                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Update your bank account details")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                         }
                         
                         Spacer()
@@ -1432,7 +1432,7 @@ struct EditBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Account Name")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("e.g., Main Business Account", text: $accountName)
                                 .textFieldStyle(CustomTextFieldStyle())
@@ -1442,7 +1442,7 @@ struct EditBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Bank Name")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("e.g., Barclays Bank", text: $bankName)
                                 .textFieldStyle(CustomTextFieldStyle())
@@ -1452,7 +1452,7 @@ struct EditBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Account Number")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("8 digits", text: $accountNumber)
                                 .textFieldStyle(CustomTextFieldStyle())
@@ -1463,7 +1463,7 @@ struct EditBankAccountSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Sort Code")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("XX-XX-XX", text: $sortCode)
                                 .textFieldStyle(CustomTextFieldStyle())
@@ -1475,17 +1475,17 @@ struct EditBankAccountSheet: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Set as Default Account")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("This account will be used for all payouts")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.7))
+                                    .foregroundColor(Color.yugiGray.opacity(0.7))
                             }
                             
                             Spacer()
                             
                             Toggle("", isOn: $isDefault)
-                                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                                .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                         }
                         .padding(16)
                         .background(Color.yugiCream.opacity(0.4))
@@ -1496,20 +1496,20 @@ struct EditBankAccountSheet: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "info.circle.fill")
                                     .font(.system(size: 20))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                                 
                                 Text("Security Notice")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                             
                             Text("Your bank details are encrypted and stored securely. We use industry-standard security measures to protect your information.")
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                                 .lineLimit(nil)
                         }
                         .padding(16)
-                        .background(.yugiMocha.opacity(0.1))
+                        .background(Color.yugiMocha.opacity(0.1))
                         .cornerRadius(12)
                     }
                     .padding(.horizontal, 24)
@@ -1523,7 +1523,7 @@ struct EditBankAccountSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1531,7 +1531,7 @@ struct EditBankAccountSheet: View {
                         updateBankAccount()
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .disabled(!isFormValid)
                 }
             }
@@ -1613,11 +1613,11 @@ struct BankAccountSelectionSheet: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Select Bank Account")
                                 .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             Text("Choose which account to withdraw to")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray.opacity(0.7))
+                                .foregroundColor(Color.yugiGray.opacity(0.7))
                         }
                         
                         Spacer()
@@ -1651,7 +1651,7 @@ struct BankAccountSelectionSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1659,7 +1659,7 @@ struct BankAccountSelectionSheet: View {
                         onConfirm()
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(selectedAccount != nil ? .yugiMocha : .yugiGray.opacity(0.5))
+                    .foregroundColor(selectedAccount != nil ? Color.yugiMocha : Color.yugiGray.opacity(0.5))
                     .disabled(selectedAccount == nil)
                 }
             }
@@ -1678,12 +1678,12 @@ struct BankAccountSelectionCard: View {
                 // Bank Icon
                 ZStack {
                     Circle()
-                        .fill(.yugiMocha.opacity(0.1))
+                        .fill(Color.yugiMocha.opacity(0.1))
                         .frame(width: 48, height: 48)
                     
                     Image(systemName: "building.columns.fill")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 
                 // Account Details
@@ -1691,7 +1691,7 @@ struct BankAccountSelectionCard: View {
                     HStack {
                         Text(account.accountName)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         if account.isDefault {
                             Text("Default")
@@ -1699,7 +1699,7 @@ struct BankAccountSelectionCard: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
-                                .background(.yugiMocha)
+                                .background(Color.yugiMocha)
                                 .cornerRadius(8)
                         }
                         
@@ -1708,7 +1708,7 @@ struct BankAccountSelectionCard: View {
                     
                     Text("\(account.bankName) • ****\(String(account.accountNumber.suffix(4)))")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -1716,11 +1716,11 @@ struct BankAccountSelectionCard: View {
                 // Selection Indicator
                 ZStack {
                     Circle()
-                        .fill(isSelected ? .yugiMocha : Color.clear)
+                        .fill(isSelected ? Color.yugiMocha : Color.clear)
                         .frame(width: 24, height: 24)
                         .overlay(
                             Circle()
-                                .stroke(.yugiMocha, lineWidth: 2)
+                                .stroke(Color.yugiMocha, lineWidth: 2)
                         )
                     
                     if isSelected {
@@ -1733,10 +1733,10 @@ struct BankAccountSelectionCard: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? .yugiMocha.opacity(0.1) : Color.white)
+                    .fill(isSelected ? Color.yugiMocha.opacity(0.1) : Color.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? .yugiMocha : Color.yugiGray.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+                            .stroke(isSelected ? Color.yugiMocha : Color.yugiGray.opacity(0.2), lineWidth: isSelected ? 2 : 1)
                     )
             )
         }

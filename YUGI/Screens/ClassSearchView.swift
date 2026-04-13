@@ -25,7 +25,7 @@ struct ClassSearchView: View {
         NavigationView {
             ZStack {
                 // Background
-                .yugiMocha
+                Color.yugiMocha
                     .ignoresSafeArea()
                 
                 if showResults {
@@ -132,7 +132,7 @@ struct ClassSearchView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 24)
                                 .padding(.vertical, 12)
-                                .background(.yugiMocha)
+                                .background(Color.yugiMocha)
                                 .cornerRadius(8)
                             }
                             .padding()
@@ -255,11 +255,11 @@ struct ClassSearchView: View {
                                     VStack(spacing: 8) {
                                         Image(systemName: category.iconName)
                                             .font(.system(size: 24))
-                                            .foregroundColor(selectedCategory == category ? .yugiMocha : .white)
+                                            .foregroundColor(selectedCategory == category ? Color.yugiMocha : .white)
                                         
                                         Text(category.displayName)
                                             .font(.system(size: 12, weight: .medium))
-                                            .foregroundColor(selectedCategory == category ? .yugiMocha : .white)
+                                            .foregroundColor(selectedCategory == category ? Color.yugiMocha : .white)
                                             .multilineTextAlignment(.center)
                                     }
                                     .frame(width: 80, height: 80)
@@ -302,7 +302,7 @@ struct ClassSearchView: View {
                                     Text(day.shortName.prefix(1))
                                         .font(.system(size: 16, weight: .medium))
                                         .frame(width: 32, height: 32)
-                                        .foregroundColor(selectedDays.contains(day) ? .yugiMocha : .white)
+                                        .foregroundColor(selectedDays.contains(day) ? Color.yugiMocha : .white)
                                         .background(
                                             Circle()
                                                 .fill(selectedDays.contains(day) ? Color.white : Color.white.opacity(0.15))
@@ -341,7 +341,7 @@ struct ClassSearchView: View {
                             .tracking(1)
                     }
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(
@@ -516,7 +516,7 @@ struct ClassSearchResultCard: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [.yugiMocha.opacity(0.8), .yugiMocha.opacity(0.6)],
+                        colors: [Color.yugiMocha.opacity(0.8), Color.yugiMocha.opacity(0.6)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -551,7 +551,7 @@ struct ClassSearchResultCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(classItem.providerName ?? "Provider \(classItem.provider)")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Button(action: {
                     showingProviderProfile = true
@@ -562,10 +562,10 @@ struct ClassSearchResultCard: View {
                         Text("View Profile")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(.yugiMocha.opacity(0.1))
+                    .background(Color.yugiMocha.opacity(0.1))
                     .cornerRadius(6)
                 }
                 .buttonStyle(.plain)
@@ -576,11 +576,11 @@ struct ClassSearchResultCard: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text("£\(NSDecimalNumber(decimal: classItem.pricing.amount).intValue)")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 
                 Text("per session")
                     .font(.system(size: 12))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
             }
         }
     }
@@ -598,10 +598,10 @@ struct ClassSearchResultCard: View {
                         Text("View in Maps")
                             .font(.system(size: 14, weight: .medium))
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(.yugiMocha.opacity(0.1))
+                    .background(Color.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                 }
                 
@@ -621,10 +621,10 @@ struct ClassSearchResultCard: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(.yugiMocha.opacity(0.1))
+                    .background(Color.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                 }
                 
@@ -644,7 +644,7 @@ struct ClassSearchResultCard: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .background(.yugiMocha)
+                .background(Color.yugiMocha)
                 .cornerRadius(10)
                 .frame(maxWidth: .infinity)
             }

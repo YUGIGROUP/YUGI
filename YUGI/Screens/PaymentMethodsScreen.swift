@@ -24,7 +24,7 @@ struct PaymentMethodsScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -38,7 +38,7 @@ struct PaymentMethodsScreen: View {
                             HStack {
                                 Text("Your Payment Methods")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Spacer()
                                 
@@ -51,7 +51,7 @@ struct PaymentMethodsScreen: View {
                                         Text("Add New")
                                             .font(.system(size: 16, weight: .medium))
                                     }
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                                 }
                             }
                             
@@ -60,16 +60,16 @@ struct PaymentMethodsScreen: View {
                                 VStack(spacing: 16) {
                                     Image(systemName: "creditcard")
                                         .font(.system(size: 48))
-                                        .foregroundColor(.yugiGray.opacity(0.3))
+                                        .foregroundColor(Color.yugiGray.opacity(0.3))
                                     
                                     VStack(spacing: 8) {
                                         Text("No Payment Methods")
                                             .font(.system(size: 18, weight: .semibold))
-                                            .foregroundColor(.yugiGray)
+                                            .foregroundColor(Color.yugiGray)
                                         
                                         Text("Add a payment method to make bookings")
                                             .font(.system(size: 14))
-                                            .foregroundColor(.yugiGray.opacity(0.7))
+                                            .foregroundColor(Color.yugiGray.opacity(0.7))
                                             .multilineTextAlignment(.center)
                                     }
                                     
@@ -81,7 +81,7 @@ struct PaymentMethodsScreen: View {
                                             .foregroundColor(.white)
                                             .padding(.horizontal, 24)
                                             .padding(.vertical, 12)
-                                            .background(.yugiMocha)
+                                            .background(Color.yugiMocha)
                                             .cornerRadius(8)
                                     }
                                 }
@@ -89,7 +89,7 @@ struct PaymentMethodsScreen: View {
                                 .background(Color.clear)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(.yugiMocha, lineWidth: 1)
+                                        .stroke(Color.yugiMocha, lineWidth: 1)
                                 )
                                 .cornerRadius(12)
                             } else {
@@ -113,37 +113,37 @@ struct PaymentMethodsScreen: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Security & Privacy")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack(alignment: .top, spacing: 8) {
                                     Image(systemName: "lock.shield.fill")
-                                        .foregroundColor(.yugiMocha)
+                                        .foregroundColor(Color.yugiMocha)
                                         .frame(width: 16)
                                     
                                     Text("All payment information is encrypted and secure")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.yugiGray.opacity(0.8))
+                                        .foregroundColor(Color.yugiGray.opacity(0.8))
                                 }
                                 
                                 HStack(alignment: .top, spacing: 8) {
                                     Image(systemName: "creditcard.fill")
-                                        .foregroundColor(.yugiMocha)
+                                        .foregroundColor(Color.yugiMocha)
                                         .frame(width: 16)
                                     
                                     Text("We never store your full card details")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.yugiGray.opacity(0.8))
+                                        .foregroundColor(Color.yugiGray.opacity(0.8))
                                 }
                                 
                                 HStack(alignment: .top, spacing: 8) {
                                     Image(systemName: "checkmark.shield.fill")
-                                        .foregroundColor(.yugiMocha)
+                                        .foregroundColor(Color.yugiMocha)
                                         .frame(width: 16)
                                     
                                     Text("PCI DSS compliant payment processing")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.yugiGray.opacity(0.8))
+                                        .foregroundColor(Color.yugiGray.opacity(0.8))
                                 }
                             }
                         }
@@ -151,7 +151,7 @@ struct PaymentMethodsScreen: View {
                         .background(Color.clear)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(.yugiMocha, lineWidth: 1)
+                                .stroke(Color.yugiMocha, lineWidth: 1)
                         )
                         .cornerRadius(12)
                         
@@ -220,7 +220,7 @@ struct UserPaymentMethodRow: View {
                 HStack {
                     Text(paymentMethod.type.displayName)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     if paymentMethod.isDefault {
                         Text("Default")
@@ -228,18 +228,18 @@ struct UserPaymentMethodRow: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(.yugiMocha)
+                            .background(Color.yugiMocha)
                             .cornerRadius(4)
                     }
                 }
                 
                 Text("•••• •••• •••• \(paymentMethod.lastFourDigits)")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                 
                 Text("Expires \(String(format: "%02d/%d", paymentMethod.expiryMonth, paymentMethod.expiryYear))")
                     .font(.system(size: 12))
-                    .foregroundColor(.yugiGray.opacity(0.6))
+                    .foregroundColor(Color.yugiGray.opacity(0.6))
             }
             
             Spacer()
@@ -258,7 +258,7 @@ struct UserPaymentMethodRow: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 16))
-                    .foregroundColor(.yugiGray.opacity(0.6))
+                    .foregroundColor(Color.yugiGray.opacity(0.6))
                     .frame(width: 24)
             }
         }
@@ -266,7 +266,7 @@ struct UserPaymentMethodRow: View {
         .background(Color.clear)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.yugiMocha, lineWidth: 1)
+                .stroke(Color.yugiMocha, lineWidth: 1)
         )
         .cornerRadius(12)
         .alert("Delete Payment Method", isPresented: $showingDeleteAlert) {

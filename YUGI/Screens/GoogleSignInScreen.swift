@@ -22,15 +22,15 @@ struct GoogleSignInScreen: View {
                         HStack {
                             Image(systemName: "g.circle.fill")
                                 .font(.system(size: 32))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             Text("Sign in with Google")
                                 .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                         }
                         
                         Text("Enter your Google account credentials")
                             .font(.system(size: 17))
-                            .foregroundColor(.yugiGray.opacity(0.8))
+                            .foregroundColor(Color.yugiGray.opacity(0.8))
                     }
                     .padding(.top, 48)
                     
@@ -40,7 +40,7 @@ struct GoogleSignInScreen: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Email")
                                 .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("Enter your email", text: $email)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -52,7 +52,7 @@ struct GoogleSignInScreen: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Password")
                                 .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             HStack {
                                 if isShowingPassword {
@@ -65,7 +65,7 @@ struct GoogleSignInScreen: View {
                                     isShowingPassword.toggle()
                                 }) {
                                     Image(systemName: isShowingPassword ? "eye.slash.fill" : "eye.fill")
-                                        .foregroundColor(.yugiGray.opacity(0.6))
+                                        .foregroundColor(Color.yugiGray.opacity(0.6))
                                 }
                             }
                             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -74,7 +74,7 @@ struct GoogleSignInScreen: View {
                         // Remember Me Toggle
                         HStack {
                             Toggle("Remember Me", isOn: $biometricService.isRememberMeEnabled)
-                                .toggleStyle(SwitchToggleStyle(tint: .yugiOrange))
+                                .toggleStyle(SwitchToggleStyle(tint: Color.yugiOrange))
                                 .onChange(of: biometricService.isRememberMeEnabled) { _, newValue in
                                     biometricService.setRememberMeEnabled(newValue)
                                 }
@@ -115,7 +115,7 @@ struct GoogleSignInScreen: View {
                             }
                         }
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiOrange)
+                        .foregroundColor(Color.yugiOrange)
                         
                         Button("Create a Google Account") {
                             // Open Google account creation page
@@ -124,7 +124,7 @@ struct GoogleSignInScreen: View {
                             }
                         }
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiOrange)
+                        .foregroundColor(Color.yugiOrange)
                     }
                     .padding(.top)
                 }
@@ -138,7 +138,7 @@ struct GoogleSignInScreen: View {
                     Button("Back") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiOrange)
+                    .foregroundColor(Color.yugiOrange)
                 }
             }
             .navigationDestination(isPresented: $shouldNavigateToDashboard) {

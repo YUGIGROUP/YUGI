@@ -9,17 +9,17 @@ struct YUGISecureField: View {
         HStack {
             if isSecured {
                 SecureField(placeholder, text: $text)
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
             } else {
                 TextField(placeholder, text: $text)
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
             }
             
             Button(action: {
                 isSecured.toggle()
             }) {
                 Image(systemName: isSecured ? "eye.fill" : "eye.slash.fill")
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
             }
         }
         .padding()

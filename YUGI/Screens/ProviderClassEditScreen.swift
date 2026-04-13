@@ -39,14 +39,14 @@ struct ProviderClassEditScreen: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveChanges()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .disabled(isSaving)
                 }
             }
@@ -68,7 +68,7 @@ struct ProviderClassEditScreen: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Class Name")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 YUGITextField(
                     text: Binding(
@@ -97,7 +97,7 @@ struct ProviderClassEditScreen: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Category")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Picker("Category", selection: Binding(
                     get: { editedClass.category },
@@ -127,7 +127,7 @@ struct ProviderClassEditScreen: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
             }
             
@@ -135,7 +135,7 @@ struct ProviderClassEditScreen: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Description")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 YUGITextEditor(
                     placeholder: "Describe your class...",
@@ -188,7 +188,7 @@ struct ProviderClassEditScreen: View {
                             createdAt: editedClass.createdAt
                         )}
                     ))
-                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
+                    .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
                     
                     Spacer()
                 }
@@ -197,12 +197,12 @@ struct ProviderClassEditScreen: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Price per Session")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         HStack {
                             Text("£")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             TextField("0.00", value: Binding(
                                 get: { editedClass.price },
@@ -233,7 +233,7 @@ struct ProviderClassEditScreen: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Class Size")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Stepper(value: Binding(
                     get: { editedClass.maxCapacity },
@@ -256,7 +256,7 @@ struct ProviderClassEditScreen: View {
                     HStack {
                         Text("\(editedClass.maxCapacity) \(editedClass.maxCapacity == 1 ? "child" : "children")")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         Spacer()
                     }
                 }
@@ -265,7 +265,7 @@ struct ProviderClassEditScreen: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
             }
         }
@@ -279,7 +279,7 @@ struct ProviderClassEditScreen: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Location")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 YUGITextField(
                     text: $locationText,
@@ -327,7 +327,7 @@ struct ProviderClassEditScreen: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSaving ? Color.yugiGray.opacity(0.3) : .yugiMocha)
+                    .fill(isSaving ? Color.yugiGray.opacity(0.3) : Color.yugiMocha)
             )
         }
         .disabled(isSaving)
@@ -353,11 +353,11 @@ struct SectionHeader: View {
         HStack {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             
             Text(title)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             Spacer()
         }

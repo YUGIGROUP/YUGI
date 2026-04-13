@@ -104,21 +104,21 @@ public struct ProviderBookingsScreen: View {
                     title: "Total",
                     value: "\(getFilteredBookings().count)",
                     icon: "calendar.badge.clock",
-                    color: .yugiMocha
+                    color: Color.yugiMocha
                 )
                 
                 ProviderStatCard(
                     title: "This Week",
                     value: "\(getThisWeeksBookings().count)",
                     icon: "calendar",
-                    color: .yugiMocha.opacity(0.8)
+                    color: Color.yugiMocha.opacity(0.8)
                 )
             }
         }
         .padding(20)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -229,11 +229,11 @@ struct ProviderBookingRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(enhancedBooking.className)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text(formatClassDate(enhancedBooking))
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -253,11 +253,11 @@ struct ProviderBookingRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sarah Johnson")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("info@yugiapp.ai")
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -265,14 +265,14 @@ struct ProviderBookingRow: View {
                 // Price
                 Text("£\(NSDecimalNumber(decimal: enhancedBooking.price).doubleValue, specifier: "%.2f")")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
             }
             
             // Participants and Contact
             HStack {
                 Text("\(enhancedBooking.booking.numberOfParticipants) participants")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
                 
                 Spacer()
                 
@@ -291,9 +291,9 @@ struct ProviderBookingRow: View {
                 }) {
                     Image(systemName: "envelope.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                         .padding(6)
-                        .background(.yugiMocha.opacity(0.1))
+                        .background(Color.yugiMocha.opacity(0.1))
                         .cornerRadius(6)
                 }
             }
@@ -303,18 +303,18 @@ struct ProviderBookingRow: View {
                 HStack {
                     Image(systemName: "info.circle.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                     
                     Text(requirements)
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                         .lineLimit(2)
                     
                     Spacer()
                 }
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
-                .background(.yugiMocha.opacity(0.05))
+                .background(Color.yugiMocha.opacity(0.05))
                 .cornerRadius(6)
             }
         }
@@ -323,7 +323,7 @@ struct ProviderBookingRow: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.yugiMocha, lineWidth: 2)
+                .stroke(Color.yugiMocha, lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         .alert("Email App Not Available", isPresented: $showingEmailAlert) {
@@ -396,16 +396,16 @@ struct ProviderBookingsEmptyStateView: View {
         VStack(spacing: 20) {
             Image(systemName: icon)
                 .font(.system(size: 48))
-                .foregroundColor(.yugiGray.opacity(0.3))
+                .foregroundColor(Color.yugiGray.opacity(0.3))
             
             VStack(spacing: 8) {
                 Text(title)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text(message)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
                     .multilineTextAlignment(.center)
             }
         }
@@ -444,7 +444,7 @@ struct ProviderStatCard: View {
         .padding(16)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )

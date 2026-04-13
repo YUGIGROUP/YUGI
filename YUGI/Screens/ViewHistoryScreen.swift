@@ -283,7 +283,7 @@ struct ViewHistoryScreen: View {
             // Search Bar
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.yugiGray.opacity(0.6))
+                    .foregroundColor(Color.yugiGray.opacity(0.6))
                 
                 TextField("Search classes or providers...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
@@ -293,7 +293,7 @@ struct ViewHistoryScreen: View {
                         searchText = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.yugiGray.opacity(0.6))
+                            .foregroundColor(Color.yugiGray.opacity(0.6))
                     }
                 }
             }
@@ -308,7 +308,7 @@ struct ViewHistoryScreen: View {
                 HStack {
                     Text("Filtered by: \(selectedStatus?.displayName ?? "")")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiOrange)
+                        .foregroundColor(Color.yugiOrange)
                     
                     Spacer()
                     
@@ -316,7 +316,7 @@ struct ViewHistoryScreen: View {
                         selectedStatus = nil
                     }
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
                 .padding(.horizontal, 4)
             }
@@ -364,11 +364,11 @@ struct StatCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text(title)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -389,11 +389,11 @@ struct HistoryBookingCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Class Name") // Placeholder - would be actual class name
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("Provider Name") // Placeholder - would be actual provider name
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -413,11 +413,11 @@ struct HistoryBookingCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(formatDate(booking.bookingDate))
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text("\(booking.numberOfParticipants) participants")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
@@ -425,11 +425,11 @@ struct HistoryBookingCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("£25.00") // Placeholder price
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiOrange)
+                        .foregroundColor(Color.yugiOrange)
                     
                     Text("Booking #\(String(booking.id.uuidString.prefix(8)))")
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
             }
             
@@ -438,11 +438,11 @@ struct HistoryBookingCard: View {
                 HStack {
                     Image(systemName: "info.circle.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiOrange)
+                        .foregroundColor(Color.yugiOrange)
                     
                     Text(requirements)
                         .font(.system(size: 12))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     
                     Spacer()
                 }
@@ -482,22 +482,22 @@ struct EmptyHistoryView: View {
         VStack(spacing: 20) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 48))
-                .foregroundColor(.yugiGray.opacity(0.3))
+                .foregroundColor(Color.yugiGray.opacity(0.3))
             
             VStack(spacing: 8) {
                 Text("No bookings found")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 if !searchText.isEmpty || selectedStatus != nil {
                     Text("Try adjusting your search or filters")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                         .multilineTextAlignment(.center)
                 } else {
                     Text("You haven't booked any classes in the past 6 months")
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                         .multilineTextAlignment(.center)
                 }
             }
@@ -517,12 +517,12 @@ struct FilterSheet: View {
             VStack(spacing: 24) {
                 Text("Filter Bookings")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Booking Status")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     VStack(spacing: 12) {
                         ForEach([ClassStatus.completed, .cancelled], id: \.self) { status in
@@ -536,13 +536,13 @@ struct FilterSheet: View {
                                 HStack {
                                     Text(status.displayName)
                                         .font(.system(size: 16))
-                                        .foregroundColor(.yugiGray)
+                                        .foregroundColor(Color.yugiGray)
                                     
                                     Spacer()
                                     
                                     if selectedStatus == status {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.yugiOrange)
+                                            .foregroundColor(Color.yugiOrange)
                                     } else {
                                         Circle()
                                             .stroke(Color.yugiGray.opacity(0.3), lineWidth: 2)
@@ -583,7 +583,7 @@ struct FilterSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 }
             }
         }

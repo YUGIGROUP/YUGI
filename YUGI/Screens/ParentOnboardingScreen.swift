@@ -11,7 +11,7 @@ struct ParentOnboardingScreen: View {
     var body: some View {
         ZStack {
             // Background gradient with new color
-            LinearGradient(gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.85)]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.85)]), startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
             
             // Subtle techy overlays

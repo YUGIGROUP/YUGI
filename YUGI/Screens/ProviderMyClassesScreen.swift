@@ -121,7 +121,7 @@ struct ProviderMyClassesScreen: View {
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -152,7 +152,7 @@ struct ProviderMyClassesScreen: View {
                 VStack {
                     ProgressView()
                         .scaleEffect(1.2)
-                        .progressViewStyle(CircularProgressViewStyle(tint: .yugiMocha))
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.yugiMocha))
                         .padding(.top, 40)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -196,16 +196,16 @@ struct ProviderMyClassesScreen: View {
         VStack(spacing: 24) {
             Image(systemName: "calendar.badge.plus")
                 .font(.system(size: 64))
-                .foregroundColor(.yugiMocha.opacity(0.6))
+                .foregroundColor(Color.yugiMocha.opacity(0.6))
             
             VStack(spacing: 8) {
                 Text("No Classes Yet")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text("Start by creating your first class to connect with families in your area.")
                     .font(.system(size: 16))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
                     .multilineTextAlignment(.center)
             }
             
@@ -224,12 +224,12 @@ struct FilterChip: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isSelected ? .white : .yugiGray)
+                .foregroundColor(isSelected ? .white : Color.yugiGray)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? .yugiMocha : Color.white)
+                        .fill(isSelected ? Color.yugiMocha : Color.white)
                         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                 )
         }
@@ -251,11 +251,11 @@ struct ProviderClassManagementCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(classItem.name)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text(classItem.category.displayName)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 
                 Spacer()
@@ -282,10 +282,10 @@ struct ProviderClassManagementCard: View {
                         Text("Edit")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(.yugiMocha.opacity(0.1))
+                    .background(Color.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -337,10 +337,10 @@ struct ProviderClassManagementCard: View {
                         Text("View Intake Responses")
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(.yugiMocha.opacity(0.08))
+                    .background(Color.yugiMocha.opacity(0.08))
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -351,7 +351,7 @@ struct ProviderClassManagementCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.yugiMocha, lineWidth: 2)
+                .stroke(Color.yugiMocha, lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
@@ -377,12 +377,12 @@ struct ProviderDetailRow: View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundColor(.yugiGray.opacity(0.6))
+                .foregroundColor(Color.yugiGray.opacity(0.6))
                 .frame(width: 16)
             
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
             
             Spacer()
         }

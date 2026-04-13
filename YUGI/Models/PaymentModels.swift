@@ -38,10 +38,10 @@ enum CardType: String, CaseIterable, Codable {
     
     var color: Color {
         switch self {
-        case .visa: return .yugiMocha
-        case .mastercard: return .yugiMocha
-        case .amex: return .yugiMocha
-        case .discover: return .yugiMocha
+        case .visa: return Color.yugiMocha
+        case .mastercard: return Color.yugiMocha
+        case .amex: return Color.yugiMocha
+        case .discover: return Color.yugiMocha
         }
     }
 } 

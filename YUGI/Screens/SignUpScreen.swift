@@ -47,7 +47,7 @@ struct SignUpScreen: View {
             VStack(spacing: 0) {
                 // Progress bar
                 ProgressView(value: Double(currentStep), total: 3)
-                    .tint(.yugiMocha)
+                    .tint(Color.yugiMocha)
                     .padding()
                 
                 ScrollView {
@@ -81,7 +81,7 @@ struct SignUpScreen: View {
             } message: {
                 Text(errorMessage)
             }
-            .background(.yugiMocha.ignoresSafeArea())
+            .background(Color.yugiMocha.ignoresSafeArea())
             .onChange(of: profileImageItem) { oldValue, newValue in
                 if let item = newValue {
                     loadImage(from: item) { image in
@@ -277,7 +277,7 @@ struct SignUpScreen: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(selectedAgeGroups.contains(age) ? Color.white : Color.white.opacity(0.2))
-                                .foregroundColor(selectedAgeGroups.contains(age) ? .yugiMocha : .white)
+                                .foregroundColor(selectedAgeGroups.contains(age) ? Color.yugiMocha : .white)
                                 .cornerRadius(20)
                         }
                     }

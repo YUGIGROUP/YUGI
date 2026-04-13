@@ -22,7 +22,7 @@ struct RefundPolicyScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -39,11 +39,11 @@ struct RefundPolicyScreen: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Each booking includes a £1.99 non-refundable service fee.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("This covers admin, platform running costs, and secure payment processing.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                         }
                         
@@ -77,7 +77,7 @@ struct RefundPolicyScreen: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("If a provider cancels for any reason, you will receive a full refund of the class price, minus the £1.99 service fee.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                         }
                         
@@ -89,23 +89,23 @@ struct RefundPolicyScreen: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("If you are unhappy with a class, you must raise a dispute with YUGI within 48 hours after the class ends.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Payments are held for 3 days after each class to allow time for disputes.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("If a dispute is raised, funds will remain on hold until the issue is investigated and resolved.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("YUGI may decide to issue a full or partial refund, or release payment to the provider.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("YUGI's decision is final and binding.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                         }
                         
@@ -117,11 +117,11 @@ struct RefundPolicyScreen: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Providers receive payments for completed classes 3 days after the class has taken place, provided there are no disputes.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("If a dispute is raised, payment will be delayed until the issue is resolved.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                         }
                         
@@ -133,11 +133,11 @@ struct RefundPolicyScreen: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("The £1.99 service fee is always non-refundable.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 
                                 Text("Refunds are not available for missed classes, late arrivals, or changes in personal circumstances unless covered under Section 2 or 3.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                             }
                         }
                         
@@ -145,7 +145,7 @@ struct RefundPolicyScreen: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Need Help?")
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.yugiGray)
+                                .foregroundColor(Color.yugiGray)
                             
                             VStack(spacing: 12) {
                                 ContactRow(
@@ -189,11 +189,11 @@ struct PolicySection<Content: View>: View {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 
                 Text(title)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
             }
             
             content
@@ -220,11 +220,11 @@ struct PolicyPoint: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text(description)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
             }
             
             Spacer()
@@ -239,12 +239,12 @@ struct FeePoint: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "circle.fill")
                 .font(.system(size: 6))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .padding(.top, 6)
             
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
             
             Spacer()
         }
@@ -260,7 +260,7 @@ struct ProcessStep: View {
         HStack(alignment: .top, spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(.yugiMocha)
+                    .fill(Color.yugiMocha)
                     .frame(width: 24, height: 24)
                 
                 Text(number)
@@ -271,11 +271,11 @@ struct ProcessStep: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text(description)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.7))
+                    .foregroundColor(Color.yugiGray.opacity(0.7))
             }
             
             Spacer()
@@ -291,12 +291,12 @@ struct ImportantNote: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(width: 20)
             
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             Spacer()
         }
@@ -314,24 +314,24 @@ struct ContactRow: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 18))
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiGray)
+                        .foregroundColor(Color.yugiGray)
                     
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.yugiGray.opacity(0.7))
+                        .foregroundColor(Color.yugiGray.opacity(0.7))
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.5))
+                    .foregroundColor(Color.yugiGray.opacity(0.5))
             }
             .padding()
             .background(Color.yugiCream)

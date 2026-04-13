@@ -34,7 +34,7 @@ struct WelcomeUserScreen: View {
                     
                     Text(firstName)
                         .font(.system(size: 72, weight: .light, design: .rounded))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 .opacity(welcomeOpacity)
                 .offset(y: welcomeOffset)

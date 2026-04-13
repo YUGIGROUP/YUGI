@@ -71,7 +71,7 @@ struct ContactFormScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -117,7 +117,7 @@ struct ContactFormScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("What can we help you with?")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -139,7 +139,7 @@ struct ContactFormScreen: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Message")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             TextField("Please provide details about your issue...", text: $viewModel.message, axis: .vertical)
                 .textFieldStyle(.plain)
@@ -173,7 +173,7 @@ struct ContactFormScreen: View {
             .padding(.vertical, 16)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                    gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )
@@ -203,7 +203,7 @@ struct CategorySelectionCard: View {
                 
                 Text(category.displayName)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(isSelected ? .white : .yugiGray)
+                    .foregroundColor(isSelected ? .white : Color.yugiGray)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)

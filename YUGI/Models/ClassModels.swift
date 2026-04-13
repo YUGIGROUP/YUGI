@@ -26,9 +26,9 @@ enum ClassStatus: String, Codable {
         switch self {
         case .draft: return .gray
         case .pending: return .yellow
-        case .upcoming: return .yugiGray
+        case .upcoming: return Color.yugiGray
         case .inProgress: return .orange
-        case .completed: return .yugiGray
+        case .completed: return Color.yugiGray
         case .cancelled: return .red
         }
     }

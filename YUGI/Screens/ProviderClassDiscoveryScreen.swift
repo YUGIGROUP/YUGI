@@ -270,7 +270,7 @@ struct ProviderClassDiscoveryScreen: View {
             .cornerRadius(12)
         }
         .padding()
-        .background(.yugiMocha)
+        .background(Color.yugiMocha)
         .offset(y: animateHeader ? 0 : -30)
         .opacity(animateHeader ? 1 : 0)
         .animation(.easeOut(duration: 0.6).delay(0.1), value: animateHeader)
@@ -308,7 +308,7 @@ struct ProviderClassDiscoveryScreen: View {
                 Spacer()
                 ProgressView()
                     .scaleEffect(1.2)
-                    .progressViewStyle(CircularProgressViewStyle(tint: .yugiMocha))
+                    .progressViewStyle(CircularProgressViewStyle(tint: Color.yugiMocha))
                 Spacer()
             } else {
                 ScrollView {
@@ -367,13 +367,13 @@ struct ProviderClassCard: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(classItem.name)
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                             .multilineTextAlignment(.leading)
                         
                         VStack(alignment: .leading, spacing: 6) {
                             Text(classItem.providerName ?? "Provider \(classItem.provider)")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                             
                             Button(action: {
                                 showingProviderProfile = true
@@ -384,10 +384,10 @@ struct ProviderClassCard: View {
                                     Text("View Provider Profile")
                                         .font(.system(size: 12, weight: .medium))
                                 }
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(.yugiMocha.opacity(0.1))
+                                .background(Color.yugiMocha.opacity(0.1))
                                 .cornerRadius(6)
                             }
                             .buttonStyle(.plain)
@@ -400,7 +400,7 @@ struct ProviderClassCard: View {
                 // Description
                 Text(classItem.description)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
                     .lineLimit(2)
                 
                 // Provider insights
@@ -408,11 +408,11 @@ struct ProviderClassCard: View {
                     HStack {
                         Image(systemName: "building.2.fill")
                             .font(.system(size: 12))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                         
                         Text("Provider Insights")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                     
                     HStack(spacing: 16) {
@@ -433,18 +433,18 @@ struct ProviderClassCard: View {
                     HStack(spacing: 6) {
                         Image(systemName: "location.fill")
                             .font(.system(size: 12))
-                            .foregroundColor(.yugiGray.opacity(0.6))
+                            .foregroundColor(Color.yugiGray.opacity(0.6))
                         
                         Text(classItem.location?.name ?? "Location TBD")
                             .font(.system(size: 12))
-                            .foregroundColor(.yugiGray.opacity(0.8))
+                            .foregroundColor(Color.yugiGray.opacity(0.8))
                     }
                     
                     Spacer()
                     
                     Text("£\(NSDecimalNumber(decimal: classItem.pricing.amount).intValue)")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
             }
             .padding(16)
@@ -471,15 +471,15 @@ struct InsightBadge: View {
         HStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(size: 10))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
             
             Text(text)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.yugiGray.opacity(0.8))
+                .foregroundColor(Color.yugiGray.opacity(0.8))
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(.yugiMocha.opacity(0.1))
+        .background(Color.yugiMocha.opacity(0.1))
         .cornerRadius(8)
     }
 }
@@ -495,8 +495,8 @@ struct CategoryButton: View {
                 .font(.system(size: 14, weight: .medium))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(isSelected ? .yugiMocha : Color.white)
-                .foregroundColor(isSelected ? .white : .yugiGray)
+                .background(isSelected ? Color.yugiMocha : Color.white)
+                .foregroundColor(isSelected ? .white : Color.yugiGray)
                 .cornerRadius(20)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
@@ -515,11 +515,11 @@ struct ProviderClassFiltersSheet: View {
             VStack(spacing: 24) {
                 Text("Filters")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text("Filter options coming soon!")
                     .font(.system(size: 16))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
                     .multilineTextAlignment(.center)
                 
                 Spacer()
@@ -532,7 +532,7 @@ struct ProviderClassFiltersSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
             }
         }
@@ -597,23 +597,23 @@ struct ProviderClassDetailSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(classItem.name)
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         Text("by Provider \(classItem.provider)")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiMocha)
+                            .foregroundColor(Color.yugiMocha)
                     }
                     
                     // Description
                     Text(classItem.description)
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     
                     // Provider details
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Provider Details")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                         
                         VStack(spacing: 12) {
                             DetailRow(
@@ -640,21 +640,21 @@ struct ProviderClassDetailSheet: View {
                                 HStack(spacing: 8) {
                                     Image(systemName: "map")
                                         .font(.system(size: 16))
-                                        .foregroundColor(.yugiMocha)
+                                        .foregroundColor(Color.yugiMocha)
                                     
                                     Text("View in Apple Maps")
                                         .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(.yugiMocha)
+                                        .foregroundColor(Color.yugiMocha)
                                     
                                     Spacer()
                                     
                                     Image(systemName: "arrow.up.right")
                                         .font(.system(size: 12))
-                                        .foregroundColor(.yugiMocha)
+                                        .foregroundColor(Color.yugiMocha)
                                 }
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 12)
-                                .background(.yugiMocha.opacity(0.1))
+                                .background(Color.yugiMocha.opacity(0.1))
                                 .cornerRadius(8)
                             }
                             .buttonStyle(.plain)
@@ -678,7 +678,7 @@ struct ProviderClassDetailSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(.yugiMocha)
+                    .foregroundColor(Color.yugiMocha)
                 }
             }
         }
@@ -694,17 +694,17 @@ struct DetailRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(.yugiMocha)
+                .foregroundColor(Color.yugiMocha)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 
                 Text(value)
                     .font(.system(size: 14))
-                    .foregroundColor(.yugiGray.opacity(0.8))
+                    .foregroundColor(Color.yugiGray.opacity(0.8))
             }
             
             Spacer()

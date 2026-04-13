@@ -62,7 +62,7 @@ struct PersonalInformationScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -157,7 +157,7 @@ struct PersonalInformationScreen: View {
                 } else {
                     Text(String(fullName.prefix(1).uppercased()))
                         .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
                 
                 if isEditing {
@@ -173,7 +173,7 @@ struct PersonalInformationScreen: View {
                                     .font(.system(size: 16))
                                     .foregroundColor(.white)
                                     .frame(width: 32, height: 32)
-                                    .background(.yugiMocha)
+                                    .background(Color.yugiMocha)
                                     .clipShape(Circle())
                             }
                         }
@@ -188,7 +188,7 @@ struct PersonalInformationScreen: View {
                 }) {
                     Text("Change Photo")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
             }
         }
@@ -198,14 +198,14 @@ struct PersonalInformationScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Personal Details")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             VStack(spacing: 16) {
                 // Full Name
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Full Name")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     
                     if isEditing {
                         YUGITextField(
@@ -217,12 +217,12 @@ struct PersonalInformationScreen: View {
                         HStack {
                             Image(systemName: "person.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                                 .frame(width: 24)
                             
                             Text(fullName.isEmpty ? "Not provided" : fullName)
                                 .font(.system(size: 16))
-                                .foregroundColor(fullName.isEmpty ? .yugiGray.opacity(0.6) : .yugiGray)
+                                .foregroundColor(fullName.isEmpty ? Color.yugiGray.opacity(0.6) : Color.yugiGray)
                             
                             Spacer()
                         }
@@ -237,7 +237,7 @@ struct PersonalInformationScreen: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Email Address")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     
                     if isEditing {
                         YUGITextField(
@@ -250,12 +250,12 @@ struct PersonalInformationScreen: View {
                         HStack {
                             Image(systemName: "envelope.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                                 .frame(width: 24)
                             
                             Text(email.isEmpty ? "Not provided" : email)
                                 .font(.system(size: 16))
-                                .foregroundColor(email.isEmpty ? .yugiGray.opacity(0.6) : .yugiGray)
+                                .foregroundColor(email.isEmpty ? Color.yugiGray.opacity(0.6) : Color.yugiGray)
                             
                             Spacer()
                         }
@@ -270,7 +270,7 @@ struct PersonalInformationScreen: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Phone Number")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.yugiGray.opacity(0.8))
+                        .foregroundColor(Color.yugiGray.opacity(0.8))
                     
                     if isEditing {
                         YUGITextField(
@@ -283,12 +283,12 @@ struct PersonalInformationScreen: View {
                         HStack {
                             Image(systemName: "phone.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(.yugiMocha)
+                                .foregroundColor(Color.yugiMocha)
                                 .frame(width: 24)
                             
                             Text(phoneNumber.isEmpty ? "Not provided" : phoneNumber)
                                 .font(.system(size: 16))
-                                .foregroundColor(phoneNumber.isEmpty ? .yugiGray.opacity(0.6) : .yugiGray)
+                                .foregroundColor(phoneNumber.isEmpty ? Color.yugiGray.opacity(0.6) : Color.yugiGray)
                             
                             Spacer()
                         }
@@ -306,24 +306,24 @@ struct PersonalInformationScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Account Information")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
             
             VStack(spacing: 12) {
                 // Account Type
                 HStack {
                     Image(systemName: "person.badge.key.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                         .frame(width: 24)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Account Type")
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                         
                         Text(getUserTypeDisplay())
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                     
                     Spacer()
@@ -337,17 +337,17 @@ struct PersonalInformationScreen: View {
                 HStack {
                     Image(systemName: "calendar")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                         .frame(width: 24)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Member Since")
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
                         
                         Text(formatMemberSinceDate())
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
                     
                     Spacer()
@@ -361,24 +361,24 @@ struct PersonalInformationScreen: View {
                 HStack {
                     Image(systemName: "chart.bar.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                         .frame(width: 24)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Activity tracking")
                             .font(.system(size: 14))
-                            .foregroundColor(.yugiGray.opacity(0.7))
+                            .foregroundColor(Color.yugiGray.opacity(0.7))
 
                         Text("Personalised recommendations")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.yugiGray)
+                            .foregroundColor(Color.yugiGray)
                     }
 
                     Spacer()
 
                     Toggle("", isOn: $trackingEnabled)
                         .labelsHidden()
-                        .tint(.yugiMocha)
+                        .tint(Color.yugiMocha)
                         .onChange(of: trackingEnabled) { _, newValue in
                             if newValue {
                                 ConsentManager.shared.grantConsent()
@@ -418,7 +418,7 @@ struct PersonalInformationScreen: View {
                 .padding(.vertical, 16)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
+                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -437,7 +437,7 @@ struct PersonalInformationScreen: View {
                     Text("Cancel")
                         .font(.system(size: 18, weight: .semibold))
                 }
-                .foregroundColor(.yugiGray)
+                .foregroundColor(Color.yugiGray)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(Color.white)

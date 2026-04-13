@@ -29,13 +29,13 @@ struct IntakeFormScreen: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "list.clipboard.fill")
                                     .font(.system(size: 36))
-                                    .foregroundColor(.yugiMocha)
+                                    .foregroundColor(Color.yugiMocha)
                                 Text("A few quick questions")
                                     .font(.system(size: 22, weight: .bold))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 Text("\(classItem.name) — \(classItem.providerName ?? "Your provider") needs a bit more info")
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray.opacity(0.65))
+                                    .foregroundColor(Color.yugiGray.opacity(0.65))
                                     .multilineTextAlignment(.center)
                             }
                             .padding(.top, 24)
@@ -82,7 +82,7 @@ struct IntakeFormScreen: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(canSubmit ? .yugiMocha : .yugiMocha.opacity(0.4))
+                            .background(canSubmit ? Color.yugiMocha : Color.yugiMocha.opacity(0.4))
                             .foregroundColor(.white)
                             .cornerRadius(14)
                         }
@@ -93,7 +93,7 @@ struct IntakeFormScreen: View {
                         } label: {
                             Text("Skip for now")
                                 .font(.system(size: 14))
-                                .foregroundColor(.yugiGray.opacity(0.5))
+                                .foregroundColor(Color.yugiGray.opacity(0.5))
                         }
                         .padding(.bottom, 8)
                     }
@@ -108,7 +108,7 @@ struct IntakeFormScreen: View {
                     Button { onSkip() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.yugiGray.opacity(0.6))
+                            .foregroundColor(Color.yugiGray.opacity(0.6))
                     }
                 }
             }
@@ -159,11 +159,11 @@ private struct QuestionCard: View {
             HStack(alignment: .top, spacing: 4) {
                 Text(question.questionText)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.yugiGray)
+                    .foregroundColor(Color.yugiGray)
                 if question.isRequired {
                     Text("*")
                         .font(.system(size: 13))
-                        .foregroundColor(.yugiMocha)
+                        .foregroundColor(Color.yugiMocha)
                 }
             }
 
@@ -174,7 +174,7 @@ private struct QuestionCard: View {
                     .padding()
                     .background(Color.white)
                     .cornerRadius(10)
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(.yugiMocha.opacity(0.3), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1))
                     .font(.system(size: 14))
 
             case .multipleChoice:
@@ -185,10 +185,10 @@ private struct QuestionCard: View {
                         } label: {
                             HStack {
                                 Image(systemName: answer == option ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(answer == option ? .yugiMocha : .yugiGray.opacity(0.4))
+                                    .foregroundColor(answer == option ? Color.yugiMocha : Color.yugiGray.opacity(0.4))
                                 Text(option)
                                     .font(.system(size: 14))
-                                    .foregroundColor(.yugiGray)
+                                    .foregroundColor(Color.yugiGray)
                                 Spacer()
                             }
                             .padding()
@@ -197,7 +197,7 @@ private struct QuestionCard: View {
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
                                     .stroke(
-                                        answer == option ? .yugiMocha : .yugiMocha.opacity(0.2),
+                                        answer == option ? Color.yugiMocha : Color.yugiMocha.opacity(0.2),
                                         lineWidth: answer == option ? 1.5 : 1
                                     )
                             )
