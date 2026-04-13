@@ -748,7 +748,7 @@ router.post('/', [
   }),
   body('category').custom((value) => {
     const normalizedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
-    return ['Baby', 'Toddler', 'Wellness'].includes(normalizedValue);
+    return ['Baby', 'Toddler', 'Preschool', 'School Age', 'Wellness', 'SEND'].includes(normalizedValue);
   }).withMessage('Category must be one of: baby, toddler, wellness (case insensitive)'),
   body('individualChildSpots').isInt({ min: 0, max: 15 }),
   body('siblingPairs').isInt({ min: 0, max: 15 }),
@@ -1362,7 +1362,7 @@ If the request violates this policy, respond ONLY with this exact JSON and nothi
 Otherwise, return ONLY valid JSON with no markdown, no code fences, and no explanation — just the raw JSON object.
 Fields to include:
 - className (string): a creative, warm, appealing name for the class
-- category (string): one of exactly: "Baby", "Toddler", "Preschool", "School Age", "Wellness", "Music", "Art", "Sports", "Dance", "Swimming", "Cooking", "STEM", "Languages", "Drama", "Outdoors", "Special Needs", "Party", "Other"
+- category (string): one of exactly: "Baby", "Toddler", "Preschool", "School Age", "Wellness", "SEND"
 - description (string): 2-3 warm, professional sentences describing what parents and children can expect
 - ageRange (string): e.g. "0-12 months", "1-3 years", "3-5 years"
 - price (number): suggested price in GBP as a number, e.g. 15 (use 0 if free)

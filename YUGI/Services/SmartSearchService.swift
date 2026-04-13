@@ -12,7 +12,7 @@ import FoundationModels
 @available(iOS 26, macOS 26, *)
 @Generable
 struct SmartSearchFilters {
-    @Guide(description: "Class category, e.g. Baby, Music, Sensory, Yoga, Swimming, Dance. Null if not specified.")
+    @Guide(description: "Class category, one of: Baby, Toddler, Preschool, School Age, Wellness, SEND. Null if not specified.")
     let category: String?
 
     @Guide(description: "Age range as a human-readable string, e.g. '0-6 months', '1-2 years'. Null if not specified.")
@@ -44,7 +44,7 @@ final class SmartSearchService {
     private let instructions = """
         You are a search assistant for YUGI, an app that helps parents discover baby and toddler classes.
         Parse the parent's natural language query into structured search filters.
-        Class categories: Music, Art, Sport, Dance, Language, STEM, Sensory, Swimming, Gymnastics, Drama, Cooking, Nature, Yoga, Baby, Wellness.
+        Class categories: Baby, Toddler, Preschool, School Age, Wellness, SEND.
         Be conservative — only set Bool flags to true when the parent clearly mentions them.
         Set string fields to null when not specified rather than guessing.
         """
