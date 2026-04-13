@@ -228,7 +228,7 @@ struct ProviderClassCreationScreen: View {
                     }
                 }
                 .pickerStyle(MenuPickerStyle())
-                Color.yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
+                .tint(Color.yugiMocha)
                 .colorScheme(.light)
                 .frame(alignment: .leading)
                 .padding()
@@ -309,7 +309,7 @@ struct ProviderClassCreationScreen: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        Color.yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
+                        .tint(Color.yugiMocha)
                         .colorScheme(.light)
                         .padding()
                         .background(Color.white)
@@ -339,7 +339,7 @@ struct ProviderClassCreationScreen: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        Color.yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
+                        .tint(Color.yugiMocha)
                         .colorScheme(.light)
                         .padding()
                         .background(Color.white)
@@ -369,7 +369,7 @@ struct ProviderClassCreationScreen: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        Color.yugiMocha(Color(red: 0.3, green: 0.3, blue: 0.3))
+                        .tint(Color.yugiMocha)
                         .colorScheme(.light)
                         .padding()
                         .background(Color.white)
@@ -669,8 +669,7 @@ struct ProviderClassCreationScreen: View {
                                     }
                                 ), displayedComponents: .date)
                                     .labelsHidden()
-                                    Color.yugiMocha(Color.yugiMocha)
-                                
+                                    .tint(Color.yugiMocha)
                                 Spacer()
                                 
                                 if classData.classDates.count > 1 {
@@ -1493,8 +1492,7 @@ struct TimeSlotRow: View {
         HStack {
             DatePicker("", selection: $timeSlot.startTime, displayedComponents: .hourAndMinute)
                 .labelsHidden()
-                Color.yugiMocha(Color.yugiMocha)
-            
+                .tint(Color.yugiMocha)
             Spacer()
             
             Button(action: onDelete) {
@@ -1633,7 +1631,7 @@ struct IntakeQuestionEditor: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                Color.yugiMocha(Color.yugiMocha)
+                .tint(Color.yugiMocha)
             }
 
             // Required toggle

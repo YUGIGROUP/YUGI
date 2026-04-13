@@ -507,7 +507,7 @@ struct DayHoursRow: View {
                         
                         DatePicker("", selection: $dayHours.openTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
-                            Color.yugiMocha(Color.yugiMocha)
+                            .tint(Color.yugiMocha)
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
@@ -517,7 +517,7 @@ struct DayHoursRow: View {
                         
                         DatePicker("", selection: $dayHours.closeTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
-                            Color.yugiMocha(Color.yugiMocha)
+                            .tint(Color.yugiMocha)
                     }
                     
                     Spacer()

@@ -122,11 +122,11 @@ struct ParsedSearchFilters {
 
 extension ParsedSearchFilters {
     /// Apply structured AI filters to a list of classes.
-    func apply(to classes: [YugiClass], enrichments: [String: VenueEnrichmentResponse]) -> [YugiClass] {
+    func apply(to classes: [Class], enrichments: [String: VenueEnrichmentResponse]) -> [Class] {
         classes.filter { yugiClass in
             // Category filter
             if let cat = category?.lowercased(), !cat.isEmpty {
-                let classCategory = yugiClass.category.lowercased()
+                let classCategory = yugiClass.category.rawValue.lowercased()
                 let className = yugiClass.name.lowercased()
                 let classDesc = yugiClass.description.lowercased()
                 guard classCategory.contains(cat) || className.contains(cat) || classDesc.contains(cat) else {
@@ -136,8 +136,11 @@ extension ParsedSearchFilters {
 
             // Location hint filter
             if let loc = locationHint?.lowercased(), !loc.isEmpty {
-                let venueAddr = (yugiClass.venueAddress ?? "").lowercased()
-                let venueName = (yugiClass.venueName ?? "").lowercased()
+                let venueAddr = [
+                    yugiClass.location?.address.street,
+                    yugiClass.location?.address.city
+                ].compactMap { $0 }.joined(separator: " ").lowercased()
+                let venueName = (yugiClass.location?.name ?? "").lowercased()
                 guard venueAddr.contains(loc) || venueName.contains(loc) else {
                     return false
                 }
@@ -145,7 +148,7 @@ extension ParsedSearchFilters {
 
             // Enrichment-based filters
             if needsParking || needsBabyChanging || needsStepFreeAccess {
-                guard let placeId = yugiClass.venuePlaceId,
+                guard let placeId = yugiClass.googlePlaceId,
                       let enrichment = enrichments[placeId] else {
                     // No enrichment data — give benefit of the doubt
                     return true

@@ -612,7 +612,6 @@ struct VenueCheckScreen: View {
             )
             .store(in: &cancellables)
     }
-}
 
     // MARK: - Venue Intelligence Summary generation
 
@@ -647,6 +646,8 @@ struct VenueCheckScreen: View {
         }
     }
 
+
+}
 
 #Preview {
     VenueCheckScreen()
