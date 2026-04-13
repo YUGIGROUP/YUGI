@@ -19,7 +19,7 @@ struct YUGISecureField: View {
                 isSecured.toggle()
             }) {
                 Image(systemName: isSecured ? "eye.fill" : "eye.slash.fill")
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
             }
         }
         .padding()

@@ -270,7 +270,7 @@ struct ProviderClassDiscoveryScreen: View {
             .cornerRadius(12)
         }
         .padding()
-        .background(Color(hex: "#BC6C5C"))
+        .background(.yugiMocha)
         .offset(y: animateHeader ? 0 : -30)
         .opacity(animateHeader ? 1 : 0)
         .animation(.easeOut(duration: 0.6).delay(0.1), value: animateHeader)
@@ -308,7 +308,7 @@ struct ProviderClassDiscoveryScreen: View {
                 Spacer()
                 ProgressView()
                     .scaleEffect(1.2)
-                    .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#BC6C5C")))
+                    .progressViewStyle(CircularProgressViewStyle(tint: .yugiMocha))
                 Spacer()
             } else {
                 ScrollView {
@@ -373,7 +373,7 @@ struct ProviderClassCard: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(classItem.providerName ?? "Provider \(classItem.provider)")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             Button(action: {
                                 showingProviderProfile = true
@@ -384,10 +384,10 @@ struct ProviderClassCard: View {
                                     Text("View Provider Profile")
                                         .font(.system(size: 12, weight: .medium))
                                 }
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(Color(hex: "#BC6C5C").opacity(0.1))
+                                .background(.yugiMocha.opacity(0.1))
                                 .cornerRadius(6)
                             }
                             .buttonStyle(.plain)
@@ -408,7 +408,7 @@ struct ProviderClassCard: View {
                     HStack {
                         Image(systemName: "building.2.fill")
                             .font(.system(size: 12))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                         
                         Text("Provider Insights")
                             .font(.system(size: 12, weight: .semibold))
@@ -444,7 +444,7 @@ struct ProviderClassCard: View {
                     
                     Text("£\(NSDecimalNumber(decimal: classItem.pricing.amount).intValue)")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
             }
             .padding(16)
@@ -471,7 +471,7 @@ struct InsightBadge: View {
         HStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(size: 10))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
             
             Text(text)
                 .font(.system(size: 10, weight: .medium))
@@ -479,7 +479,7 @@ struct InsightBadge: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Color(hex: "#BC6C5C").opacity(0.1))
+        .background(.yugiMocha.opacity(0.1))
         .cornerRadius(8)
     }
 }
@@ -495,7 +495,7 @@ struct CategoryButton: View {
                 .font(.system(size: 14, weight: .medium))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color(hex: "#BC6C5C") : Color.white)
+                .background(isSelected ? .yugiMocha : Color.white)
                 .foregroundColor(isSelected ? .white : .yugiGray)
                 .cornerRadius(20)
                 .overlay(
@@ -532,7 +532,7 @@ struct ProviderClassFiltersSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
             }
         }
@@ -601,7 +601,7 @@ struct ProviderClassDetailSheet: View {
                         
                         Text("by Provider \(classItem.provider)")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                     }
                     
                     // Description
@@ -640,21 +640,21 @@ struct ProviderClassDetailSheet: View {
                                 HStack(spacing: 8) {
                                     Image(systemName: "map")
                                         .font(.system(size: 16))
-                                        .foregroundColor(Color(hex: "#BC6C5C"))
+                                        .foregroundColor(.yugiMocha)
                                     
                                     Text("View in Apple Maps")
                                         .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(Color(hex: "#BC6C5C"))
+                                        .foregroundColor(.yugiMocha)
                                     
                                     Spacer()
                                     
                                     Image(systemName: "arrow.up.right")
                                         .font(.system(size: 12))
-                                        .foregroundColor(Color(hex: "#BC6C5C"))
+                                        .foregroundColor(.yugiMocha)
                                 }
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 12)
-                                .background(Color(hex: "#BC6C5C").opacity(0.1))
+                                .background(.yugiMocha.opacity(0.1))
                                 .cornerRadius(8)
                             }
                             .buttonStyle(.plain)
@@ -678,7 +678,7 @@ struct ProviderClassDetailSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
             }
         }
@@ -694,7 +694,7 @@ struct DetailRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {

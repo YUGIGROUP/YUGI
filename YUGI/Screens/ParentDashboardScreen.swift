@@ -418,7 +418,7 @@ struct ParentDashboardScreen: View {
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
-            .background(Color(hex: "#BC6C5C").ignoresSafeArea())
+            .background(.yugiMocha.ignoresSafeArea())
             .navigationBarHidden(true)
             .sheet(isPresented: $showingAddChild) {
                 AddChildScreen { newChild in
@@ -857,7 +857,7 @@ struct ParentDashboardScreen: View {
             }
         }
         .padding(20)
-        .background(Color(hex: "#BC6C5C"))
+        .background(.yugiMocha)
     }
     
     private var tabSelector: some View {
@@ -882,7 +882,7 @@ struct ParentDashboardScreen: View {
         }
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -954,7 +954,7 @@ struct ParentDashboardScreen: View {
                         ParentQuickActionButton(
                             title: "Find Classes",
                             icon: "magnifyingglass",
-                            color: Color(hex: "#BC6C5C")
+                            color: .yugiMocha
                         ) {
                             print("🔍 ParentDashboard: Find Classes button tapped")
                             print("🔍 ParentDashboard: Setting shouldNavigateToClassDiscovery = true")
@@ -1420,7 +1420,7 @@ struct BookingCard: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "mappin.circle")
                                     .font(.system(size: 14))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                     .frame(width: 16)
                                 
                                 Text(enhancedBooking.classInfo.location?.address.formatted ?? "Location TBD")
@@ -1448,7 +1448,7 @@ struct BookingCard: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(Color(hex: "#BC6C5C"))
+                                .background(.yugiMocha)
                                 .cornerRadius(8)
                             }
                         }
@@ -1574,12 +1574,12 @@ struct ChildCard: View {
             // Avatar
             ZStack {
                 Circle()
-                    .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                    .fill(.yugiMocha.opacity(0.1))
                     .frame(width: 60, height: 60)
                 
                 Text(String(child.name.prefix(1)))
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
             }
             
             Text(child.name)
@@ -1628,7 +1628,7 @@ struct ProfileRow: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -1720,7 +1720,7 @@ struct ParentEmptyStateView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Color(hex: "#BC6C5C"))
+                    .background(.yugiMocha)
                     .cornerRadius(8)
             }
         }

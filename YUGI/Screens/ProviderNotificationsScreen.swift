@@ -53,7 +53,7 @@ struct ProviderNotificationsScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -88,7 +88,7 @@ struct ProviderNotificationsScreen: View {
             }
             .background(Color.yugiCream.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
+            .toolbarBackground(.yugiMocha, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -214,17 +214,17 @@ struct ProviderNotificationTabButton: View {
             VStack(spacing: 4) {
                 Text(title)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(isSelected ? Color(hex: "#BC6C5C") : .yugiGray)
+                    .foregroundColor(isSelected ? .yugiMocha : .yugiGray)
                 
                 Text("\(count)")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(isSelected ? Color(hex: "#BC6C5C") : .yugiGray.opacity(0.7))
+                    .foregroundColor(isSelected ? .yugiMocha : .yugiGray.opacity(0.7))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .background(
                 Rectangle()
-                    .fill(isSelected ? Color(hex: "#BC6C5C").opacity(0.1) : Color.clear)
+                    .fill(isSelected ? .yugiMocha.opacity(0.1) : Color.clear)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -264,7 +264,7 @@ struct ProviderNotificationRow: View {
                         
                         if !notification.isRead {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C"))
+                                .fill(.yugiMocha)
                                 .frame(width: 8, height: 8)
                         }
                     }
@@ -285,7 +285,7 @@ struct ProviderNotificationRow: View {
                         if let actionType = notification.actionType, actionType != .none {
                             Text(actionType.displayName)
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                     }
                 }
@@ -303,7 +303,7 @@ struct ProviderNotificationRow: View {
             .padding(16)
             .background(
                 Rectangle()
-                    .fill(notification.isRead ? Color.white : Color(hex: "#BC6C5C").opacity(0.05))
+                    .fill(notification.isRead ? Color.white : .yugiMocha.opacity(0.05))
             )
             
             Divider()

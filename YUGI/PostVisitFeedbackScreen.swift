@@ -124,7 +124,7 @@ struct PostVisitFeedbackScreen: View {
             HStack(spacing: 5) {
                 ForEach(1...totalCards, id: \.self) { i in
                     Capsule()
-                        .fill(i <= currentCard ? Color.accentColor : Color(.systemGray5))
+                        .fill(i <= currentCard ? Color.yugiMocha : Color(.systemGray5))
                         .frame(width: i == currentCard ? 22 : 8, height: 6)
                         .animation(.spring(response: 0.3), value: currentCard)
                 }
@@ -171,7 +171,7 @@ struct PostVisitFeedbackScreen: View {
                             .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 17)
-                            .background(Color.accentColor)
+                            .background(Color.yugiMocha)
                             .foregroundColor(.white)
                             .cornerRadius(14)
                     }
@@ -274,13 +274,13 @@ struct PostVisitFeedbackScreen: View {
                     .padding(.vertical, 17)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(selected ? Color.accentColor.opacity(0.10) : Color(.systemGray6))
+                            .fill(selected ? Color.yugiMocha.opacity(0.10) : Color(.systemGray6))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 2)
+                            .stroke(selected ? Color.yugiMocha : Color.clear, lineWidth: 2)
                     )
-                    .foregroundColor(selected ? Color.accentColor : .primary)
+                    .foregroundColor(selected ? Color.yugiMocha : .primary)
             }
         }
     // MARK: - Card 4: Star Rating
@@ -305,7 +305,7 @@ struct PostVisitFeedbackScreen: View {
                             } label: {
                                 Image(systemName: star <= rating ? "star.fill" : "star")
                                     .font(.system(size: 46))
-                                    .foregroundColor(star <= rating ? Color.accentColor : Color(.systemGray4))
+                                    .foregroundColor(star <= rating ? Color.yugiMocha : Color(.systemGray4))
                             }
                         }
                     }
@@ -369,7 +369,7 @@ struct PostVisitFeedbackScreen: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 17)
-                        .background(Color.accentColor)
+                        .background(Color.yugiMocha)
                         .foregroundColor(.white)
                         .cornerRadius(14)
                     }
@@ -388,7 +388,7 @@ struct PostVisitFeedbackScreen: View {
         VStack(spacing: 16) {
             Image(systemName: "heart.fill")
                 .font(.system(size: 60))
-                .foregroundColor(Color.accentColor)
+                .foregroundColor(Color.yugiMocha)
 
             Text("No worries!")
                 .font(.title2.weight(.bold))

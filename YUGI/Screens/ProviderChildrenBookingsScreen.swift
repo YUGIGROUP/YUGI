@@ -46,7 +46,7 @@ struct ProviderChildrenBookingsScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -83,7 +83,7 @@ struct ProviderChildrenBookingsScreen: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(Color(hex: "#BC6C5C"))
+                .background(.yugiMocha)
                 
                 // Content based on selected tab
                 TabView(selection: $selectedTab) {
@@ -97,7 +97,7 @@ struct ProviderChildrenBookingsScreen: View {
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
-            .background(Color(hex: "#BC6C5C").ignoresSafeArea())
+            .background(.yugiMocha.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
 
@@ -208,7 +208,7 @@ struct ProviderChildrenBookingsScreen: View {
                                 Text("Add Child")
                                     .font(.system(size: 16, weight: .medium))
                             }
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                         }
                     }
                     
@@ -340,7 +340,7 @@ struct ProviderChildrenEmptyStateView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Color(hex: "#BC6C5C"))
+                    .background(.yugiMocha)
                     .cornerRadius(8)
             }
         }
@@ -384,7 +384,7 @@ struct ProviderChildrenBookingCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(enhancedBooking.className)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                     
                     Text(enhancedBooking.providerName)
                         .font(.system(size: 14))
@@ -396,7 +396,7 @@ struct ProviderChildrenBookingCard: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("£\(NSDecimalNumber(decimal: enhancedBooking.price).doubleValue, specifier: "%.2f")")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                     
                     Text(formatDate(enhancedBooking.booking.bookingDate))
                         .font(.system(size: 12))
@@ -438,7 +438,7 @@ struct ProviderChildrenBookingCard: View {
                 }
                 .padding(.vertical, 6)
                 .padding(.horizontal, 10)
-                .background(Color(hex: "#BC6C5C").opacity(0.05))
+                .background(.yugiMocha.opacity(0.05))
                 .cornerRadius(6)
             }
         }
@@ -463,7 +463,7 @@ struct ProviderChildrenEmptyBookingsView: View {
         VStack(spacing: 16) {
             Image(systemName: "calendar.badge.plus")
                 .font(.system(size: 48))
-                .foregroundColor(Color(hex: "#BC6C5C").opacity(0.6))
+                .foregroundColor(.yugiMocha.opacity(0.6))
             
             Text(emptyStateTitle)
                 .font(.system(size: 18, weight: .semibold))

@@ -25,7 +25,7 @@ struct BiometricSettingsScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -76,7 +76,7 @@ struct BiometricSettingsScreen: View {
                 HStack {
                     Image(systemName: biometricService.getBiometricIcon())
                         .font(.system(size: 24))
-                        .foregroundColor(biometricService.isBiometricAvailable ? Color(hex: "#BC6C5C") : .gray)
+                        .foregroundColor(biometricService.isBiometricAvailable ? .yugiMocha : .gray)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(biometricService.getBiometricTypeName())
@@ -100,7 +100,7 @@ struct BiometricSettingsScreen: View {
                                 }
                             }
                         ))
-                        .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                        .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                     }
                 }
                 .padding()
@@ -129,7 +129,7 @@ struct BiometricSettingsScreen: View {
                 HStack {
                     Image(systemName: "key.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Save Credentials")
@@ -144,7 +144,7 @@ struct BiometricSettingsScreen: View {
                     Spacer()
                     
                     Toggle("", isOn: $biometricService.isRememberMeEnabled)
-                        .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                        .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                         .onChange(of: biometricService.isRememberMeEnabled) { _, newValue in
                             biometricService.setRememberMeEnabled(newValue)
                         }
@@ -207,7 +207,7 @@ struct BiometricSettingsScreen: View {
         HStack {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 24)
             
             VStack(alignment: .leading, spacing: 4) {

@@ -47,7 +47,7 @@ struct AddPaymentMethodScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -284,7 +284,7 @@ struct AddPaymentMethodScreen: View {
             HStack {
                 Image(systemName: "star.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Set as default")
@@ -299,7 +299,7 @@ struct AddPaymentMethodScreen: View {
                 Spacer()
                 
                 Toggle("", isOn: $isDefault)
-                    .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
             }
             .padding()
             .background(Color.white)
@@ -328,7 +328,7 @@ struct AddPaymentMethodScreen: View {
             .padding(.vertical, 16)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )

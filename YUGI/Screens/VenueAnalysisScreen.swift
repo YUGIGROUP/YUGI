@@ -95,7 +95,7 @@ struct VenueAnalysisScreen: View {
             .frame(maxWidth: .infinity)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -120,7 +120,7 @@ struct VenueAnalysisScreen: View {
                 .padding(20)
             }
         }
-        .background(Color(hex: "#BC6C5C").ignoresSafeArea())
+        .background(.yugiMocha.ignoresSafeArea())
         .navigationBarHidden(true)
         .onAppear {
             loadVenueAnalysis()
@@ -192,7 +192,7 @@ struct VenueAnalysisScreen: View {
                         HStack(spacing: 8) {
                             Image(systemName: "tram.fill")
                                 .font(.system(size: 14))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                                 .frame(width: 16)
                             
                             Text(station)
@@ -257,7 +257,7 @@ struct VenueAnalysisScreen: View {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "lightbulb")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                             .frame(width: 16)
                         
                         Text(recommendation)
@@ -409,7 +409,7 @@ struct AnalysisRow: View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 16)
             
             Text(title)

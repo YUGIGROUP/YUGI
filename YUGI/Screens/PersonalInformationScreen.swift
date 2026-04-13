@@ -62,7 +62,7 @@ struct PersonalInformationScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -157,7 +157,7 @@ struct PersonalInformationScreen: View {
                 } else {
                     Text(String(fullName.prefix(1).uppercased()))
                         .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
                 
                 if isEditing {
@@ -173,7 +173,7 @@ struct PersonalInformationScreen: View {
                                     .font(.system(size: 16))
                                     .foregroundColor(.white)
                                     .frame(width: 32, height: 32)
-                                    .background(Color(hex: "#BC6C5C"))
+                                    .background(.yugiMocha)
                                     .clipShape(Circle())
                             }
                         }
@@ -188,7 +188,7 @@ struct PersonalInformationScreen: View {
                 }) {
                     Text("Change Photo")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
             }
         }
@@ -217,7 +217,7 @@ struct PersonalInformationScreen: View {
                         HStack {
                             Image(systemName: "person.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                                 .frame(width: 24)
                             
                             Text(fullName.isEmpty ? "Not provided" : fullName)
@@ -250,7 +250,7 @@ struct PersonalInformationScreen: View {
                         HStack {
                             Image(systemName: "envelope.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                                 .frame(width: 24)
                             
                             Text(email.isEmpty ? "Not provided" : email)
@@ -283,7 +283,7 @@ struct PersonalInformationScreen: View {
                         HStack {
                             Image(systemName: "phone.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                                 .frame(width: 24)
                             
                             Text(phoneNumber.isEmpty ? "Not provided" : phoneNumber)
@@ -313,7 +313,7 @@ struct PersonalInformationScreen: View {
                 HStack {
                     Image(systemName: "person.badge.key.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                         .frame(width: 24)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -337,7 +337,7 @@ struct PersonalInformationScreen: View {
                 HStack {
                     Image(systemName: "calendar")
                         .font(.system(size: 16))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                         .frame(width: 24)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -361,7 +361,7 @@ struct PersonalInformationScreen: View {
                 HStack {
                     Image(systemName: "chart.bar.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                         .frame(width: 24)
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -378,7 +378,7 @@ struct PersonalInformationScreen: View {
 
                     Toggle("", isOn: $trackingEnabled)
                         .labelsHidden()
-                        .tint(Color(hex: "#BC6C5C"))
+                        .tint(.yugiMocha)
                         .onChange(of: trackingEnabled) { _, newValue in
                             if newValue {
                                 ConsentManager.shared.grantConsent()
@@ -418,7 +418,7 @@ struct PersonalInformationScreen: View {
                 .padding(.vertical, 16)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .leading,
                         endPoint: .trailing
                     )

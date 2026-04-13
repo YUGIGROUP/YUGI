@@ -24,7 +24,7 @@ struct HelpSupportScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -56,12 +56,12 @@ struct HelpSupportScreen: View {
             VStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                        .fill(.yugiMocha.opacity(0.1))
                         .frame(width: 80, height: 80)
                     
                     Image(systemName: "envelope.fill")
                         .font(.system(size: 32))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
                 
                 VStack(spacing: 8) {
@@ -92,7 +92,7 @@ struct HelpSupportScreen: View {
                 .padding(.vertical, 16)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -106,7 +106,7 @@ struct HelpSupportScreen: View {
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                .stroke(.yugiMocha, lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
     }

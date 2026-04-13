@@ -62,7 +62,7 @@ struct ForgotPasswordScreen: View {
                     .padding()
                     .background(
                         LinearGradient(
-                            gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                            gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -78,7 +78,7 @@ struct ForgotPasswordScreen: View {
                     dismiss()
                 }
                 .font(.system(size: 15))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .fontWeight(.medium)
                 .padding(.top, 16)
             }

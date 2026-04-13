@@ -29,7 +29,7 @@ struct NotificationPreferencesScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -97,7 +97,7 @@ struct NotificationPreferencesScreen: View {
                 Spacer()
                 
                 Toggle("", isOn: $preferences.isEnabled)
-                    .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
             }
             .padding()
             .background(Color.white)
@@ -120,7 +120,7 @@ struct NotificationPreferencesScreen: View {
             .padding(.vertical, 16)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )

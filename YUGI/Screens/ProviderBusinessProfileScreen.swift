@@ -137,9 +137,9 @@ struct ProviderBusinessProfileScreen: View {
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color(hex: "#BC6C5C"),
-                            Color(hex: "#BC6C5C").opacity(0.9),
-                            Color(hex: "#BC6C5C").opacity(0.8)
+                            .yugiMocha,
+                            .yugiMocha.opacity(0.9),
+                            .yugiMocha.opacity(0.8)
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -389,12 +389,12 @@ struct BusinessOverviewTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .fill(.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "camera.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -427,7 +427,7 @@ struct BusinessOverviewTab: View {
                             } else {
                                 Text(String(businessInfo.name.prefix(1).uppercased()))
                                     .font(.system(size: 48, weight: .bold))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                             }
                             
                             if showingEditMode {
@@ -443,7 +443,7 @@ struct BusinessOverviewTab: View {
                                                 .font(.system(size: 16))
                                                 .foregroundColor(.white)
                                                 .frame(width: 32, height: 32)
-                                                .background(Color(hex: "#BC6C5C"))
+                                                .background(.yugiMocha)
                                                 .clipShape(Circle())
                                         }
                                     }
@@ -484,7 +484,7 @@ struct BusinessOverviewTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                        .stroke(.yugiMocha, lineWidth: 2)
                 )
                 
                 // Business Information Card
@@ -493,12 +493,12 @@ struct BusinessOverviewTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .fill(.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "building.2.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -548,7 +548,7 @@ struct BusinessOverviewTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                        .stroke(.yugiMocha, lineWidth: 2)
                 )
                 
                 // Contact Information Card
@@ -557,12 +557,12 @@ struct BusinessOverviewTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .fill(.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "envelope.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -618,7 +618,7 @@ struct BusinessOverviewTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                        .stroke(.yugiMocha, lineWidth: 2)
                 )
                 
                 // Documents Section
@@ -626,11 +626,11 @@ struct BusinessOverviewTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .fill(.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             Image(systemName: "doc.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Documents")
@@ -650,7 +650,7 @@ struct BusinessOverviewTab: View {
                             } label: {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 24))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                             }
                         }
                     }
@@ -747,7 +747,7 @@ struct BusinessOverviewTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                        .stroke(.yugiMocha, lineWidth: 2)
                 )
                 
                 // Save Button (only shown in edit mode)
@@ -764,8 +764,8 @@ struct BusinessOverviewTab: View {
                         .padding(.vertical, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(hex: "#BC6C5C"))
-                                .shadow(color: Color(hex: "#BC6C5C").opacity(0.3), radius: 8, x: 0, y: 4)
+                                .fill(.yugiMocha)
+                                .shadow(color: .yugiMocha.opacity(0.3), radius: 8, x: 0, y: 4)
                         )
                     }
                     .buttonStyle(.plain)
@@ -853,12 +853,12 @@ struct BusinessSettingsTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .fill(.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "gear")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -891,7 +891,7 @@ struct BusinessSettingsTab: View {
                             Spacer()
                             
                             Toggle("", isOn: $notificationsEnabled)
-                                .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                         }
                         .padding(.vertical, 8)
                         
@@ -1012,7 +1012,7 @@ struct EditableProfileField: View {
                                 .fill(Color.yugiCream.opacity(0.5))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                                 )
                         )
                 } else {
@@ -1025,7 +1025,7 @@ struct EditableProfileField: View {
                                 .fill(Color.yugiCream.opacity(0.5))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                                 )
                         )
                 }
@@ -1062,7 +1062,7 @@ struct DocumentUploadSheet: View {
                 VStack(spacing: 8) {
                     Image(systemName: documentType.icon)
                         .font(.system(size: 48))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                     
                     Text("Upload \(documentType.rawValue)")
                         .font(.system(size: 24, weight: .bold))
@@ -1081,7 +1081,7 @@ struct DocumentUploadSheet: View {
                         HStack(spacing: 12) {
                             Image(systemName: "photo.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Upload Picture from Photo Library")
@@ -1113,7 +1113,7 @@ struct DocumentUploadSheet: View {
                         HStack(spacing: 12) {
                             Image(systemName: "folder.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Browse Files")
@@ -1161,7 +1161,7 @@ struct DocumentUploadSheet: View {
                         HStack {
                             Image(systemName: "doc.fill")
                                 .font(.system(size: 20))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             Text(document.lastPathComponent)
                                 .font(.system(size: 14))
@@ -1198,7 +1198,7 @@ struct DocumentUploadSheet: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(
-                        (selectedImage != nil || selectedDocument != nil) && !isUploading ? Color(hex: "#BC6C5C") : Color.yugiGray.opacity(0.3)
+                        (selectedImage != nil || selectedDocument != nil) && !isUploading ? .yugiMocha : Color.yugiGray.opacity(0.3)
                     )
                     .cornerRadius(12)
                 }
@@ -1212,7 +1212,7 @@ struct DocumentUploadSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
             }
         }
@@ -1292,7 +1292,7 @@ struct DocumentViewerSheet: View {
                 VStack(spacing: 8) {
                     Image(systemName: documentType.icon)
                         .font(.system(size: 48))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                     
                     Text(documentType.rawValue)
                         .font(.system(size: 24, weight: .bold))
@@ -1337,7 +1337,7 @@ struct DocumentViewerSheet: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color(hex: "#BC6C5C"))
+                        .background(.yugiMocha)
                         .cornerRadius(12)
                 }
             }
@@ -1349,7 +1349,7 @@ struct DocumentViewerSheet: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
             }
         }
@@ -1373,12 +1373,12 @@ struct DocumentManagementCard: View {
             // Icon
             ZStack {
                 Circle()
-                    .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                    .fill(.yugiMocha.opacity(0.1))
                     .frame(width: 48, height: 48)
                 
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
             }
             
             // Content
@@ -1394,7 +1394,7 @@ struct DocumentManagementCard: View {
                     if isUploaded {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                     }
                 }
                 
@@ -1414,7 +1414,7 @@ struct DocumentManagementCard: View {
                     Button(action: onView) {
                         Image(systemName: "eye.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                     }
                     .buttonStyle(.plain)
                 } else {
@@ -1422,7 +1422,7 @@ struct DocumentManagementCard: View {
                     Button(action: onUpload) {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 18))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                     }
                     .buttonStyle(.plain)
                 }
@@ -1431,7 +1431,7 @@ struct DocumentManagementCard: View {
                 Button(action: onView) {
                     Image(systemName: "eye.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
                 .buttonStyle(.plain)
             }
@@ -1441,7 +1441,7 @@ struct DocumentManagementCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "#BC6C5C").opacity(0.2), lineWidth: 1)
+                .stroke(.yugiMocha.opacity(0.2), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }

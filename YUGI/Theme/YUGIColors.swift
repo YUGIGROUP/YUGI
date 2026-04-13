@@ -1,14 +1,28 @@
 import SwiftUI
 
-// Extension for custom colors
+// MARK: - YUGI Colour Palette
+
 extension Color {
-    static let yugiOrange = Color(hex: "FF7F41")  // Updated to match logo orange
-    static let yugiCream = Color(hex: "FFF5E9")   // Warm background
-    static let yugiGray = Color(hex: "2C3E50")    // Deep gray for text
-    static let yugiLightGray = Color(hex: "ECF0F1") // Light gray for backgrounds
+    // Primary Actions
+    static let yugiMocha      = Color(hex: "A3867A")  // buttons, CTAs, primary actions
+    static let yugiCloud      = Color(hex: "FAF7F4")  // main backgrounds
+    static let yugiSoftBlack  = Color(hex: "3A3836")  // headings, primary text
+    static let yugiDustyBlush = Color(hex: "C4A69A")  // highlights, selected states, tags
+    static let yugiOat        = Color(hex: "E8DDD5")  // card backgrounds, secondary surfaces
+    static let yugiSage       = Color(hex: "B7C4B1")  // verified badges, success, AI features
+    static let yugiDeepSage   = Color(hex: "8B9E82")  // badge text, icon accents
+    static let yugiBodyText   = Color(hex: "6B6461")  // secondary / body text
+    static let yugiBorder     = Color(hex: "D4D0CC")  // dividers, card borders
+    static let yugiError      = Color(hex: "E8574B")  // error states
+
+    // Legacy aliases — keep existing files compiling
+    static let yugiGray       = yugiSoftBlack
+    static let yugiCream      = yugiCloud
+    static let yugiOrange     = yugiMocha
+    static let yugiLightGray  = yugiOat
 }
 
-// Hex color initializer
+// MARK: - Hex initialiser
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -16,11 +30,11 @@ extension Color {
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
+        case 3:
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
+        case 6:
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
+        case 8:
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
             (a, r, g, b) = (255, 0, 0, 0)
@@ -29,8 +43,8 @@ extension Color {
             .sRGB,
             red: Double(r) / 255,
             green: Double(g) / 255,
-            blue:  Double(b) / 255,
+            blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
     }
-} 
+}

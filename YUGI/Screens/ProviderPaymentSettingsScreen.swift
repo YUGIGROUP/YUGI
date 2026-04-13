@@ -34,9 +34,9 @@ struct ProviderPaymentSettingsScreen: View {
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color(hex: "#BC6C5C"),
-                            Color(hex: "#BC6C5C").opacity(0.9),
-                            Color(hex: "#BC6C5C").opacity(0.8)
+                            .yugiMocha,
+                            .yugiMocha.opacity(0.9),
+                            .yugiMocha.opacity(0.8)
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -99,12 +99,12 @@ struct PayoutsTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .fill(.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "banknote.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -148,7 +148,7 @@ struct PayoutsTab: View {
                                 
                                 Text("£\(String(format: "%.2f", heldFunds))")
                                     .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                 
                                 Text("72-hour holding period")
                                     .font(.system(size: 12))
@@ -184,7 +184,7 @@ struct PayoutsTab: View {
                                 HStack(spacing: 4) {
                                     Text("£\(String(format: "%.2f", availableBalance))")
                                         .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(Color(hex: "#BC6C5C"))
+                                        .foregroundColor(.yugiMocha)
                                     
                                     Text("-10%")
                                         .font(.system(size: 12, weight: .medium))
@@ -205,7 +205,7 @@ struct PayoutsTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                        .stroke(.yugiMocha, lineWidth: 2)
                 )
                 
                 // Bank Accounts Section
@@ -213,12 +213,12 @@ struct PayoutsTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .fill(.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "building.columns.fill")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -238,7 +238,7 @@ struct PayoutsTab: View {
                         } label: {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 24))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                     }
                     
@@ -284,7 +284,7 @@ struct PayoutsTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                        .stroke(.yugiMocha, lineWidth: 2)
                 )
                 
                 // Quick Actions
@@ -292,12 +292,12 @@ struct PayoutsTab: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                .fill(.yugiMocha.opacity(0.1))
                                 .frame(width: 44, height: 44)
                             
                             Image(systemName: "clock.arrow.circlepath")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -351,7 +351,7 @@ struct PayoutsTab: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                        .stroke(.yugiMocha, lineWidth: 2)
                 )
             }
             .padding(.horizontal, 20)
@@ -665,12 +665,12 @@ struct BankAccountCard: View {
             // Bank Icon
             ZStack {
                 Circle()
-                    .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                    .fill(.yugiMocha.opacity(0.1))
                     .frame(width: 48, height: 48)
                 
                 Image(systemName: "building.columns.fill")
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
             }
             
             // Account Details
@@ -686,7 +686,7 @@ struct BankAccountCard: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(Color(hex: "#BC6C5C"))
+                            .background(.yugiMocha)
                             .cornerRadius(8)
                     }
                     
@@ -724,7 +724,7 @@ struct BankAccountCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -741,7 +741,7 @@ struct QuickActionRow: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(isEnabled ? Color(hex: "#BC6C5C") : .yugiGray.opacity(0.4))
+                    .foregroundColor(isEnabled ? .yugiMocha : .yugiGray.opacity(0.4))
                     .frame(width: 24, height: 24)
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -870,7 +870,7 @@ struct AddBankAccountSheet: View {
                             Spacer()
                             
                             Toggle("", isOn: $isDefault)
-                                .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                         }
                         .padding(16)
                         .background(Color.yugiCream.opacity(0.4))
@@ -881,7 +881,7 @@ struct AddBankAccountSheet: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "info.circle.fill")
                                     .font(.system(size: 20))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                 
                                 Text("Security Notice")
                                     .font(.system(size: 16, weight: .semibold))
@@ -894,7 +894,7 @@ struct AddBankAccountSheet: View {
                                 .lineLimit(nil)
                         }
                         .padding(16)
-                        .background(Color(hex: "#BC6C5C").opacity(0.1))
+                        .background(.yugiMocha.opacity(0.1))
                         .cornerRadius(12)
                     }
                     .padding(.horizontal, 24)
@@ -916,7 +916,7 @@ struct AddBankAccountSheet: View {
                         saveBankAccount()
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .disabled(!isFormValid)
                 }
             }
@@ -1004,7 +1004,7 @@ struct PayoutHistoryScreen: View {
                             
                             Text("£\(String(format: "%.2f", totalTransferred))")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                     }
                 }
@@ -1065,7 +1065,7 @@ struct PayoutHistoryScreen: View {
                     Spacer()
                     ProgressView()
                         .scaleEffect(1.2)
-                        .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#BC6C5C")))
+                        .progressViewStyle(CircularProgressViewStyle(tint: .yugiMocha))
                     Spacer()
                 } else if filteredPayouts.isEmpty {
                     // Empty State
@@ -1115,7 +1115,7 @@ struct PayoutHistoryScreen: View {
                     } label: {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                     }
                 }
             }
@@ -1233,7 +1233,7 @@ enum PayoutStatus: String, CaseIterable {
     var color: Color {
         switch self {
         case .completed: return .green
-        case .pending: return Color(hex: "#BC6C5C")
+        case .pending: return .yugiMocha
         case .failed: return .red
         }
     }
@@ -1275,10 +1275,10 @@ struct FilterPill: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color(hex: "#BC6C5C") : Color.clear)
+                        .fill(isSelected ? .yugiMocha : Color.clear)
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color(hex: "#BC6C5C"), lineWidth: isSelected ? 0 : 1)
+                                .stroke(.yugiMocha, lineWidth: isSelected ? 0 : 1)
                         )
                 )
         }
@@ -1485,7 +1485,7 @@ struct EditBankAccountSheet: View {
                             Spacer()
                             
                             Toggle("", isOn: $isDefault)
-                                .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                         }
                         .padding(16)
                         .background(Color.yugiCream.opacity(0.4))
@@ -1496,7 +1496,7 @@ struct EditBankAccountSheet: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "info.circle.fill")
                                     .font(.system(size: 20))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                 
                                 Text("Security Notice")
                                     .font(.system(size: 16, weight: .semibold))
@@ -1509,7 +1509,7 @@ struct EditBankAccountSheet: View {
                                 .lineLimit(nil)
                         }
                         .padding(16)
-                        .background(Color(hex: "#BC6C5C").opacity(0.1))
+                        .background(.yugiMocha.opacity(0.1))
                         .cornerRadius(12)
                     }
                     .padding(.horizontal, 24)
@@ -1531,7 +1531,7 @@ struct EditBankAccountSheet: View {
                         updateBankAccount()
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .disabled(!isFormValid)
                 }
             }
@@ -1659,7 +1659,7 @@ struct BankAccountSelectionSheet: View {
                         onConfirm()
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(selectedAccount != nil ? Color(hex: "#BC6C5C") : .yugiGray.opacity(0.5))
+                    .foregroundColor(selectedAccount != nil ? .yugiMocha : .yugiGray.opacity(0.5))
                     .disabled(selectedAccount == nil)
                 }
             }
@@ -1678,12 +1678,12 @@ struct BankAccountSelectionCard: View {
                 // Bank Icon
                 ZStack {
                     Circle()
-                        .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                        .fill(.yugiMocha.opacity(0.1))
                         .frame(width: 48, height: 48)
                     
                     Image(systemName: "building.columns.fill")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
                 
                 // Account Details
@@ -1699,7 +1699,7 @@ struct BankAccountSelectionCard: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
-                                .background(Color(hex: "#BC6C5C"))
+                                .background(.yugiMocha)
                                 .cornerRadius(8)
                         }
                         
@@ -1716,11 +1716,11 @@ struct BankAccountSelectionCard: View {
                 // Selection Indicator
                 ZStack {
                     Circle()
-                        .fill(isSelected ? Color(hex: "#BC6C5C") : Color.clear)
+                        .fill(isSelected ? .yugiMocha : Color.clear)
                         .frame(width: 24, height: 24)
                         .overlay(
                             Circle()
-                                .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                                .stroke(.yugiMocha, lineWidth: 2)
                         )
                     
                     if isSelected {
@@ -1733,10 +1733,10 @@ struct BankAccountSelectionCard: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color(hex: "#BC6C5C").opacity(0.1) : Color.white)
+                    .fill(isSelected ? .yugiMocha.opacity(0.1) : Color.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color(hex: "#BC6C5C") : Color.yugiGray.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+                            .stroke(isSelected ? .yugiMocha : Color.yugiGray.opacity(0.2), lineWidth: isSelected ? 2 : 1)
                     )
             )
         }

@@ -12,7 +12,7 @@ struct ConsentScreen: View {
                 VStack(spacing: 0) {
                     // Accent bar
                     LinearGradient(
-                        colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.7)],
+                        colors: [.yugiMocha, .yugiMocha.opacity(0.7)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -23,11 +23,11 @@ struct ConsentScreen: View {
                         VStack(spacing: 20) {
                             ZStack {
                                 Circle()
-                                    .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                                    .fill(.yugiMocha.opacity(0.1))
                                     .frame(width: 96, height: 96)
                                 Image(systemName: "chart.bar.fill")
                                     .font(.system(size: 44))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                             }
                             .padding(.top, 40)
 
@@ -69,7 +69,7 @@ struct ConsentScreen: View {
                                     .padding(.vertical, 16)
                                     .background(
                                         LinearGradient(
-                                            colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.85)],
+                                            colors: [.yugiMocha, .yugiMocha.opacity(0.85)],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
@@ -84,13 +84,13 @@ struct ConsentScreen: View {
                             }) {
                                 Text("No thanks")
                                     .font(.system(size: 17, weight: .semibold))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
                                     .background(Color.white)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color(hex: "#BC6C5C"), lineWidth: 1.5)
+                                            .stroke(.yugiMocha, lineWidth: 1.5)
                                     )
                                     .cornerRadius(12)
                             }
@@ -101,7 +101,7 @@ struct ConsentScreen: View {
                         Button(action: { showingPrivacyPolicy = true }) {
                             Text("Read our full Privacy Policy")
                                 .font(.system(size: 14))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                                 .underline()
                         }
                         .padding(.bottom, 40)
@@ -124,7 +124,7 @@ private struct ConsentTrackingItem: View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 15))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 22)
             Text(text)
                 .font(.system(size: 15))

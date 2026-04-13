@@ -28,10 +28,10 @@ struct BookingFeedbackButton: View {
         } label: {
             Label("How was it?", systemImage: "star.bubble")
                 .font(.footnote.weight(.semibold))
-                .foregroundColor(Color.accentColor)
+                .foregroundColor(Color.yugiMocha)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
-                .background(Color.accentColor.opacity(0.10))
+                .background(Color.yugiMocha.opacity(0.10))
                 .cornerRadius(20)
         }
         .sheet(isPresented: $showFeedback) {

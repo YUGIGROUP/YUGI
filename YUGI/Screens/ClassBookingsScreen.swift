@@ -39,7 +39,7 @@ struct ClassBookingsScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -89,7 +89,7 @@ struct ClassBookingsScreen: View {
                     .padding(20)
                 }
             }
-            .background(Color(hex: "#BC6C5C").ignoresSafeArea())
+            .background(.yugiMocha.ignoresSafeArea())
             .navigationBarHidden(true)
             .sheet(item: $selectedBookingForAnalysis) { enhancedBooking in
                 VenueAnalysisScreen(enhancedBooking: enhancedBooking)
@@ -240,7 +240,7 @@ struct BookingDetailCard: View {
                     HStack(spacing: 8) {
                         Image(systemName: "mappin.circle")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                             .frame(width: 16)
                         
                         Text(enhancedBooking.classInfo.location?.address.formatted ?? "Location TBD")
@@ -266,7 +266,7 @@ struct BookingDetailCard: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color(hex: "#BC6C5C"))
+                        .background(.yugiMocha)
                         .cornerRadius(8)
                         .frame(maxWidth: .infinity)
                     }
@@ -399,7 +399,7 @@ struct ClassBookingDetailRow: View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 16)
             
             Text(text)

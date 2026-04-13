@@ -24,7 +24,7 @@ struct PaymentMethodsScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -51,7 +51,7 @@ struct PaymentMethodsScreen: View {
                                         Text("Add New")
                                             .font(.system(size: 16, weight: .medium))
                                     }
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                 }
                             }
                             
@@ -81,7 +81,7 @@ struct PaymentMethodsScreen: View {
                                             .foregroundColor(.white)
                                             .padding(.horizontal, 24)
                                             .padding(.vertical, 12)
-                                            .background(Color(hex: "#BC6C5C"))
+                                            .background(.yugiMocha)
                                             .cornerRadius(8)
                                     }
                                 }
@@ -89,7 +89,7 @@ struct PaymentMethodsScreen: View {
                                 .background(Color.clear)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(hex: "#BC6C5C"), lineWidth: 1)
+                                        .stroke(.yugiMocha, lineWidth: 1)
                                 )
                                 .cornerRadius(12)
                             } else {
@@ -118,7 +118,7 @@ struct PaymentMethodsScreen: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack(alignment: .top, spacing: 8) {
                                     Image(systemName: "lock.shield.fill")
-                                        .foregroundColor(Color(hex: "#BC6C5C"))
+                                        .foregroundColor(.yugiMocha)
                                         .frame(width: 16)
                                     
                                     Text("All payment information is encrypted and secure")
@@ -128,7 +128,7 @@ struct PaymentMethodsScreen: View {
                                 
                                 HStack(alignment: .top, spacing: 8) {
                                     Image(systemName: "creditcard.fill")
-                                        .foregroundColor(Color(hex: "#BC6C5C"))
+                                        .foregroundColor(.yugiMocha)
                                         .frame(width: 16)
                                     
                                     Text("We never store your full card details")
@@ -138,7 +138,7 @@ struct PaymentMethodsScreen: View {
                                 
                                 HStack(alignment: .top, spacing: 8) {
                                     Image(systemName: "checkmark.shield.fill")
-                                        .foregroundColor(Color(hex: "#BC6C5C"))
+                                        .foregroundColor(.yugiMocha)
                                         .frame(width: 16)
                                     
                                     Text("PCI DSS compliant payment processing")
@@ -151,7 +151,7 @@ struct PaymentMethodsScreen: View {
                         .background(Color.clear)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(hex: "#BC6C5C"), lineWidth: 1)
+                                .stroke(.yugiMocha, lineWidth: 1)
                         )
                         .cornerRadius(12)
                         
@@ -228,7 +228,7 @@ struct UserPaymentMethodRow: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(Color(hex: "#BC6C5C"))
+                            .background(.yugiMocha)
                             .cornerRadius(4)
                     }
                 }
@@ -266,7 +266,7 @@ struct UserPaymentMethodRow: View {
         .background(Color.clear)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "#BC6C5C"), lineWidth: 1)
+                .stroke(.yugiMocha, lineWidth: 1)
         )
         .cornerRadius(12)
         .alert("Delete Payment Method", isPresented: $showingDeleteAlert) {

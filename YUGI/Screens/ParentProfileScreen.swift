@@ -35,7 +35,7 @@ struct ParentProfileScreen: View {
             }
             .background(Color.yugiCream.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
+            .toolbarBackground(.yugiMocha, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -73,12 +73,12 @@ struct ParentProfileScreen: View {
             // Profile Image
             ZStack {
                 Circle()
-                    .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                    .fill(.yugiMocha.opacity(0.1))
                     .frame(width: 100, height: 100)
                 
                 Text(String(fullName.prefix(1)))
                     .font(.system(size: 40, weight: .bold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
             }
             
             VStack(spacing: 4) {
@@ -99,7 +99,7 @@ struct ParentProfileScreen: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Color(hex: "#BC6C5C"))
+                    .background(.yugiMocha)
                     .cornerRadius(8)
             }
         }
@@ -264,7 +264,7 @@ struct ProfileInfoRow: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 24)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -298,7 +298,7 @@ struct ProfileActionRow: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.system(size: 18))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -318,7 +318,7 @@ struct ProfileActionRow: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 4)
-                        .background(Color(hex: "#BC6C5C"))
+                        .background(.yugiMocha)
                         .cornerRadius(4)
                 }
                 
@@ -365,7 +365,7 @@ struct EditProfileScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -422,7 +422,7 @@ struct EditProfileScreen: View {
             }
             .background(Color.yugiCream.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
+            .toolbarBackground(.yugiMocha, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {

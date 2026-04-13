@@ -75,7 +75,7 @@ struct VenueCheckScreen: View {
                             HStack(spacing: 10) {
                                 if isLoading {
                                     ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#BC6C5C")))
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .yugiMocha))
                                         .scaleEffect(0.9)
                                 } else {
                                     Image(systemName: "magnifyingglass")
@@ -84,7 +84,7 @@ struct VenueCheckScreen: View {
                                 Text(isLoading ? "Searching..." : "Search Venue")
                                     .font(.system(size: 17, weight: .semibold))
                             }
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
                             .background(Color.white)
@@ -120,7 +120,7 @@ struct VenueCheckScreen: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
             }
-            .background(Color(hex: "#BC6C5C").ignoresSafeArea())
+            .background(.yugiMocha.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

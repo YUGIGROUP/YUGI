@@ -29,7 +29,7 @@ struct ProviderNotificationPreferencesScreen: View {
                             Spacer()
                             
                             Toggle("", isOn: $preferences.isEnabled)
-                                .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                         }
                         .padding(16)
                         .background(Color.white)
@@ -146,7 +146,7 @@ struct ProviderNotificationPreferencesScreen: View {
                                 Spacer()
                                 
                                 Toggle("", isOn: $preferences.quietHoursEnabled)
-                                    .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                             }
                             .padding(16)
                             .background(Color.white)
@@ -197,7 +197,7 @@ struct ProviderNotificationPreferencesScreen: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -205,7 +205,7 @@ struct ProviderNotificationPreferencesScreen: View {
                         notificationService.updatePreferences(preferences)
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .fontWeight(.semibold)
                 }
             }
@@ -233,7 +233,7 @@ struct NotificationTypeRow: View {
             Spacer()
             
             Toggle("", isOn: $isOn)
-                .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
         }
         .padding(16)
     }

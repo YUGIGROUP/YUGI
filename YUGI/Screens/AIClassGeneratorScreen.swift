@@ -22,7 +22,7 @@ struct AIClassGeneratorScreen: View {
                             VStack(spacing: 12) {
                                 Image(systemName: "sparkles")
                                     .font(.system(size: 48))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
 
                                 Text("Create your listing")
                                     .font(.system(size: 28, weight: .bold))
@@ -49,7 +49,7 @@ struct AIClassGeneratorScreen: View {
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color(hex: "#BC6C5C").opacity(0.35), lineWidth: 1.5)
+                                        .stroke(.yugiMocha.opacity(0.35), lineWidth: 1.5)
                                 )
                                 .font(.system(size: 15))
 
@@ -85,8 +85,8 @@ struct AIClassGeneratorScreen: View {
                             .padding(.vertical, 16)
                             .background(
                                 aiPrompt.trimmingCharacters(in: .whitespaces).isEmpty
-                                    ? Color(hex: "#BC6C5C").opacity(0.4)
-                                    : Color(hex: "#BC6C5C")
+                                    ? .yugiMocha.opacity(0.4)
+                                    : .yugiMocha
                             )
                             .foregroundColor(.white)
                             .cornerRadius(14)

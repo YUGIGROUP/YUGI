@@ -71,7 +71,7 @@ struct AuthScreen: View {
                     // Remember Me Toggle
                     HStack {
                         Toggle("Remember Me", isOn: $biometricService.isRememberMeEnabled)
-                            .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                            .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                             .onChange(of: biometricService.isRememberMeEnabled) { _, newValue in
                                 biometricService.setRememberMeEnabled(newValue)
                             }
@@ -97,7 +97,7 @@ struct AuthScreen: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(hex: "#BC6C5C"))
+                            .fill(.yugiMocha)
                     )
                 }
                 .padding(.horizontal)
@@ -108,7 +108,7 @@ struct AuthScreen: View {
                     shouldNavigateToForgotPassword = true
                 }
                 .font(.system(size: 15))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .fontWeight(.medium)
                 .padding(.top, 8)
                 
@@ -119,7 +119,7 @@ struct AuthScreen: View {
                     Button("Sign Up") {
                         shouldNavigateToSignUp = true
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .fontWeight(.semibold)
                 }
                 .font(.system(size: 15))

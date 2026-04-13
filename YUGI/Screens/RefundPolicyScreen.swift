@@ -22,7 +22,7 @@ struct RefundPolicyScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -189,7 +189,7 @@ struct PolicySection<Content: View>: View {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 
                 Text(title)
                     .font(.system(size: 18, weight: .semibold))
@@ -239,7 +239,7 @@ struct FeePoint: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "circle.fill")
                 .font(.system(size: 6))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .padding(.top, 6)
             
             Text(text)
@@ -260,7 +260,7 @@ struct ProcessStep: View {
         HStack(alignment: .top, spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Color(hex: "#BC6C5C"))
+                    .fill(.yugiMocha)
                     .frame(width: 24, height: 24)
                 
                 Text(number)
@@ -291,7 +291,7 @@ struct ImportantNote: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 20)
             
             Text(text)
@@ -314,7 +314,7 @@ struct ContactRow: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 18))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {

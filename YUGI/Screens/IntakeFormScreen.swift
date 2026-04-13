@@ -29,7 +29,7 @@ struct IntakeFormScreen: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "list.clipboard.fill")
                                     .font(.system(size: 36))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                 Text("A few quick questions")
                                     .font(.system(size: 22, weight: .bold))
                                     .foregroundColor(.yugiGray)
@@ -82,7 +82,7 @@ struct IntakeFormScreen: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(canSubmit ? Color(hex: "#BC6C5C") : Color(hex: "#BC6C5C").opacity(0.4))
+                            .background(canSubmit ? .yugiMocha : .yugiMocha.opacity(0.4))
                             .foregroundColor(.white)
                             .cornerRadius(14)
                         }
@@ -163,7 +163,7 @@ private struct QuestionCard: View {
                 if question.isRequired {
                     Text("*")
                         .font(.system(size: 13))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
             }
 
@@ -174,7 +174,7 @@ private struct QuestionCard: View {
                     .padding()
                     .background(Color.white)
                     .cornerRadius(10)
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(.yugiMocha.opacity(0.3), lineWidth: 1))
                     .font(.system(size: 14))
 
             case .multipleChoice:
@@ -185,7 +185,7 @@ private struct QuestionCard: View {
                         } label: {
                             HStack {
                                 Image(systemName: answer == option ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(answer == option ? Color(hex: "#BC6C5C") : .yugiGray.opacity(0.4))
+                                    .foregroundColor(answer == option ? .yugiMocha : .yugiGray.opacity(0.4))
                                 Text(option)
                                     .font(.system(size: 14))
                                     .foregroundColor(.yugiGray)
@@ -197,7 +197,7 @@ private struct QuestionCard: View {
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
                                     .stroke(
-                                        answer == option ? Color(hex: "#BC6C5C") : Color(hex: "#BC6C5C").opacity(0.2),
+                                        answer == option ? .yugiMocha : .yugiMocha.opacity(0.2),
                                         lineWidth: answer == option ? 1.5 : 1
                                     )
                             )

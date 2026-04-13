@@ -33,7 +33,7 @@ struct TermsPrivacyScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -70,7 +70,7 @@ struct TermsPrivacyScreen: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(Color(hex: "#BC6C5C"))
+                .background(.yugiMocha)
                 
                 // Content
                 TabView(selection: $selectedTab) {
@@ -319,7 +319,7 @@ struct TermsOfServiceView: View {
                             }) {
                                 Image(systemName: hasAcceptedTerms ? "checkmark.square.fill" : "square")
                                     .font(.system(size: 24))
-                                    .foregroundColor(hasAcceptedTerms ? Color(hex: "#BC6C5C") : .yugiGray.opacity(0.6))
+                                    .foregroundColor(hasAcceptedTerms ? .yugiMocha : .yugiGray.opacity(0.6))
                             }
                             .buttonStyle(.plain)
                             
@@ -362,7 +362,7 @@ struct TermsOfServiceView: View {
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(hasAcceptedTerms ? Color(hex: "#BC6C5C") : Color.yugiGray.opacity(0.3))
+                                    .fill(hasAcceptedTerms ? .yugiMocha : Color.yugiGray.opacity(0.3))
                             )
                         }
                         .disabled(!hasAcceptedTerms)
@@ -516,7 +516,7 @@ struct TermsAgreementScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                        gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -553,7 +553,7 @@ struct TermsAgreementScreen: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .background(Color(hex: "#BC6C5C"))
+                .background(.yugiMocha)
                 
                 // Content
                 TabView(selection: $selectedTab) {
@@ -682,7 +682,7 @@ struct TermsAgreementScreen: View {
                                     }) {
                                         Image(systemName: hasAcceptedTerms ? "checkmark.square.fill" : "square")
                                             .font(.system(size: 24))
-                                            .foregroundColor(hasAcceptedTerms ? Color(hex: "#BC6C5C") : .yugiGray.opacity(0.6))
+                                            .foregroundColor(hasAcceptedTerms ? .yugiMocha : .yugiGray.opacity(0.6))
                                     }
                                     .buttonStyle(.plain)
                                     
@@ -723,7 +723,7 @@ struct TermsAgreementScreen: View {
                                     .padding()
                                     .background(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .fill(hasAcceptedTerms ? Color(hex: "#BC6C5C") : Color.yugiGray.opacity(0.3))
+                                            .fill(hasAcceptedTerms ? .yugiMocha : Color.yugiGray.opacity(0.3))
                                     )
                                 }
                                 .disabled(!hasAcceptedTerms)

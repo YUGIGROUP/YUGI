@@ -58,7 +58,7 @@ struct IntakeResponsesScreen: View {
             .navigationTitle("Intake Responses")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
+            .toolbarBackground(.yugiMocha, for: .navigationBar)
             .onAppear { Task { await loadResponses() } }
         }
     }

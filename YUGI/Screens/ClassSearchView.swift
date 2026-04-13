@@ -25,7 +25,7 @@ struct ClassSearchView: View {
         NavigationView {
             ZStack {
                 // Background
-                Color(hex: "#BC6C5C")
+                .yugiMocha
                     .ignoresSafeArea()
                 
                 if showResults {
@@ -132,7 +132,7 @@ struct ClassSearchView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 24)
                                 .padding(.vertical, 12)
-                                .background(Color(hex: "#BC6C5C"))
+                                .background(.yugiMocha)
                                 .cornerRadius(8)
                             }
                             .padding()
@@ -255,11 +255,11 @@ struct ClassSearchView: View {
                                     VStack(spacing: 8) {
                                         Image(systemName: category.iconName)
                                             .font(.system(size: 24))
-                                            .foregroundColor(selectedCategory == category ? Color(hex: "#BC6C5C") : .white)
+                                            .foregroundColor(selectedCategory == category ? .yugiMocha : .white)
                                         
                                         Text(category.displayName)
                                             .font(.system(size: 12, weight: .medium))
-                                            .foregroundColor(selectedCategory == category ? Color(hex: "#BC6C5C") : .white)
+                                            .foregroundColor(selectedCategory == category ? .yugiMocha : .white)
                                             .multilineTextAlignment(.center)
                                     }
                                     .frame(width: 80, height: 80)
@@ -302,7 +302,7 @@ struct ClassSearchView: View {
                                     Text(day.shortName.prefix(1))
                                         .font(.system(size: 16, weight: .medium))
                                         .frame(width: 32, height: 32)
-                                        .foregroundColor(selectedDays.contains(day) ? Color(hex: "#BC6C5C") : .white)
+                                        .foregroundColor(selectedDays.contains(day) ? .yugiMocha : .white)
                                         .background(
                                             Circle()
                                                 .fill(selectedDays.contains(day) ? Color.white : Color.white.opacity(0.15))
@@ -341,7 +341,7 @@ struct ClassSearchView: View {
                             .tracking(1)
                     }
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(
@@ -516,7 +516,7 @@ struct ClassSearchResultCard: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [Color(hex: "#BC6C5C").opacity(0.8), Color(hex: "#BC6C5C").opacity(0.6)],
+                        colors: [.yugiMocha.opacity(0.8), .yugiMocha.opacity(0.6)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -562,10 +562,10 @@ struct ClassSearchResultCard: View {
                         Text("View Profile")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color(hex: "#BC6C5C").opacity(0.1))
+                    .background(.yugiMocha.opacity(0.1))
                     .cornerRadius(6)
                 }
                 .buttonStyle(.plain)
@@ -576,7 +576,7 @@ struct ClassSearchResultCard: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text("£\(NSDecimalNumber(decimal: classItem.pricing.amount).intValue)")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 
                 Text("per session")
                     .font(.system(size: 12))
@@ -598,10 +598,10 @@ struct ClassSearchResultCard: View {
                         Text("View in Maps")
                             .font(.system(size: 14, weight: .medium))
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color(hex: "#BC6C5C").opacity(0.1))
+                    .background(.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                 }
                 
@@ -621,10 +621,10 @@ struct ClassSearchResultCard: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color(hex: "#BC6C5C").opacity(0.1))
+                    .background(.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                 }
                 
@@ -644,7 +644,7 @@ struct ClassSearchResultCard: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .background(Color(hex: "#BC6C5C"))
+                .background(.yugiMocha)
                 .cornerRadius(10)
                 .frame(maxWidth: .infinity)
             }

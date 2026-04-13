@@ -39,14 +39,14 @@ struct ProviderClassEditScreen: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveChanges()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .disabled(isSaving)
                 }
             }
@@ -127,7 +127,7 @@ struct ProviderClassEditScreen: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
             }
             
@@ -188,7 +188,7 @@ struct ProviderClassEditScreen: View {
                             createdAt: editedClass.createdAt
                         )}
                     ))
-                    .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
                     
                     Spacer()
                 }
@@ -265,7 +265,7 @@ struct ProviderClassEditScreen: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                        .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
             }
         }
@@ -327,7 +327,7 @@ struct ProviderClassEditScreen: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSaving ? Color.yugiGray.opacity(0.3) : Color(hex: "#BC6C5C"))
+                    .fill(isSaving ? Color.yugiGray.opacity(0.3) : .yugiMocha)
             )
         }
         .disabled(isSaving)
@@ -353,7 +353,7 @@ struct SectionHeader: View {
         HStack {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
             
             Text(title)
                 .font(.system(size: 18, weight: .semibold))

@@ -61,10 +61,10 @@ struct ProviderProfileCompletionScreen: View {
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                            .fill(.yugiMocha.opacity(0.1))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                    .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                             )
                     )
                     .offset(y: animateCards ? 0 : -50)
@@ -76,7 +76,7 @@ struct ProviderProfileCompletionScreen: View {
                         HStack {
                             Image(systemName: "building.2.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             Text("About Your Business")
                                 .font(.system(size: 18, weight: .semibold))
@@ -103,7 +103,7 @@ struct ProviderProfileCompletionScreen: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "star.fill")
                                     .font(.system(size: 16))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                 
                                 Text("Specialties & Qualifications")
                                     .font(.system(size: 18, weight: .semibold))
@@ -121,10 +121,10 @@ struct ProviderProfileCompletionScreen: View {
                                     Text("Add")
                                         .font(.system(size: 14, weight: .medium))
                                 }
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(Color(hex: "#BC6C5C").opacity(0.1))
+                                .background(.yugiMocha.opacity(0.1))
                                 .cornerRadius(20)
                             }
                         }
@@ -133,7 +133,7 @@ struct ProviderProfileCompletionScreen: View {
                             HStack {
                                 Image(systemName: "info.circle")
                                     .font(.system(size: 14))
-                                    .foregroundColor(Color(hex: "#BC6C5C"))
+                                    .foregroundColor(.yugiMocha)
                                 
                                 Text("Add your qualifications and areas of expertise")
                                     .font(.system(size: 14))
@@ -141,11 +141,11 @@ struct ProviderProfileCompletionScreen: View {
                             }
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(Color(hex: "#BC6C5C").opacity(0.05))
+                            .background(.yugiMocha.opacity(0.05))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color(hex: "#BC6C5C").opacity(0.2), lineWidth: 1)
+                                    .stroke(.yugiMocha.opacity(0.2), lineWidth: 1)
                             )
                         } else {
                             LazyVGrid(columns: [
@@ -176,7 +176,7 @@ struct ProviderProfileCompletionScreen: View {
                         HStack {
                             Image(systemName: "clock.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             Text("Years of Experience")
                                 .font(.system(size: 18, weight: .semibold))
@@ -195,7 +195,7 @@ struct ProviderProfileCompletionScreen: View {
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                     .padding(16)
@@ -211,7 +211,7 @@ struct ProviderProfileCompletionScreen: View {
                         HStack {
                             Image(systemName: "person.3.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             Text("Age Groups You Work With")
                                 .font(.system(size: 18, weight: .semibold))
@@ -250,7 +250,7 @@ struct ProviderProfileCompletionScreen: View {
                         HStack {
                             Image(systemName: "clock.badge")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             Text("Business Hours")
                                 .font(.system(size: 18, weight: .semibold))
@@ -272,7 +272,7 @@ struct ProviderProfileCompletionScreen: View {
                         HStack {
                             Image(systemName: "network")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                             
                             Text("Social Media & Website")
                                 .font(.system(size: 18, weight: .semibold))
@@ -309,14 +309,14 @@ struct ProviderProfileCompletionScreen: View {
                         .padding()
                         .background(
                             LinearGradient(
-                                gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                         .foregroundColor(.white)
                         .cornerRadius(16)
-                        .shadow(color: Color(hex: "#BC6C5C").opacity(0.3), radius: 8, x: 0, y: 4)
+                        .shadow(color: .yugiMocha.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
                     .disabled(isSaving)
                     .padding(.top, 8)
@@ -333,7 +333,7 @@ struct ProviderProfileCompletionScreen: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
             }
             .sheet(isPresented: $showingSpecialtyPicker) {
@@ -369,7 +369,7 @@ struct SpecialtyChip: View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 10))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
             
             Text(text)
                 .font(.system(size: 12, weight: .medium))
@@ -385,11 +385,11 @@ struct SpecialtyChip: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Color(hex: "#BC6C5C").opacity(0.1))
+        .background(.yugiMocha.opacity(0.1))
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -417,7 +417,7 @@ struct AgeGroupToggle: View {
             .background(
                 isSelected ? 
                 AnyShapeStyle(LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )) : AnyShapeStyle(Color.white)
@@ -425,9 +425,9 @@ struct AgeGroupToggle: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.clear : Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                    .stroke(isSelected ? Color.clear : .yugiMocha.opacity(0.3), lineWidth: 1)
             )
-            .shadow(color: isSelected ? Color(hex: "#BC6C5C").opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+            .shadow(color: isSelected ? .yugiMocha.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(.plain)
     }
@@ -495,7 +495,7 @@ struct DayHoursRow: View {
                 Spacer()
                 
                 Toggle("", isOn: $dayHours.isOpen)
-                    .toggleStyle(SwitchToggleStyle(tint: Color(hex: "#BC6C5C")))
+                    .toggleStyle(SwitchToggleStyle(tint: .yugiMocha))
             }
             
             if dayHours.isOpen {
@@ -503,21 +503,21 @@ struct DayHoursRow: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Open")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                         
                         DatePicker("", selection: $dayHours.openTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
-                            .accentColor(Color(hex: "#BC6C5C"))
+                            .yugiMocha(.yugiMocha)
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Close")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                         
                         DatePicker("", selection: $dayHours.closeTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
-                            .accentColor(Color(hex: "#BC6C5C"))
+                            .yugiMocha(.yugiMocha)
                     }
                     
                     Spacer()
@@ -529,7 +529,7 @@ struct DayHoursRow: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -596,7 +596,7 @@ struct SocialMediaField: View {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
@@ -609,7 +609,7 @@ struct SocialMediaField: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                    .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
             )
         }
     }
@@ -637,10 +637,10 @@ struct SpecialtyPickerSheet: View {
                 .padding(.vertical, 16)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(hex: "#BC6C5C").opacity(0.1))
+                        .fill(.yugiMocha.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                 )
                 
@@ -675,7 +675,7 @@ struct SpecialtyPickerSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
             }
         }
@@ -706,7 +706,7 @@ struct SpecialtyToggle: View {
             .background(
                 isSelected ? 
                 AnyShapeStyle(LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                    gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                     startPoint: .leading,
                     endPoint: .trailing
                 )) : AnyShapeStyle(Color.white)
@@ -714,9 +714,9 @@ struct SpecialtyToggle: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.clear : Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                    .stroke(isSelected ? Color.clear : .yugiMocha.opacity(0.3), lineWidth: 1)
             )
-            .shadow(color: isSelected ? Color(hex: "#BC6C5C").opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+            .shadow(color: isSelected ? .yugiMocha.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(.plain)
     }

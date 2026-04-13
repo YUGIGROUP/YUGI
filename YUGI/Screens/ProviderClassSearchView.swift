@@ -165,7 +165,7 @@ struct ProviderClassSearchView: View {
                     Button("Back") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -173,7 +173,7 @@ struct ProviderClassSearchView: View {
                         showingFilters = true
                     } label: {
                         Image(systemName: "slider.horizontal.3")
-                            .foregroundColor(Color(hex: "#BC6C5C"))
+                            .foregroundColor(.yugiMocha)
                     }
                 }
             }
@@ -210,7 +210,7 @@ struct ProviderClassSearchView: View {
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -247,7 +247,7 @@ struct ProviderClassSearchView: View {
                 HStack {
                     Text("Filtered by: \(filterDescription)")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                     
                     Spacer()
                     
@@ -317,7 +317,7 @@ struct ProviderSearchClassCard: View {
                     
                     Text(classItem.category.displayName)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
                 
                 Spacer()
@@ -346,7 +346,7 @@ struct ProviderSearchClassCard: View {
                 // Price
                 Text("£\(String(format: "%.2f", Double(truncating: classItem.pricing.amount as NSDecimalNumber)))")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
             }
             
             // Schedule and Capacity
@@ -372,7 +372,7 @@ struct ProviderSearchClassCard: View {
                         .padding(.vertical, 8)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(classItem.isAvailable ? Color(hex: "#BC6C5C") : Color.gray)
+                                .fill(classItem.isAvailable ? .yugiMocha : Color.gray)
                         )
                 }
                 .disabled(!classItem.isAvailable)
@@ -463,7 +463,7 @@ struct ProviderFilterSheet: View {
                                     
                                     if selectedCategory == category {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(Color(hex: "#BC6C5C"))
+                                            .foregroundColor(.yugiMocha)
                                     } else {
                                         Circle()
                                             .stroke(Color.yugiGray.opacity(0.3), lineWidth: 2)
@@ -473,11 +473,11 @@ struct ProviderFilterSheet: View {
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(selectedCategory == category ? Color(hex: "#BC6C5C").opacity(0.05) : Color.white)
+                                        .fill(selectedCategory == category ? .yugiMocha.opacity(0.05) : Color.white)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(selectedCategory == category ? Color(hex: "#BC6C5C").opacity(0.3) : Color.clear, lineWidth: 1)
+                                        .stroke(selectedCategory == category ? .yugiMocha.opacity(0.3) : Color.clear, lineWidth: 1)
                                 )
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -504,7 +504,7 @@ struct ProviderFilterSheet: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(Color(hex: "#BC6C5C"))
+                .background(.yugiMocha)
                 .cornerRadius(12)
             }
             .padding()
@@ -544,7 +544,7 @@ struct ProviderBookingSheet: View {
                     
                     Text("£\(String(format: "%.2f", Double(truncating: classItem.pricing.amount as NSDecimalNumber))) per session")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
@@ -573,7 +573,7 @@ struct ProviderBookingSheet: View {
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                     
@@ -609,7 +609,7 @@ struct ProviderBookingSheet: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(Color(hex: "#BC6C5C"))
+                    .background(.yugiMocha)
                     .cornerRadius(12)
                 }
                 .disabled(isBooking)

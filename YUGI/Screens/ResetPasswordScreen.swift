@@ -137,7 +137,7 @@ struct ResetPasswordScreen: View {
                     .padding()
                     .background(
                         LinearGradient(
-                            gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                            gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -151,7 +151,7 @@ struct ResetPasswordScreen: View {
         }
         .background(Color.yugiCream.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color(hex: "#BC6C5C"), for: .navigationBar)
+        .toolbarBackground(.yugiMocha, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {

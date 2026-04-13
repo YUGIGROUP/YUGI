@@ -35,7 +35,7 @@ struct AIAnalysisView: View {
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                .stroke(.yugiMocha, lineWidth: 2)
         )
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
@@ -62,7 +62,7 @@ struct AIAnalysisView: View {
                     .cornerRadius(16)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                            .stroke(.yugiMocha, lineWidth: 2)
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 12, x: 0, y: 6)
                     .transition(.scale.combined(with: .opacity))
@@ -76,7 +76,7 @@ struct AIAnalysisView: View {
         VStack(spacing: 16) {
             Image(systemName: "brain.head.profile")
                 .font(.system(size: 40))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
             
             Text("AI-Powered Venue Check")
                 .font(.system(size: 18, weight: .semibold))
@@ -97,7 +97,7 @@ struct AIAnalysisView: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(Color(hex: "#BC6C5C"))
+                .background(.yugiMocha)
                 .cornerRadius(12)
             }
         }
@@ -109,19 +109,19 @@ struct AIAnalysisView: View {
             VStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .stroke(Color(hex: "#BC6C5C").opacity(0.2), lineWidth: 6)
+                        .stroke(.yugiMocha.opacity(0.2), lineWidth: 6)
                         .frame(width: 60, height: 60)
                     
                     Circle()
                         .trim(from: 0, to: aiService.analysisProgress)
-                        .stroke(Color(hex: "#BC6C5C"), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .stroke(.yugiMocha, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .frame(width: 60, height: 60)
                         .rotationEffect(.degrees(-90))
                         .animation(.easeInOut(duration: 0.5), value: aiService.analysisProgress)
                     
                     Image(systemName: "brain.head.profile")
                         .font(.system(size: 20))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
                 
                 Text("AI is analysing venue...")
@@ -179,7 +179,7 @@ struct AIAnalysisView: View {
                 Button(action: startAnalysis) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 16))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
             }
             
@@ -233,7 +233,7 @@ struct AIAnalysisView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(Color(hex: "#BC6C5C"))
+                        .background(.yugiMocha)
                         .cornerRadius(8)
                 }
                 
@@ -243,10 +243,10 @@ struct AIAnalysisView: View {
                 }) {
                     Text("Save Venue Data")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(Color(hex: "#BC6C5C").opacity(0.1))
+                        .background(.yugiMocha.opacity(0.1))
                         .cornerRadius(8)
                 }
             }
@@ -267,13 +267,13 @@ struct AIAnalysisView: View {
                     .padding(.vertical, 14)
                     .background(
                         LinearGradient(
-                            colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)],
+                            colors: [.yugiMocha, .yugiMocha.opacity(0.8)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
                     .cornerRadius(12)
-                    .shadow(color: Color(hex: "#BC6C5C").opacity(0.3), radius: 8, x: 0, y: 4)
+                    .shadow(color: .yugiMocha.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 .padding(.top, 8)
             }
@@ -349,7 +349,7 @@ struct AnalysisStep: View {
         if isCompleted {
             return .green
         } else if isActive {
-            return Color(hex: "#BC6C5C")
+            return .yugiMocha
         } else {
             return .gray.opacity(0.3)
         }
@@ -373,7 +373,7 @@ struct FacilityResultRow: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -391,11 +391,11 @@ struct FacilityResultRow: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        .background(Color(hex: "#BC6C5C").opacity(0.05))
+        .background(.yugiMocha.opacity(0.05))
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -444,11 +444,11 @@ struct AIAnalysisDetailView: View {
                             Spacer()
                         }
                         .padding()
-                        .background(Color(hex: "#BC6C5C").opacity(0.05))
+                        .background(.yugiMocha.opacity(0.05))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                     
@@ -507,11 +507,11 @@ struct AIAnalysisDetailView: View {
                             }
                         }
                         .padding()
-                        .background(Color(hex: "#BC6C5C").opacity(0.05))
+                        .background(.yugiMocha.opacity(0.05))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
                         )
                     }
                 }
@@ -571,7 +571,7 @@ struct DetailedFacilityCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "#BC6C5C").opacity(0.3), lineWidth: 1)
+                .stroke(.yugiMocha.opacity(0.3), lineWidth: 1)
         )
     }
 }

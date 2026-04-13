@@ -121,7 +121,7 @@ struct ProviderMyClassesScreen: View {
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -152,7 +152,7 @@ struct ProviderMyClassesScreen: View {
                 VStack {
                     ProgressView()
                         .scaleEffect(1.2)
-                        .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#BC6C5C")))
+                        .progressViewStyle(CircularProgressViewStyle(tint: .yugiMocha))
                         .padding(.top, 40)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -196,7 +196,7 @@ struct ProviderMyClassesScreen: View {
         VStack(spacing: 24) {
             Image(systemName: "calendar.badge.plus")
                 .font(.system(size: 64))
-                .foregroundColor(Color(hex: "#BC6C5C").opacity(0.6))
+                .foregroundColor(.yugiMocha.opacity(0.6))
             
             VStack(spacing: 8) {
                 Text("No Classes Yet")
@@ -229,7 +229,7 @@ struct FilterChip: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color(hex: "#BC6C5C") : Color.white)
+                        .fill(isSelected ? .yugiMocha : Color.white)
                         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                 )
         }
@@ -255,7 +255,7 @@ struct ProviderClassManagementCard: View {
                     
                     Text(classItem.category.displayName)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                 }
                 
                 Spacer()
@@ -282,10 +282,10 @@ struct ProviderClassManagementCard: View {
                         Text("Edit")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color(hex: "#BC6C5C").opacity(0.1))
+                    .background(.yugiMocha.opacity(0.1))
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -337,10 +337,10 @@ struct ProviderClassManagementCard: View {
                         Text("View Intake Responses")
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(Color(hex: "#BC6C5C").opacity(0.08))
+                    .background(.yugiMocha.opacity(0.08))
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -351,7 +351,7 @@ struct ProviderClassManagementCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                .stroke(.yugiMocha, lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }

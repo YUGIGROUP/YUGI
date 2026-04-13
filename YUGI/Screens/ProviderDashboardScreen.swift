@@ -298,7 +298,7 @@ struct ProviderDashboardScreen: View {
                 }
                 .padding()
             }
-            .background(Color(hex: "#BC6C5C").ignoresSafeArea())
+            .background(.yugiMocha.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .sheet(isPresented: $showingHelpSupport) {
@@ -934,12 +934,12 @@ struct ProviderProfileSheet: View {
                         // Profile Avatar
                         ZStack {
                             Circle()
-                                .fill(Color(hex: "#BC6C5C").opacity(0.2))
+                                .fill(.yugiMocha.opacity(0.2))
                                 .frame(width: 80, height: 80)
                             
                             Image(systemName: "building.2.fill")
                                 .font(.system(size: 32))
-                                .foregroundColor(Color(hex: "#BC6C5C"))
+                                .foregroundColor(.yugiMocha)
                         }
                         
                         VStack(spacing: 8) {
@@ -1058,7 +1058,7 @@ struct ProviderProfileSheet: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
             }
             .alert("Sign Out", isPresented: $showingLogoutConfirmation) {
@@ -1095,7 +1095,7 @@ struct ProviderProfileInfoRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -1137,7 +1137,7 @@ struct AcceptedTermsView: View {
                     Button("Back") {
                         dismiss()
                     }
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
                 }
             }
         }
@@ -1205,7 +1205,7 @@ struct TermsRequiredCard: View {
                     Text("Read & Accept Terms")
                         .font(.system(size: 18, weight: .semibold))
                 }
-                .foregroundColor(Color(hex: "#BC6C5C"))
+                .foregroundColor(.yugiMocha)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(Color.white)

@@ -104,21 +104,21 @@ public struct ProviderBookingsScreen: View {
                     title: "Total",
                     value: "\(getFilteredBookings().count)",
                     icon: "calendar.badge.clock",
-                    color: Color(hex: "#BC6C5C")
+                    color: .yugiMocha
                 )
                 
                 ProviderStatCard(
                     title: "This Week",
                     value: "\(getThisWeeksBookings().count)",
                     icon: "calendar",
-                    color: Color(hex: "#BC6C5C").opacity(0.8)
+                    color: .yugiMocha.opacity(0.8)
                 )
             }
         }
         .padding(20)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -265,7 +265,7 @@ struct ProviderBookingRow: View {
                 // Price
                 Text("£\(NSDecimalNumber(decimal: enhancedBooking.price).doubleValue, specifier: "%.2f")")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "#BC6C5C"))
+                    .foregroundColor(.yugiMocha)
             }
             
             // Participants and Contact
@@ -291,9 +291,9 @@ struct ProviderBookingRow: View {
                 }) {
                     Image(systemName: "envelope.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                         .padding(6)
-                        .background(Color(hex: "#BC6C5C").opacity(0.1))
+                        .background(.yugiMocha.opacity(0.1))
                         .cornerRadius(6)
                 }
             }
@@ -303,7 +303,7 @@ struct ProviderBookingRow: View {
                 HStack {
                     Image(systemName: "info.circle.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#BC6C5C"))
+                        .foregroundColor(.yugiMocha)
                     
                     Text(requirements)
                         .font(.system(size: 12))
@@ -314,7 +314,7 @@ struct ProviderBookingRow: View {
                 }
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
-                .background(Color(hex: "#BC6C5C").opacity(0.05))
+                .background(.yugiMocha.opacity(0.05))
                 .cornerRadius(6)
             }
         }
@@ -323,7 +323,7 @@ struct ProviderBookingRow: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "#BC6C5C"), lineWidth: 2)
+                .stroke(.yugiMocha, lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         .alert("Email App Not Available", isPresented: $showingEmailAlert) {
@@ -444,7 +444,7 @@ struct ProviderStatCard: View {
         .padding(16)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [Color(hex: "#BC6C5C"), Color(hex: "#BC6C5C").opacity(0.8)]),
+                gradient: Gradient(colors: [.yugiMocha, .yugiMocha.opacity(0.8)]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
