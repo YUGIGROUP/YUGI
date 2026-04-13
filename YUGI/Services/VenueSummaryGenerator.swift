@@ -37,7 +37,7 @@ final class VenueSummaryGenerator {
                     let session = LanguageModelSession(instructions: self.instructions)
                     let stream = session.streamResponse(to: prompt)
                     for try await partial in stream {
-                        continuation.yield(partial.text)
+                        continuation.yield(partial.content)
                     }
                     continuation.finish()
                 } catch {
