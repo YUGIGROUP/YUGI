@@ -1,45 +1,39 @@
 import SwiftUI
 import Combine
 
+// MARK: - ViewModel
+
 class ContactFormViewModel: ObservableObject {
-    @Published var message = ""
-    @Published var selectedCategory: ContactCategory = .general
+    @Published var message      = ""
     @Published var isSubmitting = false
     @Published var showingSuccess = false
     @Published var error: String?
     @Published var showingError = false
-    
+
     private let supportService = SupportService.shared
-    private var cancellables = Set<AnyCancellable>()
-    
-    func submitForm(userEmail: String?, userName: String?) {
+    private var cancellables   = Set<AnyCancellable>()
+
+    func submitForm() {
         isSubmitting = true
-        error = nil
-        
-        let supportMessage = SupportMessage(
-            category: selectedCategory,
-            message: message,
-            userEmail: userEmail,
-            userName: userName
-        )
-        
-        supportService.sendSupportMessage(supportMessage)
+        error        = nil
+
+        supportService.sendMessage(message)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
-                    guard let self = self else { return }
+                    guard let self else { return }
                     self.isSubmitting = false
-                    if case let .failure(error) = completion {
-                        self.error = error.localizedDescription
+                    if case let .failure(err) = completion {
+                        self.error        = err.localizedDescription
                         self.showingError = true
                     }
                 },
                 receiveValue: { [weak self] response in
-                    guard let self = self else { return }
+                    guard let self else { return }
                     if response.success {
                         self.showingSuccess = true
                     } else {
-                        self.error = response.message
+                        self.error        = response.message
                         self.showingError = true
                     }
                 }
@@ -48,46 +42,79 @@ class ContactFormViewModel: ObservableObject {
     }
 }
 
+// MARK: - View
+
 struct ContactFormScreen: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = ContactFormViewModel()
-    
+
+    private var canSend: Bool {
+        !viewModel.message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Header
-                VStack(spacing: 16) {
+                VStack(spacing: 4) {
                     Text("Contact Support")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.custom("Raleway-SemiBold", size: 22))
                         .foregroundColor(.white)
-                    
+
                     Text("Send us a message and we'll get back to you as soon as possible")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.9))
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.75))
                         .multilineTextAlignment(.center)
                 }
-                .padding(.top, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                
+                .background(Color.yugiMocha)
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 16, bottomLeadingRadius: 0,
+                                                  bottomTrailingRadius: 0, topTrailingRadius: 16))
+
                 // Content
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Category Selection
-                        categorySection
-                        
-                        // Message Field
-                        messageSection
-                        
-                        // Submit Button
-                        submitButton
+                        // Message field
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Message")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color.yugiGray)
+
+                            TextField("Please provide details about your issue...",
+                                      text: $viewModel.message, axis: .vertical)
+                                .textFieldStyle(.plain)
+                                .lineLimit(5...10)
+                                .padding(16)
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        }
+
+                        // Send button
+                        Button(action: { viewModel.submitForm() }) {
+                            HStack(spacing: 10) {
+                                if viewModel.isSubmitting {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "paperplane.fill")
+                                        .font(.system(size: 17))
+                                }
+                                Text(viewModel.isSubmitting ? "Sending..." : "Send Message")
+                                    .font(.system(size: 17, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.yugiMocha)
+                            .cornerRadius(12)
+                        }
+                        .disabled(viewModel.isSubmitting || !canSend)
+                        .opacity(canSend ? 1.0 : 0.5)
                     }
                     .padding(20)
                 }
@@ -95,16 +122,12 @@ struct ContactFormScreen: View {
             .background(Color.yugiCream.ignoresSafeArea())
             .navigationBarHidden(true)
             .alert("Message Sent", isPresented: $viewModel.showingSuccess) {
-                Button("OK") {
-                    dismiss()
-                }
+                Button("Done") { dismiss() }
             } message: {
-                Text("Thank you for contacting us. We'll get back to you within 24 hours.")
+                Text("We'll get back to you as soon as possible.")
             }
-            .alert("Error", isPresented: $viewModel.showingError) {
-                Button("OK") {
-                    viewModel.showingError = false
-                }
+            .alert("Couldn't Send Message", isPresented: $viewModel.showingError) {
+                Button("OK") { viewModel.showingError = false }
             } message: {
                 if let error = viewModel.error {
                     Text(error)
@@ -112,160 +135,8 @@ struct ContactFormScreen: View {
             }
         }
     }
-    
-    private var categorySection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("What can we help you with?")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(Color.yugiGray)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                ForEach(ContactCategory.allCases, id: \ .self) { category in
-                    CategorySelectionCard(
-                        category: category,
-                        isSelected: viewModel.selectedCategory == category
-                    ) {
-                        viewModel.selectedCategory = category
-                    }
-                }
-            }
-        }
-    }
-    
-    private var messageSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Message")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(Color.yugiGray)
-            
-            TextField("Please provide details about your issue...", text: $viewModel.message, axis: .vertical)
-                .textFieldStyle(.plain)
-                .lineLimit(5...10)
-                .padding(16)
-                .background(Color.white)
-                .cornerRadius(12)
-                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-        }
-    }
-    
-    private var submitButton: some View {
-        Button(action: {
-            viewModel.submitForm(userEmail: APIService.shared.currentUser?.email, userName: APIService.shared.currentUser?.fullName)
-        }) {
-            HStack {
-                if viewModel.isSubmitting {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(0.8)
-                } else {
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(size: 18))
-                }
-                
-                Text(viewModel.isSubmitting ? "Sending..." : "Send Message")
-                    .font(.system(size: 18, weight: .semibold))
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        }
-        .disabled(viewModel.isSubmitting || viewModel.message.isEmpty)
-        .opacity((viewModel.message.isEmpty) ? 0.6 : 1.0)
-        .padding(.top, 8)
-    }
-}
-
-// MARK: - Supporting Views
-
-struct CategorySelectionCard: View {
-    let category: ContactCategory
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 12) {
-                Image(systemName: category.icon)
-                    .font(.system(size: 24))
-                    .foregroundColor(isSelected ? .white : category.color)
-                
-                Text(category.displayName)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(isSelected ? .white : Color.yugiGray)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? category.color : Color.white)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.clear : category.color.opacity(0.3), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-// MARK: - Models
-
-enum ContactCategory: String, CaseIterable, Codable {
-    case general = "general"
-    case booking = "booking"
-    case payment = "payment"
-    case technical = "technical"
-    case feedback = "feedback"
-    case other = "other"
-    
-    var displayName: String {
-        switch self {
-        case .general: return "General\nInquiry"
-        case .booking: return "Booking\nIssue"
-        case .payment: return "Payment\nProblem"
-        case .technical: return "Technical\nSupport"
-        case .feedback: return "Feedback\n& Suggestions"
-        case .other: return "Other"
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .general: return "questionmark.circle.fill"
-        case .booking: return "calendar.badge.clock"
-        case .payment: return "creditcard.fill"
-        case .technical: return "wrench.and.screwdriver.fill"
-        case .feedback: return "star.bubble.fill"
-        case .other: return "ellipsis.circle.fill"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .general: return .blue
-        case .booking: return .green
-        case .payment: return .orange
-        case .technical: return .purple
-        case .feedback: return .pink
-        case .other: return .gray
-        }
-    }
 }
 
 #Preview {
     ContactFormScreen()
-} 
+}

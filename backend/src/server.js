@@ -19,6 +19,7 @@ const intakeRoutes = require('./routes/intake');
 const venueRoutes = require('./routes/venues');
 
 const feedbackRoutes = require('./routes/feedback');
+const supportRoutes = require('./routes/support');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -174,6 +175,7 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/intake', intakeRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/support', supportRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
