@@ -350,26 +350,22 @@ struct EditProfileScreen: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Header
-                VStack(spacing: 16) {
+                VStack(spacing: 4) {
                     Text("Edit Profile")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.custom("Raleway-SemiBold", size: 22))
                         .foregroundColor(.white)
                     
                     Text("Update your personal information")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.9))
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.75))
                         .multilineTextAlignment(.center)
                 }
-                .padding(.top, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .background(Color.yugiMocha)
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 16, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 16))
                 
                 // Form
                 ScrollView {
