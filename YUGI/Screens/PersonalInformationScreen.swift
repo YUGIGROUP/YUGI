@@ -32,38 +32,35 @@ struct PersonalInformationScreen: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Personal Information")
-                            .font(.custom("Raleway-SemiBold", size: 22))
-                            .foregroundColor(.white)
-                        
-                        Text("Manage your account details")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.75))
-                    }
-                    
-                    Spacer()
-                    
-                    if !isEditing {
-                        Button(action: startEditing) {
-                            Text("Edit")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(8)
-                        }
-                    }
+                VStack(alignment: .center, spacing: 4) {
+                    Text("Personal Information")
+                        .font(.custom("Raleway-SemiBold", size: 22))
+                        .foregroundColor(.white)
+                    Text("Manage your account details")
+                        .font(.custom("Raleway-Regular", size: 13))
+                        .foregroundColor(.white.opacity(0.75))
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.top, 24)
                 .padding(.bottom, 20)
                 .padding(.horizontal, 20)
-                .frame(maxWidth: .infinity)
                 .background(Color.yugiMocha)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 16, bottomLeadingRadius: 0, bottomTrailingRadius: 0, topTrailingRadius: 16))
-                
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
+
+                // Edit / Save button row
+                if !isEditing {
+                    HStack {
+                        Spacer()
+                        Button(action: startEditing) {
+                            Text("Edit")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color.yugiMocha)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                }
+
                 // Content
                 ScrollView {
                     VStack(spacing: 24) {
