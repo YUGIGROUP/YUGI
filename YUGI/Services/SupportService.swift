@@ -69,9 +69,9 @@ enum ContactCategory: String, CaseIterable, Codable {
         switch self {
         case .general:   return .yugiMocha
         case .booking:   return .yugiSage
-        case .payment:   return .yugiBlush
+        case .payment:   return .yugiDustyBlush
         case .technical: return .yugiDeepSage
-        case .feedback:  return .yugiBlush
+        case .feedback:  return .yugiDustyBlush
         case .other:     return .yugiMocha
         }
     }
