@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 // MARK: - Response model
 
@@ -61,6 +62,17 @@ enum ContactCategory: String, CaseIterable, Codable {
         case .technical: return "Technical Support"
         case .feedback:  return "Feedback & Suggestions"
         case .other:     return "Other"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .general:   return .yugiMocha
+        case .booking:   return .yugiSage
+        case .payment:   return .yugiBlush
+        case .technical: return .yugiDeepSage
+        case .feedback:  return .yugiBlush
+        case .other:     return .yugiMocha
         }
     }
 }
