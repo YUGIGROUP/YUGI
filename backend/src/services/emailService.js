@@ -87,9 +87,11 @@ class EmailService {
   }
 
   async sendEmail(to, subject, html, text = null) {
-    // This is where you would integrate with an email service provider
-    // Examples: SendGrid, AWS SES, Mailgun, Gmail SMTP, etc.
-    
+    // Resend takes priority when RESEND_API_KEY is present (Railway-safe: HTTPS only, no SMTP)
+    if (process.env.RESEND_API_KEY) {
+      return await this.sendWithResend(to, subject, html);
+    }
+
     if (process.env.EMAIL_PROVIDER === 'sendgrid') {
       return await this.sendWithSendGrid(to, subject, html, text);
     } else if (process.env.EMAIL_PROVIDER === 'ses') {
@@ -103,6 +105,27 @@ class EmailService {
       console.log(`📧 Email would be sent to ${to}: ${subject}`);
       return { success: true, message: 'Email service not configured' };
     }
+  }
+
+  // Resend integration — HTTPS only, works on Railway (no outbound SMTP required)
+  async sendWithResend(to, subject, html) {
+    const { Resend } = require('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const { data, error } = await resend.emails.send({
+      from:    'YUGI <onboarding@resend.dev>',
+      to:      Array.isArray(to) ? to : [to],
+      subject,
+      html,
+    });
+
+    if (error) {
+      console.error('❌ Resend error:', error);
+      throw new Error(error.message);
+    }
+
+    console.log(`✅ Resend email sent. id=${data.id}`);
+    return { success: true, message: 'Email sent successfully', messageId: data.id };
   }
 
   // SendGrid integration
