@@ -29,7 +29,11 @@ class SupportService: ObservableObject {
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        req.httpBody = try? JSONSerialization.data(withJSONObject: ["message": text])
+        req.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "message":  text,
+            "category": "general",
+            "subject":  "New support message"
+        ])
 
         return URLSession.shared.dataTaskPublisher(for: req)
             .tryMap { data, response -> Data in
