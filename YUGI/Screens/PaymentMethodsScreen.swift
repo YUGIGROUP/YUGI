@@ -4,174 +4,149 @@ struct PaymentMethodsScreen: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingAddPaymentMethod = false
     @StateObject private var sharedPaymentService = SharedPaymentService.shared
-    
+
+    @State private var showHeader  = false
+    @State private var showContent = false
+    @State private var showFooter  = false
+
     var body: some View {
-        NavigationStack {
+        ZStack {
+            Color.yugiCloud.ignoresSafeArea()
+
             VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 16) {
-                    Text("Payment Methods")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Text("Manage your payment options")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 20)
-                .padding(.horizontal, 20)
-                .frame(maxWidth: .infinity)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                
-                // Content
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Payment Methods List
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("Your Payment Methods")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(Color.yugiGray)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    showingAddPaymentMethod = true
-                                }) {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "plus.circle.fill")
-                                            .font(.system(size: 16))
-                                        Text("Add New")
-                                            .font(.system(size: 16, weight: .medium))
-                                    }
-                                    .foregroundColor(Color.yugiMocha)
-                                }
-                            }
-                            
-                            if sharedPaymentService.paymentMethods.isEmpty {
-                                // Empty State
-                                VStack(spacing: 16) {
-                                    Image(systemName: "creditcard")
-                                        .font(.system(size: 48))
-                                        .foregroundColor(Color.yugiGray.opacity(0.3))
-                                    
-                                    VStack(spacing: 8) {
-                                        Text("No Payment Methods")
-                                            .font(.system(size: 18, weight: .semibold))
-                                            .foregroundColor(Color.yugiGray)
-                                        
-                                        Text("Add a payment method to make bookings")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(Color.yugiGray.opacity(0.7))
-                                            .multilineTextAlignment(.center)
-                                    }
-                                    
-                                    Button(action: {
-                                        showingAddPaymentMethod = true
-                                    }) {
-                                        Text("Add Payment Method")
-                                            .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.white)
-                                            .padding(.horizontal, 24)
-                                            .padding(.vertical, 12)
-                                            .background(Color.yugiMocha)
-                                            .cornerRadius(8)
-                                    }
-                                }
-                                .padding(32)
-                                .background(Color.clear)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.yugiMocha, lineWidth: 1)
-                                )
-                                .cornerRadius(12)
-                            } else {
-                                VStack(spacing: 12) {
-                                    ForEach(sharedPaymentService.paymentMethods) { paymentMethod in
-                                        UserPaymentMethodRow(
-                                            paymentMethod: paymentMethod,
-                                            onSetDefault: {
-                                                setDefaultPaymentMethod(paymentMethod)
-                                            },
-                                            onDelete: {
-                                                deletePaymentMethod(paymentMethod)
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Security Info
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Security & Privacy")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(Color.yugiGray)
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack(alignment: .top, spacing: 8) {
-                                    Image(systemName: "lock.shield.fill")
-                                        .foregroundColor(Color.yugiMocha)
-                                        .frame(width: 16)
-                                    
-                                    Text("All payment information is encrypted and secure")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(Color.yugiGray.opacity(0.8))
-                                }
-                                
-                                HStack(alignment: .top, spacing: 8) {
-                                    Image(systemName: "creditcard.fill")
-                                        .foregroundColor(Color.yugiMocha)
-                                        .frame(width: 16)
-                                    
-                                    Text("We never store your full card details")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(Color.yugiGray.opacity(0.8))
-                                }
-                                
-                                HStack(alignment: .top, spacing: 8) {
-                                    Image(systemName: "checkmark.shield.fill")
-                                        .foregroundColor(Color.yugiMocha)
-                                        .frame(width: 16)
-                                    
-                                    Text("PCI DSS compliant payment processing")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(Color.yugiGray.opacity(0.8))
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color.clear)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.yugiMocha, lineWidth: 1)
-                        )
-                        .cornerRadius(12)
-                        
-                        Spacer(minLength: 40)
+                // MARK: Nav header
+                HStack(spacing: 6) {
+                    Button(action: { dismiss() }) {
+                        Text("‹")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundColor(.white)
                     }
-                    .padding(20)
+                    Text("Payment methods")
+                        .font(.custom("Raleway-Medium", size: 18))
+                        .foregroundColor(.white)
+                    Spacer()
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+                .background(Color.yugiMocha.ignoresSafeArea(edges: .top))
+                .opacity(showHeader ? 1 : 0)
+                .offset(y: showHeader ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showHeader)
+
+                // MARK: Body
+                Group {
+                    if sharedPaymentService.paymentMethods.isEmpty {
+                        emptyState
+                    } else {
+                        populatedState
+                    }
+                }
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showContent)
+
+                // MARK: Footer
+                Text("🔒 Encrypted & PCI-DSS compliant")
+                    .font(.custom("Raleway-Regular", size: 12))
+                    .foregroundColor(Color.yugiBodyText)
+                    .multilineTextAlignment(.center)
+                    .padding(.vertical, 8)
+                    .padding(.bottom, 32)
+                    .opacity(showFooter ? 1 : 0)
+                    .offset(y: showFooter ? 0 : 12)
+                    .animation(.easeOut(duration: 0.6), value: showFooter)
             }
-            .background(Color.yugiCream.ignoresSafeArea())
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showingAddPaymentMethod) {
-                AddPaymentMethodScreen { newPaymentMethod in
-                    addNewPaymentMethod(newPaymentMethod)
-                }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { showHeader  = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) { showContent = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.42) { showFooter  = true }
+        }
+        .sheet(isPresented: $showingAddPaymentMethod) {
+            AddPaymentMethodScreen { newPaymentMethod in
+                addNewPaymentMethod(newPaymentMethod)
             }
         }
     }
-    
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack {
+            Spacer()
+            VStack(spacing: 0) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(Color.yugiOat)
+                        .frame(width: 72, height: 72)
+                    Image(systemName: "creditcard")
+                        .font(.system(size: 30, weight: .light))
+                        .foregroundColor(Color.yugiMocha)
+                }
+                Spacer().frame(height: 28)
+                Text("No cards added yet")
+                    .font(.custom("Raleway-Medium", size: 22))
+                    .foregroundColor(Color.yugiSoftBlack)
+                    .tracking(-0.3)
+                Spacer().frame(height: 8)
+                Text("Add a card to make bookings quick and secure.")
+                    .font(.custom("Raleway-Regular", size: 14))
+                    .foregroundColor(Color.yugiBodyText)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(7)
+                    .frame(maxWidth: 260)
+                Spacer().frame(height: 28)
+                Button(action: { showingAddPaymentMethod = true }) {
+                    Text("Add a card")
+                        .font(.custom("Raleway-Medium", size: 15))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 14)
+                        .padding(.horizontal, 40)
+                        .background(Color.yugiMocha)
+                        .clipShape(Capsule())
+                }
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Populated State
+
+    private var populatedState: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                ForEach(sharedPaymentService.paymentMethods) { paymentMethod in
+                    UserPaymentMethodRow(
+                        paymentMethod: paymentMethod,
+                        onSetDefault: { setDefaultPaymentMethod(paymentMethod) },
+                        onDelete: { deletePaymentMethod(paymentMethod) }
+                    )
+                }
+                Button(action: { showingAddPaymentMethod = true }) {
+                    Text("+ Add another card")
+                        .font(.custom("Raleway-Medium", size: 14))
+                        .foregroundColor(Color.yugiMocha)
+                        .frame(maxWidth: .infinity)
+                        .padding(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [6]))
+                                .foregroundColor(Color.yugiBorder)
+                        )
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 28)
+            .padding(.bottom, 16)
+        }
+    }
+
+    // MARK: - Logic (preserved)
+
     private func setDefaultPaymentMethod(_ paymentMethod: UserPaymentMethod) {
-        // Create a new payment method with default set to true
         let updatedPaymentMethod = UserPaymentMethod(
             id: paymentMethod.id,
             type: paymentMethod.type,
@@ -181,99 +156,81 @@ struct PaymentMethodsScreen: View {
             cardholderName: paymentMethod.cardholderName,
             isDefault: true
         )
-        
-        // Remove the old payment method and add the updated one
         sharedPaymentService.deletePaymentMethod(paymentMethod)
         sharedPaymentService.addPaymentMethod(updatedPaymentMethod)
     }
-    
+
     private func deletePaymentMethod(_ paymentMethod: UserPaymentMethod) {
         sharedPaymentService.deletePaymentMethod(paymentMethod)
     }
-    
+
     private func addNewPaymentMethod(_ newPaymentMethod: UserPaymentMethod) {
         sharedPaymentService.addPaymentMethod(newPaymentMethod)
     }
 }
+
+// MARK: - UserPaymentMethodRow
 
 struct UserPaymentMethodRow: View {
     let paymentMethod: UserPaymentMethod
     let onSetDefault: () -> Void
     let onDelete: () -> Void
     @State private var showingDeleteAlert = false
-    
+
     var body: some View {
-        HStack(spacing: 16) {
-            // Card Icon
+        HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(paymentMethod.type.color.opacity(0.1))
-                    .frame(width: 50, height: 32)
-                
-                Image(systemName: paymentMethod.type.iconName)
-                    .font(.system(size: 20))
-                    .foregroundColor(paymentMethod.type.color)
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color(hex: "F5F1ED"))
+                    .frame(width: 40, height: 40)
+                Image(systemName: "creditcard")
+                    .font(.system(size: 18, weight: .light))
+                    .foregroundColor(Color.yugiMocha)
             }
-            
-            // Card Details
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(paymentMethod.type.displayName)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Color.yugiGray)
-                    
-                    if paymentMethod.isDefault {
-                        Text("Default")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Color.yugiMocha)
-                            .cornerRadius(4)
-                    }
-                }
-                
-                Text("•••• •••• •••• \(paymentMethod.lastFourDigits)")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color.yugiGray.opacity(0.7))
-                
-                Text("Expires \(String(format: "%02d/%d", paymentMethod.expiryMonth, paymentMethod.expiryYear))")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color.yugiGray.opacity(0.6))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(paymentMethod.type.displayName) ••\(paymentMethod.lastFourDigits)")
+                    .font(.custom("Raleway-Medium", size: 15))
+                    .foregroundColor(Color.yugiSoftBlack)
+                Text("Expires \(String(format: "%02d/%02d", paymentMethod.expiryMonth, paymentMethod.expiryYear % 100))")
+                    .font(.custom("Raleway-Regular", size: 12))
+                    .foregroundColor(Color.yugiBodyText)
             }
-            
+
             Spacer()
-            
-            // Actions Menu
+
+            if paymentMethod.isDefault {
+                Text("DEFAULT")
+                    .font(.custom("Raleway-Medium", size: 11))
+                    .foregroundColor(Color.yugiDeepSage)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 10)
+                    .background(Color.yugiSage)
+                    .clipShape(Capsule())
+            }
+
             Menu {
                 if !paymentMethod.isDefault {
-                    Button("Set as Default") {
-                        onSetDefault()
-                    }
+                    Button("Set as Default") { onSetDefault() }
                 }
-                
-                Button("Delete", role: .destructive) {
-                    showingDeleteAlert = true
-                }
+                Button("Delete", role: .destructive) { showingDeleteAlert = true }
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 16))
-                    .foregroundColor(Color.yugiGray.opacity(0.6))
+                    .font(.system(size: 14))
+                    .foregroundColor(Color.yugiBodyText)
                     .frame(width: 24)
             }
         }
-        .padding()
-        .background(Color.clear)
+        .padding(18)
+        .background(Color.white)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.yugiMocha, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.yugiOat, lineWidth: 1)
         )
-        .cornerRadius(12)
+        .cornerRadius(16)
         .alert("Delete Payment Method", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                onDelete()
-            }
+            Button("Delete", role: .destructive) { onDelete() }
         } message: {
             Text("Are you sure you want to delete this payment method? This action cannot be undone.")
         }
@@ -282,4 +239,4 @@ struct UserPaymentMethodRow: View {
 
 #Preview {
     PaymentMethodsScreen()
-} 
+}

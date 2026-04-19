@@ -3,477 +3,310 @@ import SwiftUI
 struct AddPaymentMethodScreen: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var apiService = APIService.shared
-    
+
     // Form fields
-    @State private var cardNumber = ""
+    @State private var cardNumber     = ""
     @State private var cardholderName = ""
-    @State private var expiryMonth = 1
-    @State private var expiryYear = Calendar.current.component(.year, from: Date())
-    @State private var cvv = ""
-    @State private var isDefault = false
-    
+    @State private var expiryMonth    = 1
+    @State private var expiryYear     = Calendar.current.component(.year, from: Date())
+    @State private var expiryText     = ""
+    @State private var cvv            = ""
+    @State private var isDefault      = false
+
     // UI state
-    @State private var isLoading = false
-    @State private var showingError = false
-    @State private var errorMessage = ""
+    @State private var isLoading      = false
+    @State private var showingError   = false
+    @State private var errorMessage   = ""
     @State private var detectedCardType: CardType?
-    
-    // Callback
+
+    // Animation
+    @State private var showHeader = false
+    @State private var showForm   = false
+    @State private var showSave   = false
+
     let onPaymentMethodAdded: (UserPaymentMethod) -> Void
-    
-    // Available months and years
-    private let months = Array(1...12)
-    private let years: [Int] = {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        return Array(currentYear...(currentYear + 20))
-    }()
-    
+
     var body: some View {
-        NavigationStack {
+        ZStack {
+            Color.yugiCloud.ignoresSafeArea()
+
             VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 16) {
-                    Text("Add Payment Method")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Text("Enter your card details securely")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 20)
-                .padding(.horizontal, 20)
-                .frame(maxWidth: .infinity)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                
-                // Content
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Card Preview
-                        cardPreviewSection
-                        
-                        // Form Fields
-                        formSection
-                        
-                        // Default Card Toggle
-                        defaultCardSection
-                        
-                        // Add Card Button
-                        addCardButton
-                        
-                        // Security Notice
-                        securityNoticeSection
-                    }
-                    .padding(20)
-                }
-            }
-            .background(Color.yugiCream.ignoresSafeArea())
-            .navigationBarHidden(true)
-            .alert("Error", isPresented: $showingError) {
-                Button("OK") {}
-            } message: {
-                Text(errorMessage)
-            }
-            .onChange(of: cardNumber) { _, _ in
-                detectCardType()
-            }
-        }
-    }
-    
-    private var cardPreviewSection: some View {
-        VStack(spacing: 16) {
-            // Card Preview
-            VStack(spacing: 0) {
-                // Card front
-                VStack(alignment: .leading, spacing: 20) {
-                    HStack {
-                        Spacer()
-                        
-                        if let cardType = detectedCardType {
-                            Image(systemName: cardType.iconName)
-                                .font(.system(size: 32))
-                                .foregroundColor(.white)
-                        } else {
-                            Image(systemName: "creditcard.fill")
-                                .font(.system(size: 32))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(cardNumber.isEmpty ? "•••• •••• •••• ••••" : formatCardNumber(cardNumber))
-                            .font(.system(size: 18, weight: .semibold, design: .monospaced))
+                // MARK: Header
+                HStack(spacing: 6) {
+                    Button(action: { dismiss() }) {
+                        Text("‹")
+                            .font(.system(size: 22, weight: .medium))
                             .foregroundColor(.white)
-                        
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("CARDHOLDER")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-                                Text(cardholderName.isEmpty ? "YOUR NAME" : cardholderName.uppercased())
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text("EXPIRES")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-                                Text(String(format: "%02d/%d", expiryMonth, expiryYear))
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white)
-                            }
-                        }
                     }
-                }
-                .padding(20)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            detectedCardType?.color ?? Color.gray,
-                            detectedCardType?.color.opacity(0.8) ?? Color.gray.opacity(0.8)
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .cornerRadius(12)
-                
-                // Card type indicator
-                HStack {
-                    Text(detectedCardType?.displayName ?? "Card")
-                        .font(.system(size: 12, weight: .medium))
+                    Text("Add a card")
+                        .font(.custom("Raleway-Medium", size: 18))
                         .foregroundColor(.white)
-                    
                     Spacer()
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(detectedCardType?.color ?? Color.gray)
-                .cornerRadius(12)
-            }
-            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-        }
-    }
-    
-    private var formSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Card Details")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(Color.yugiGray)
-            
-            VStack(spacing: 16) {
-                // Card Number
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Card Number")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color.yugiGray.opacity(0.8))
-                    
-                    YUGITextField(
-                        text: $cardNumber,
-                        placeholder: "1234 5678 9012 3456",
-                        icon: "creditcard.fill",
-                        keyboardType: .numberPad
-                    )
-                    .onChange(of: cardNumber) { _, newValue in
-                        // Format card number with spaces
-                        let cleaned = newValue.replacingOccurrences(of: " ", with: "")
-                        let formatted = cleaned.enumerated().map { index, char in
-                            if index > 0 && index % 4 == 0 {
-                                return " \(char)"
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+                .background(Color.yugiMocha.ignoresSafeArea(edges: .top))
+                .opacity(showHeader ? 1 : 0)
+                .offset(y: showHeader ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showHeader)
+
+                // MARK: Form
+                ScrollView {
+                    VStack(spacing: 22) {
+                        // Card Number
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("CARD NUMBER")
+                                .font(.custom("Raleway-Medium", size: 12))
+                                .foregroundColor(Color.yugiBodyText)
+                                .kerning(0.4)
+                            inputField(text: $cardNumber, placeholder: "1234 5678 9012 3456", keyboardType: .numberPad)
+                                .onChange(of: cardNumber) { _, newValue in
+                                    let digits = newValue.filter { $0.isNumber }
+                                    let formatted = formatCardNumberString(String(digits.prefix(16)))
+                                    if formatted != newValue { cardNumber = formatted }
+                                    detectCardType()
+                                }
+                        }
+
+                        // Cardholder Name
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("CARDHOLDER NAME")
+                                .font(.custom("Raleway-Medium", size: 12))
+                                .foregroundColor(Color.yugiBodyText)
+                                .kerning(0.4)
+                            inputField(text: $cardholderName, placeholder: "Name on card")
+                        }
+
+                        // Expiry + CVV
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("EXPIRY")
+                                    .font(.custom("Raleway-Medium", size: 12))
+                                    .foregroundColor(Color.yugiBodyText)
+                                    .kerning(0.4)
+                                inputField(text: $expiryText, placeholder: "MM / YY", keyboardType: .numberPad)
+                                    .onChange(of: expiryText) { _, newValue in
+                                        let digits = newValue.filter { $0.isNumber }
+                                        let capped = String(digits.prefix(4))
+                                        var formatted = ""
+                                        for (i, d) in capped.enumerated() {
+                                            if i == 2 { formatted += " / " }
+                                            formatted.append(d)
+                                        }
+                                        if formatted != newValue { expiryText = formatted }
+                                        parseExpiry(formatted)
+                                    }
                             }
-                            return String(char)
-                        }.joined()
-                        cardNumber = formatted
-                    }
-                }
-                
-                // Cardholder Name
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Cardholder Name")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color.yugiGray.opacity(0.8))
-                    
-                    YUGITextField(
-                        text: $cardholderName,
-                        placeholder: "Enter cardholder name",
-                        icon: "person.fill"
-                    )
-                }
-                
-                // Expiry Date and CVV
-                HStack(spacing: 16) {
-                    // Expiry Month
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Month")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Color.yugiGray.opacity(0.8))
-                        
-                        Picker("Month", selection: $expiryMonth) {
-                            ForEach(months, id: \.self) { month in
-                                Text(String(format: "%02d", month)).tag(month)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("CVV")
+                                    .font(.custom("Raleway-Medium", size: 12))
+                                    .foregroundColor(Color.yugiBodyText)
+                                    .kerning(0.4)
+                                secureInputField(text: $cvv, placeholder: "123", keyboardType: .numberPad)
+                                    .onChange(of: cvv) { _, newValue in
+                                        let cleaned = newValue.filter { $0.isNumber }
+                                        let capped = String(cleaned.prefix(4))
+                                        if capped != newValue { cvv = capped }
+                                    }
                             }
                         }
-                        .pickerStyle(MenuPickerStyle())
+
+                        // Default toggle
+                        HStack {
+                            Text("Use for future bookings")
+                                .font(.custom("Raleway-Regular", size: 14))
+                                .foregroundColor(Color.yugiSoftBlack)
+                            Spacer()
+                            Toggle("", isOn: $isDefault)
+                                .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
+                        }
+                        .padding(.top, 6)
+                        .padding(.bottom, 2)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 32)
+                    .padding(.bottom, 16)
+                }
+                .opacity(showForm ? 1 : 0)
+                .offset(y: showForm ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showForm)
+
+                // MARK: Save (sticky)
+                VStack(spacing: 10) {
+                    Button(action: addCard) {
+                        Group {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text("Save card")
+                                    .font(.custom("Raleway-Medium", size: 15))
+                                    .foregroundColor(.white)
+                            }
+                        }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        .padding(.vertical, 14)
+                        .background(Color.yugiMocha)
+                        .clipShape(Capsule())
                     }
-                    
-                    // Expiry Year
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Year")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Color.yugiGray.opacity(0.8))
-                        
-                        Picker("Year", selection: $expiryYear) {
-                            ForEach(years, id: \.self) { year in
-                                Text(String(year)).tag(year)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-                    }
-                    
-                    // CVV
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("CVV")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Color.yugiGray.opacity(0.8))
-                        
-                        YUGITextField(
-                            text: $cvv,
-                            placeholder: "123",
-                            icon: "lock.fill",
-                            keyboardType: .numberPad
-                        )
-                        .onChange(of: cvv) { _, newValue in
-                            // Limit CVV to 3-4 digits
-                            let cleaned = newValue.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-                            cvv = String(cleaned.prefix(4))
-                        }
-                    }
+                    .disabled(isLoading || !isFormValid)
+                    .opacity(isFormValid ? 1.0 : 0.55)
+
+                    Text("🔒 Encrypted & PCI-DSS compliant")
+                        .font(.custom("Raleway-Regular", size: 11))
+                        .foregroundColor(Color.yugiBodyText)
+                        .multilineTextAlignment(.center)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 28)
+                .opacity(showSave ? 1 : 0)
+                .offset(y: showSave ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showSave)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { showHeader = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) { showForm   = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.42) { showSave   = true }
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") {}
+        } message: {
+            Text(errorMessage)
+        }
+    }
+
+    // MARK: - Field Builders
+
+    @ViewBuilder
+    private func inputField(text: Binding<String>, placeholder: String, keyboardType: UIKeyboardType = .default) -> some View {
+        ZStack(alignment: .leading) {
+            if text.wrappedValue.isEmpty {
+                Text(placeholder)
+                    .font(.custom("Raleway-Regular", size: 15))
+                    .foregroundColor(Color.yugiBodyText.opacity(0.7))
+            }
+            TextField("", text: text)
+                .font(.custom("Raleway-Regular", size: 15))
+                .foregroundColor(Color.yugiSoftBlack)
+                .keyboardType(keyboardType)
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .background(Color.white)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.yugiBorder, lineWidth: 1))
+        .cornerRadius(12)
+    }
+
+    @ViewBuilder
+    private func secureInputField(text: Binding<String>, placeholder: String, keyboardType: UIKeyboardType = .default) -> some View {
+        ZStack(alignment: .leading) {
+            if text.wrappedValue.isEmpty {
+                Text(placeholder)
+                    .font(.custom("Raleway-Regular", size: 15))
+                    .foregroundColor(Color.yugiBodyText.opacity(0.7))
+            }
+            SecureField("", text: text)
+                .font(.custom("Raleway-Regular", size: 15))
+                .foregroundColor(Color.yugiSoftBlack)
+                .keyboardType(keyboardType)
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .background(Color.white)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.yugiBorder, lineWidth: 1))
+        .cornerRadius(12)
+    }
+
+    // MARK: - Helper Methods (preserved)
+
+    private func parseExpiry(_ text: String) {
+        let digits = text.filter { $0.isNumber }
+        guard digits.count >= 2 else { return }
+        let monthStr = String(digits.prefix(2))
+        guard let month = Int(monthStr), month >= 1 && month <= 12 else { return }
+        expiryMonth = month
+        if digits.count == 4 {
+            let yearStr = String(digits.suffix(2))
+            if let year2 = Int(yearStr) {
+                let century = (Calendar.current.component(.year, from: Date()) / 100) * 100
+                expiryYear = century + year2
             }
         }
     }
-    
-    private var defaultCardSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Default Payment Method")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(Color.yugiGray)
-            
-            HStack {
-                Image(systemName: "star.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(Color.yugiMocha)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Set as default")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Color.yugiGray)
-                    
-                    Text("This card will be used for future bookings")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.yugiGray.opacity(0.7))
-                }
-                
-                Spacer()
-                
-                Toggle("", isOn: $isDefault)
-                    .toggleStyle(SwitchToggleStyle(tint: Color.yugiMocha))
-            }
-            .padding()
-            .background(Color.white)
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+
+    private func formatCardNumberString(_ digits: String) -> String {
+        var result = ""
+        for (i, d) in digits.enumerated() {
+            if i > 0 && i % 4 == 0 { result += " " }
+            result.append(d)
         }
+        return result
     }
-    
-    private var addCardButton: some View {
-        Button(action: addCard) {
-            HStack {
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(0.8)
-                } else {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 18))
-                }
-                
-                Text("Add Card")
-                    .font(.system(size: 18, weight: .semibold))
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        }
-        .disabled(isLoading || !isFormValid)
-        .opacity(isFormValid ? 1.0 : 0.6)
-    }
-    
-    private var securityNoticeSection: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(.green)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Secure Payment")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color.yugiGray)
-                    
-                    Text("Your card information is encrypted and secure")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.yugiGray.opacity(0.7))
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .background(Color.white)
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-        }
-    }
-    
-    // MARK: - Helper Methods
-    
+
     private var isFormValid: Bool {
-        let cleanedCardNumber = cardNumber.replacingOccurrences(of: " ", with: "")
-        let cardNumberValid = cleanedCardNumber.count >= 12
-        let cardholderValid = !cardholderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        let cvvValid = cvv.count >= 3
-        let expiryValid = isExpiryDateValid()
-        
-        // Debug print to see what's failing
-        print("Form validation: cardNumber=\(cardNumberValid) (\(cleanedCardNumber.count) digits), cardholder=\(cardholderValid), cvv=\(cvvValid) (\(cvv.count) chars), expiry=\(expiryValid)")
-        
+        let cleanedCardNumber = cardNumber.filter { $0.isNumber }
+        let cardNumberValid   = cleanedCardNumber.count >= 12
+        let cardholderValid   = !cardholderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let cvvValid          = cvv.count >= 3
+        let expiryValid       = isExpiryDateValid()
         return cardNumberValid && cardholderValid && cvvValid && expiryValid
     }
-    
+
     private func isExpiryDateValid() -> Bool {
-        let currentDate = Date()
-        let currentYear = Calendar.current.component(.year, from: currentDate)
+        let currentDate  = Date()
+        let currentYear  = Calendar.current.component(.year,  from: currentDate)
         let currentMonth = Calendar.current.component(.month, from: currentDate)
-        
-        if expiryYear < currentYear {
-            return false
-        }
-        
-        if expiryYear == currentYear && expiryMonth < currentMonth {
-            return false
-        }
-        
+        if expiryYear < currentYear  { return false }
+        if expiryYear == currentYear && expiryMonth < currentMonth { return false }
         return true
     }
-    
+
     private func detectCardType() {
-        let cleaned = cardNumber.replacingOccurrences(of: " ", with: "")
-        
-        if cleaned.hasPrefix("4") {
-            detectedCardType = .visa
-        } else if cleaned.hasPrefix("5") {
-            detectedCardType = .mastercard
-        } else if cleaned.hasPrefix("34") || cleaned.hasPrefix("37") {
-            detectedCardType = .amex
-        } else if cleaned.hasPrefix("6") {
-            detectedCardType = .discover
-        } else {
-            detectedCardType = nil
-        }
+        let cleaned = cardNumber.filter { $0.isNumber }
+        if      cleaned.hasPrefix("4")                              { detectedCardType = .visa }
+        else if cleaned.hasPrefix("5")                              { detectedCardType = .mastercard }
+        else if cleaned.hasPrefix("34") || cleaned.hasPrefix("37") { detectedCardType = .amex }
+        else if cleaned.hasPrefix("6")                              { detectedCardType = .discover }
+        else                                                        { detectedCardType = nil }
     }
-    
-    private func formatCardNumber(_ number: String) -> String {
-        let cleaned = number.replacingOccurrences(of: " ", with: "")
-        var formatted = ""
-        
-        for (index, char) in cleaned.enumerated() {
-            if index > 0 && index % 4 == 0 {
-                formatted += " "
-            }
-            formatted += String(char)
-        }
-        
-        return formatted
-    }
-    
+
     private func addCard() {
         guard isFormValid else {
-            let cleanedCardNumber = cardNumber.replacingOccurrences(of: " ", with: "")
+            let cleanedCardNumber = cardNumber.filter { $0.isNumber }
             var errorDetails: [String] = []
-            
-            if cleanedCardNumber.count < 12 {
-                errorDetails.append("Card number must be at least 12 digits")
-            }
-            if cardholderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                errorDetails.append("Cardholder name is required")
-            }
-            if cvv.count < 3 {
-                errorDetails.append("CVV must be at least 3 digits")
-            }
-            if !isExpiryDateValid() {
-                errorDetails.append("Expiry date must be in the future")
-            }
-            
-            let errorMessage = errorDetails.isEmpty ? "Please fill in all required fields correctly" : errorDetails.joined(separator: "\n")
-            showError(errorMessage)
+            if cleanedCardNumber.count < 12                                           { errorDetails.append("Card number must be at least 12 digits") }
+            if cardholderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { errorDetails.append("Cardholder name is required") }
+            if cvv.count < 3                                                          { errorDetails.append("CVV must be at least 3 digits") }
+            if !isExpiryDateValid()                                                   { errorDetails.append("Expiry date must be in the future") }
+            showError(errorDetails.isEmpty ? "Please fill in all required fields correctly" : errorDetails.joined(separator: "\n"))
             return
         }
-        
+
         isLoading = true
-        
-        // Simulate API call
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             isLoading = false
-            
-            let cleanedCardNumber = cardNumber.replacingOccurrences(of: " ", with: "")
-            let lastFourDigits = String(cleanedCardNumber.suffix(4))
-            
-            let newPaymentMethod = UserPaymentMethod(
-                id: UUID().uuidString,
-                type: detectedCardType ?? .visa,
-                lastFourDigits: lastFourDigits,
-                expiryMonth: expiryMonth,
-                expiryYear: expiryYear,
-                cardholderName: cardholderName.trimmingCharacters(in: .whitespacesAndNewlines),
-                isDefault: isDefault
+            let cleanedCardNumber = cardNumber.filter { $0.isNumber }
+            let lastFourDigits    = String(cleanedCardNumber.suffix(4))
+            let newPaymentMethod  = UserPaymentMethod(
+                id:              UUID().uuidString,
+                type:            detectedCardType ?? .visa,
+                lastFourDigits:  lastFourDigits,
+                expiryMonth:     expiryMonth,
+                expiryYear:      expiryYear,
+                cardholderName:  cardholderName.trimmingCharacters(in: .whitespacesAndNewlines),
+                isDefault:       isDefault
             )
-            
             onPaymentMethodAdded(newPaymentMethod)
             dismiss()
         }
     }
-    
+
     private func showError(_ message: String) {
         errorMessage = message
         showingError = true
@@ -482,4 +315,4 @@ struct AddPaymentMethodScreen: View {
 
 #Preview {
     AddPaymentMethodScreen { _ in }
-} 
+}
