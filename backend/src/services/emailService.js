@@ -113,7 +113,7 @@ class EmailService {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { data, error } = await resend.emails.send({
-      from:    'YUGI <onboarding@resend.dev>',
+      from:    'YUGI Support <support@yugiapp.ai>',
       to:      Array.isArray(to) ? to : [to],
       subject,
       html,
