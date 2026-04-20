@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(xcodebuild -scheme YUGI -destination \"platform=iOS Simulator,id=F169CCC7-BB2F-4AAE-8EA7-2A91EFDCE194\" build)"
+    ]
+  }
+}
