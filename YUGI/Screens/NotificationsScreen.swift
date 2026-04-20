@@ -7,310 +7,259 @@ struct NotificationsScreen: View {
     @State private var showingPreferences = false
     @State private var showingClearConfirmation = false
     @State private var selectedNotification: UserNotification?
-    
+
+    // Animation
+    @State private var showHeader  = false
+    @State private var showTabs    = false
+    @State private var showContent = false
+
     var body: some View {
-        NavigationStack {
+        ZStack {
+            Color.yugiCloud.ignoresSafeArea()
+
             VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 16) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Notifications")
-                                .font(.system(size: 28, weight: .bold))
+                // MARK: Nav header
+                HStack(spacing: 6) {
+                    Button(action: { dismiss() }) {
+                        Text("‹")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                    Text("Notifications")
+                        .font(.custom("Raleway-Medium", size: 18))
+                        .foregroundColor(.white)
+                    Spacer()
+                    if !notificationService.notifications.isEmpty {
+                        Button(action: { showingClearConfirmation = true }) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 18))
                                 .foregroundColor(.white)
-                            
-                            Text("\(notificationService.unreadCount) unread")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white.opacity(0.9))
                         }
-                        
-                        Spacer()
-                        
-                        // Action buttons
-                        HStack(spacing: 12) {
-                            Button(action: {
-                                showingPreferences = true
-                            }) {
-                                Image(systemName: "gearshape.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.white)
-                            }
-                            
-                            if !notificationService.notifications.isEmpty {
-                                Button(action: {
-                                    showingClearConfirmation = true
-                                }) {
-                                    Image(systemName: "trash.fill")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.white)
-                                }
-                            }
-                        }
+                        .padding(.trailing, 12)
+                    }
+                    Button(action: { showingPreferences = true }) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white)
                     }
                 }
-                .padding(.top, 20)
                 .padding(.horizontal, 20)
-                .frame(maxWidth: .infinity)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.yugiMocha, Color.yugiMocha.opacity(0.8)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                
-                // Tab Selector
-                HStack(spacing: 0) {
-                    NotificationTabButton(
-                        title: "All",
-                        isSelected: selectedTab == 0,
-                        count: notificationService.notifications.count
-                    ) {
-                        selectedTab = 0
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+                .background(Color.yugiMocha.ignoresSafeArea(edges: .top))
+                .opacity(showHeader ? 1 : 0)
+                .offset(y: showHeader ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showHeader)
+
+                // MARK: Tabs
+                VStack(spacing: 0) {
+                    HStack(spacing: 24) {
+                        notificationTabLabel(title: "All", isSelected: selectedTab == 0) {
+                            selectedTab = 0
+                        }
+                        notificationTabLabel(title: "Unread", isSelected: selectedTab == 1) {
+                            selectedTab = 1
+                        }
+                        Spacer()
                     }
-                    
-                    NotificationTabButton(
-                        title: "Unread",
-                        isSelected: selectedTab == 1,
-                        count: notificationService.unreadCount
-                    ) {
-                        selectedTab = 1
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+
+                    Rectangle()
+                        .fill(Color.yugiOat)
+                        .frame(height: 0.5)
+                        .padding(.top, 0)
+                }
+                .opacity(showTabs ? 1 : 0)
+                .offset(y: showTabs ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showTabs)
+
+                // MARK: Content
+                Group {
+                    if notificationService.notifications.isEmpty || (selectedTab == 1 && notificationService.notifications.filter { !$0.isRead }.isEmpty) {
+                        emptyStateView
+                    } else {
+                        notificationListView
                     }
                 }
-                .background(Color.white)
-                
-                // Content
-                if notificationService.notifications.isEmpty {
-                    emptyStateView
-                } else {
-                    notificationListView
-                }
-            }
-            .background(Color.yugiCream.ignoresSafeArea())
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showingPreferences) {
-                NotificationPreferencesScreen()
-            }
-            .alert("Clear All Notifications", isPresented: $showingClearConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Clear All", role: .destructive) {
-                    notificationService.clearAllNotifications()
-                }
-            } message: {
-                Text("Are you sure you want to clear all notifications? This action cannot be undone.")
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showContent)
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { showHeader  = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) { showTabs    = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.38) { showContent = true }
+        }
+        .sheet(isPresented: $showingPreferences) {
+            NotificationPreferencesScreen()
+        }
+        .alert("Clear All Notifications", isPresented: $showingClearConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear All", role: .destructive) {
+                notificationService.clearAllNotifications()
+            }
+        } message: {
+            Text("Are you sure you want to clear all notifications? This action cannot be undone.")
+        }
     }
-    
+
+    @ViewBuilder
+    private func notificationTabLabel(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 0) {
+                Text(title)
+                    .font(isSelected ? .custom("Raleway-Medium", size: 14) : .custom("Raleway-Regular", size: 14))
+                    .foregroundColor(isSelected ? Color.yugiSoftBlack : Color.yugiBodyText)
+                    .padding(.bottom, 12)
+
+                Rectangle()
+                    .fill(isSelected ? Color.yugiMocha : Color.clear)
+                    .frame(height: 2)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     private var emptyStateView: some View {
         VStack(spacing: 24) {
             Spacer()
-            
-            Image(systemName: "bell.slash")
-                .font(.system(size: 64))
-                .foregroundColor(Color.yugiGray.opacity(0.3))
-            
-            VStack(spacing: 8) {
-                Text("No Notifications")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(Color.yugiGray)
-                
-                Text("You're all caught up! We'll notify you about important updates, bookings, and reminders.")
-                    .font(.system(size: 16))
-                    .foregroundColor(Color.yugiGray.opacity(0.7))
+
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.yugiOat)
+                .frame(width: 72, height: 72)
+                .overlay(
+                    Image(systemName: "bell")
+                        .font(.system(size: 28, weight: .light))
+                        .foregroundColor(Color.yugiMocha)
+                )
+
+            VStack(spacing: 6) {
+                Text("All caught up")
+                    .font(.custom("Raleway-Medium", size: 20))
+                    .foregroundColor(Color.yugiSoftBlack)
+                    .tracking(-0.3)
+
+                Text("New bookings and reminders will appear here.")
+                    .font(.custom("Raleway-Regular", size: 14))
+                    .foregroundColor(Color.yugiBodyText)
+                    .lineSpacing(4)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                    .frame(maxWidth: 240)
             }
-            
+
             Spacer()
         }
     }
-    
+
     private var notificationListView: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: 10) {
                 ForEach(filteredNotifications) { notification in
-                    NotificationRow(
+                    StyledNotificationRow(
                         notification: notification,
-                        onTap: {
-                            handleNotificationTap(notification)
-                        },
-                        onDelete: {
-                            notificationService.deleteNotification(notification)
-                        }
+                        onTap: { handleNotificationTap(notification) },
+                        onDelete: { notificationService.deleteNotification(notification) }
                     )
-                    .onTapGesture {
-                        handleNotificationTap(notification)
-                    }
                 }
             }
-            .padding(.top, 8)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 40)
         }
     }
-    
+
     private var filteredNotifications: [UserNotification] {
         switch selectedTab {
-        case 0:
-            return notificationService.notifications
-        case 1:
-            return notificationService.notifications.filter { !$0.isRead }
-        default:
-            return notificationService.notifications
+        case 1:  return notificationService.notifications.filter { !$0.isRead }
+        default: return notificationService.notifications
         }
     }
-    
+
     private func handleNotificationTap(_ notification: UserNotification) {
-        // Mark as read if not already read
         if !notification.isRead {
             notificationService.markAsRead(notification)
         }
-        
-        // Handle action if available
         if let actionType = notification.actionType {
             switch actionType {
-            case .viewBooking:
-                // Navigate to booking details
-                print("Navigate to booking: \(notification.actionData?["bookingId"] ?? "")")
-            case .viewClass:
-                // Navigate to class details
-                print("Navigate to class: \(notification.actionData?["classId"] ?? "")")
-            case .viewPayment:
-                // Navigate to payment details
-                print("Navigate to payment: \(notification.actionData?["paymentId"] ?? "")")
-            case .bookClass:
-                // Navigate to class booking
-                print("Navigate to book class with promo: \(notification.actionData?["promoCode"] ?? "")")
-            case .contactProvider:
-                // Navigate to provider contact
-                print("Navigate to contact provider")
-            case .contactSupport:
-                // Navigate to support contact
-                print("Navigate to contact support")
-            case .none:
-                break
+            case .viewBooking:     print("Navigate to booking: \(notification.actionData?["bookingId"] ?? "")")
+            case .viewClass:       print("Navigate to class: \(notification.actionData?["classId"] ?? "")")
+            case .viewPayment:     print("Navigate to payment: \(notification.actionData?["paymentId"] ?? "")")
+            case .bookClass:       print("Navigate to book class with promo: \(notification.actionData?["promoCode"] ?? "")")
+            case .contactProvider: print("Navigate to contact provider")
+            case .contactSupport:  print("Navigate to contact support")
+            case .none:            break
             }
         }
     }
 }
 
-// MARK: - Supporting Views
+// MARK: - Styled Notification Row
 
-struct NotificationTabButton: View {
-    let title: String
-    let isSelected: Bool
-    let count: Int
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Text(title)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(isSelected ? Color.yugiMocha : Color.yugiGray)
-                
-                Text("\(count)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(isSelected ? Color.yugiMocha : Color.yugiGray.opacity(0.7))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                Rectangle()
-                    .fill(isSelected ? Color.yugiMocha.opacity(0.1) : Color.clear)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct NotificationRow: View {
+struct StyledNotificationRow: View {
     let notification: UserNotification
     let onTap: () -> Void
     let onDelete: () -> Void
-    
+
     @State private var showingDeleteConfirmation = false
-    
+
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                // Notification icon
-                ZStack {
+        Button(action: onTap) {
+            HStack(alignment: .top, spacing: 0) {
+                if !notification.isRead {
                     Circle()
-                        .fill(notification.type.color.opacity(0.1))
-                        .frame(width: 48, height: 48)
-                    
-                    Image(systemName: notification.type.icon)
-                        .font(.system(size: 20))
-                        .foregroundColor(notification.type.color)
+                        .fill(Color.yugiMocha)
+                        .frame(width: 6, height: 6)
+                        .padding(.top, 5)
+                        .padding(.trailing, 10)
+                } else {
+                    Spacer().frame(width: 16)
                 }
-                
-                // Notification content
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(alignment: .top) {
                         Text(notification.title)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Color.yugiGray)
+                            .font(.custom("Raleway-Medium", size: 14))
+                            .foregroundColor(Color.yugiSoftBlack)
                             .lineLimit(1)
-                        
                         Spacer()
-                        
-                        if !notification.isRead {
-                            Circle()
-                                .fill(Color.yugiMocha)
-                                .frame(width: 8, height: 8)
-                        }
+                        Text(formatDate(notification.date))
+                            .font(.custom("Raleway-Regular", size: 11))
+                            .foregroundColor(Color.yugiBodyText)
                     }
-                    
+
                     Text(notification.message)
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.yugiGray.opacity(0.8))
+                        .font(.custom("Raleway-Regular", size: 13))
+                        .foregroundColor(Color.yugiBodyText)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
-                    
-                    HStack {
-                        Text(formatDate(notification.date))
-                            .font(.system(size: 12))
-                            .foregroundColor(Color.yugiGray.opacity(0.6))
-                        
-                        Spacer()
-                        
-                        if let actionType = notification.actionType, actionType != .none {
-                            Text(actionType.displayName)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(Color.yugiMocha)
-                        }
-                    }
+                        .padding(.top, 2)
                 }
-                
-                // Delete button
-                Button(action: {
-                    showingDeleteConfirmation = true
-                }) {
+
+                Button(action: { showingDeleteConfirmation = true }) {
                     Image(systemName: "trash")
-                        .font(.system(size: 14))
-                        .foregroundColor(.red)
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.yugiBodyText.opacity(0.5))
                 }
-                .opacity(0.6)
+                .padding(.leading, 10)
+                .padding(.top, 2)
             }
-            .padding(16)
-            .background(
-                Rectangle()
-                    .fill(notification.isRead ? Color.white : Color.yugiMocha.opacity(0.05))
-            )
-            
-            Divider()
-                .padding(.leading, 80)
+            .padding(14)
+            .background(Color.white)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.yugiOat, lineWidth: 1))
+            .cornerRadius(14)
         }
+        .buttonStyle(.plain)
         .alert("Delete Notification", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                onDelete()
-            }
+            Button("Delete", role: .destructive) { onDelete() }
         } message: {
             Text("Are you sure you want to delete this notification?")
         }
     }
-    
+
     private func formatDate(_ date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
@@ -320,4 +269,4 @@ struct NotificationRow: View {
 
 #Preview {
     NotificationsScreen()
-} 
+}
