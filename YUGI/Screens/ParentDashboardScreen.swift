@@ -142,7 +142,6 @@ struct ParentDashboardScreen: View {
     @State private var showVenueCheck = false
     @State private var showForYou     = false
     @State private var showNearYou    = false
-    @State private var showCategories = false
 
     // Home navigation
     @State private var showingVenueCheckSheet  = false
@@ -411,12 +410,11 @@ private extension ParentDashboardScreen {
                 VStack(spacing: 0) {
                     greetingBar
                     VStack(spacing: 0) {
-                        searchBarView
+                        findAClassPill
                         nextUpSection
                         venueCheckHeroCard
-                        forYouSection
                         nearYouSection
-                        browseByAgeSection
+                        forYouSection
                     }
                 }
             }
@@ -430,15 +428,13 @@ private extension ParentDashboardScreen {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) { showSearch     = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) { showNextUp     = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.44) { showVenueCheck = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.56) { showForYou     = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.68) { showNearYou    = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.80) { showCategories = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.56) { showNearYou    = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.68) { showForYou     = true }
     }
 
     func resetHomeAnimation() {
         showGreeting = false; showSearch = false; showNextUp = false
         showVenueCheck = false; showForYou = false; showNearYou = false
-        showCategories = false
     }
 
     var greetingText: String {
@@ -476,28 +472,28 @@ private extension ParentDashboardScreen {
         .animation(.easeOut(duration: 0.6), value: showGreeting)
     }
 
-    // MARK: 2. Search bar (straddles Mocha/Cloud boundary)
+    // MARK: 2. Find a class pill
 
-    var searchBarView: some View {
+    var findAClassPill: some View {
         Button(action: { showingClassSearchSheet = true }) {
             HStack(spacing: 12) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16))
+                    .font(.system(size: 18))
                     .foregroundColor(Color.yugiMocha)
-                Text("Search classes, venues, or providers")
-                    .font(.custom("Raleway-Regular", size: 15))
-                    .foregroundColor(Color.yugiBodyText.opacity(0.7))
+                Text("Find a class")
+                    .font(.custom("Raleway-SemiBold", size: 16))
+                    .foregroundColor(Color.yugiSoftBlack)
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .padding(.horizontal, 16)
-            .background(Color.white)
-            .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.yugiOat, lineWidth: 1))
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(Color.yugiOat)
+            .clipShape(Capsule())
         }
         .buttonStyle(PlainButtonStyle())
         .padding(.horizontal, 20)
-        .padding(.top, -14)
+        .padding(.top, 16)
         .padding(.bottom, 24)
         .opacity(showSearch ? 1 : 0)
         .offset(y: showSearch ? 0 : 12)
@@ -515,126 +511,64 @@ private extension ParentDashboardScreen {
     }
 
     var nextUpSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("NEXT UP")
-                .font(.custom("Raleway-Medium", size: 11))
-                .foregroundColor(Color.yugiBodyText)
-                .tracking(0.5)
-                .padding(.leading, 4)
-                .padding(.bottom, 10)
-
+        Group {
             if let eb = nextUpBooking {
-                nextUpCard(for: eb)
-            } else {
-                onboardingCard
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("NEXT UP")
+                        .font(.custom("Raleway-SemiBold", size: 11))
+                        .foregroundColor(Color.yugiBodyText)
+                        .tracking(1.5)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 10)
+
+                    nextUpCard(for: eb)
+                }
+                .padding(.bottom, 24)
+                .opacity(showNextUp ? 1 : 0)
+                .offset(y: showNextUp ? 0 : 12)
+                .animation(.easeOut(duration: 0.6), value: showNextUp)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 20)
-        .opacity(showNextUp ? 1 : 0)
-        .offset(y: showNextUp ? 0 : 12)
-        .animation(.easeOut(duration: 0.6), value: showNextUp)
     }
 
     func nextUpCard(for eb: EnhancedBooking) -> some View {
         Button(action: { showingBookingsSheet = true }) {
-            HStack(spacing: 14) {
-                // Date column
+            HStack(spacing: 16) {
+                // Date stamp block
                 VStack(spacing: 0) {
                     Text(dayAbbrev(eb.booking.bookingDate))
-                        .font(.custom("Raleway-Medium", size: 11))
-                        .foregroundColor(Color.yugiMocha)
+                        .font(.custom("Raleway-SemiBold", size: 11))
+                        .foregroundColor(Color.yugiBodyText)
                         .tracking(0.3)
                     Text(dayNumber(eb.booking.bookingDate))
-                        .font(.custom("Raleway-Medium", size: 22))
-                        .foregroundColor(Color.yugiSoftBlack)
-                        .padding(.vertical, 2)
+                        .font(.custom("Raleway-Medium", size: 28))
+                        .foregroundColor(Color.yugiMocha)
+                        .padding(.vertical, 1)
                     Text(timeStr(eb.booking.bookingDate))
-                        .font(.custom("Raleway-Regular", size: 11))
+                        .font(.custom("Raleway-Regular", size: 13))
                         .foregroundColor(Color.yugiBodyText)
                 }
-                .frame(width: 48)
-
-                // Divider
-                Rectangle()
-                    .fill(Color.yugiOat)
-                    .frame(width: 0.5, height: 44)
+                .frame(width: 52)
 
                 // Class details
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(eb.className)
-                        .font(.custom("Raleway-Medium", size: 15))
+                        .font(.custom("Raleway-SemiBold", size: 16))
                         .foregroundColor(Color.yugiSoftBlack)
                         .lineLimit(1)
                     Text(eb.classInfo.location?.name ?? eb.providerName)
-                        .font(.custom("Raleway-Regular", size: 12))
+                        .font(.custom("Raleway-Regular", size: 13))
                         .foregroundColor(Color.yugiBodyText)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 18))
-                    .foregroundColor(Color.yugiMocha)
             }
             .padding(16)
-            .background(Color.white)
+            .background(Color.yugiOat)
             .cornerRadius(16)
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.yugiOat, lineWidth: 1))
+            .padding(.horizontal, 20)
         }
         .buttonStyle(PlainButtonStyle())
-    }
-
-    var onboardingCard: some View {
-        VStack(spacing: 0) {
-            // Top Oat band
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color.yugiSage)
-                        .frame(width: 52, height: 52)
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 22))
-                        .foregroundColor(Color.yugiDeepSage)
-                }
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Let YUGI help")
-                        .font(.custom("Raleway-Medium", size: 16))
-                        .foregroundColor(Color.yugiSoftBlack)
-                    Text("Tailored picks from your first tap")
-                        .font(.custom("Raleway-Regular", size: 13))
-                        .foregroundColor(Color.yugiBodyText)
-                }
-                Spacer()
-            }
-            .padding(.vertical, 28)
-            .padding(.horizontal, 20)
-            .background(Color.yugiOat)
-
-            // Lower section
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Tell us about your children and where you are, and we'll curate classes that fit your week.")
-                    .font(.custom("Raleway-Regular", size: 13))
-                    .foregroundColor(Color.yugiBodyText)
-                    .lineSpacing(13 * 0.55)
-
-                Button(action: { showingClassSearchSheet = true }) {
-                    Text("Find my first class")
-                        .font(.custom("Raleway-Medium", size: 14))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.yugiMocha)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(.vertical, 18)
-            .padding(.horizontal, 20)
-            .background(Color.white)
-        }
-        .cornerRadius(18)
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.yugiOat, lineWidth: 1))
     }
 
     // MARK: 4. Venue Check hero card
@@ -709,7 +643,7 @@ private extension ParentDashboardScreen {
         }
         .buttonStyle(PlainButtonStyle())
         .padding(.horizontal, 20)
-        .padding(.bottom, 20)
+        .padding(.bottom, 24)
         .opacity(showVenueCheck ? 1 : 0)
         .offset(y: showVenueCheck ? 0 : 12)
         .animation(.easeOut(duration: 0.6), value: showVenueCheck)
@@ -878,63 +812,10 @@ private extension ParentDashboardScreen {
             .clipped()
             .padding(.horizontal, 20)
         }
-        .padding(.bottom, 20)
+        .padding(.bottom, 24)
         .opacity(showNearYou ? 1 : 0)
         .offset(y: showNearYou ? 0 : 12)
         .animation(.easeOut(duration: 0.6), value: showNearYou)
-    }
-
-    // MARK: 7. Browse by Age section
-
-    var browseByAgeSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("BROWSE BY AGE")
-                .font(.custom("Raleway-Medium", size: 11))
-                .foregroundColor(Color.yugiBodyText)
-                .tracking(0.5)
-                .padding(.leading, 4)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 10)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(ClassCategory.allCases, id: \.self) { cat in
-                        Button(action: { showingClassSearchSheet = true }) {
-                            ageCategoryTile(cat)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-        }
-        .padding(.bottom, 32)
-        .opacity(showCategories ? 1 : 0)
-        .offset(y: showCategories ? 0 : 12)
-        .animation(.easeOut(duration: 0.6), value: showCategories)
-    }
-
-    func ageCategoryTile(_ category: ClassCategory) -> some View {
-        VStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.yugiOat)
-                    .frame(width: 32, height: 32)
-                Image(systemName: category.iconName)
-                    .font(.system(size: 14))
-                    .foregroundColor(Color.yugiMocha)
-            }
-            Text(category.displayName)
-                .font(.custom("Raleway-Medium", size: 12))
-                .foregroundColor(Color.yugiSoftBlack)
-                .multilineTextAlignment(.center)
-        }
-        .frame(width: 90)
-        .padding(.vertical, 14)
-        .padding(.horizontal, 10)
-        .background(Color.white)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.yugiOat, lineWidth: 1))
     }
 
     // MARK: Date helpers
