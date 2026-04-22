@@ -702,6 +702,97 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
   }
 });
 
+// @route   GET /api/classes/nearby
+// @desc    Get active published classes within a radius (haversine) — no auth required
+// @access  Public
+router.get('/nearby', async (req, res) => {
+  try {
+    const { lat, lng, radiusMiles = '5' } = req.query;
+    if (!lat || !lng) {
+      return res.status(400).json({ success: false, message: 'lat and lng are required' });
+    }
+
+    const userLat  = parseFloat(lat);
+    const userLng  = parseFloat(lng);
+    const radius   = parseFloat(radiusMiles);
+    const toRad    = deg => deg * Math.PI / 180;
+    const EARTH_MI = 3958.8;
+
+    const classes = await Class.find({
+      isActive:    true,
+      isPublished: true,
+      'location.coordinates.latitude':  { $ne: 0 },
+      'location.coordinates.longitude': { $ne: 0 }
+    }).lean();
+
+    const now     = new Date();
+    const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+    const nearby = classes
+      .map(cls => {
+        const clsLat = cls.location?.coordinates?.latitude;
+        const clsLng = cls.location?.coordinates?.longitude;
+        if (!clsLat || !clsLng) return null;
+
+        // Haversine distance check
+        const dLat = toRad(clsLat - userLat);
+        const dLng = toRad(clsLng - userLng);
+        const a    = Math.sin(dLat / 2) ** 2 +
+                     Math.cos(toRad(userLat)) * Math.cos(toRad(clsLat)) * Math.sin(dLng / 2) ** 2;
+        if (2 * EARTH_MI * Math.asin(Math.sqrt(a)) > radius) return null;
+
+        // Resolve next session start
+        let nextSessionStart = null;
+        const futureDates = (cls.classDates || [])
+          .map(d => new Date(d))
+          .filter(d => d > now)
+          .sort((a, b) => a - b);
+
+        if (futureDates.length > 0) {
+          const next = new Date(futureDates[0]);
+          const slot = cls.timeSlots?.[0];
+          if (slot?.startTime) {
+            const [h, m] = slot.startTime.split(':').map(Number);
+            next.setHours(h, m, 0, 0);
+          }
+          nextSessionStart = next.toISOString();
+        } else if (cls.recurringDays?.length && cls.timeSlots?.length) {
+          const todayIdx = now.getDay();
+          for (let i = 1; i <= 7; i++) {
+            const dayName = dayKeys[(todayIdx + i) % 7];
+            if (cls.recurringDays.includes(dayName)) {
+              const next = new Date(now);
+              next.setDate(next.getDate() + i);
+              const [h, m] = cls.timeSlots[0].startTime.split(':').map(Number);
+              next.setHours(h, m, 0, 0);
+              nextSessionStart = next.toISOString();
+              break;
+            }
+          }
+        }
+
+        if (!nextSessionStart) return null;
+
+        return {
+          id:               cls._id.toString(),
+          title:            cls.name,
+          venueName:        cls.location?.name || '',
+          latitude:         clsLat,
+          longitude:        clsLng,
+          nextSessionStart,
+          price:            cls.price,
+          categoryName:     cls.category || ''
+        };
+      })
+      .filter(Boolean);
+
+    res.json({ success: true, data: nearby });
+  } catch (error) {
+    console.error('❌ GET /api/classes/nearby error:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching nearby classes' });
+  }
+});
+
 // @route   GET /api/classes/:id
 // @desc    Get a specific class by ID
 // @access  Public
