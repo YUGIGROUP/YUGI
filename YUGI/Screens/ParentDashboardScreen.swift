@@ -476,24 +476,42 @@ private extension ParentDashboardScreen {
         .animation(.easeOut(duration: 0.6), value: showGreeting)
     }
 
-    // MARK: 2. Find a class pill
+    // MARK: 2. Find a class hero
 
     var findAClassPill: some View {
         Button(action: { showingClassSearchSheet = true }) {
-            HStack(spacing: 12) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18))
-                    .foregroundColor(Color.yugiMocha)
-                Text("Find a class")
-                    .font(.custom("Raleway-SemiBold", size: 16))
-                    .foregroundColor(Color.yugiSoftBlack)
-                Spacer()
+            VStack(alignment: .leading, spacing: 0) {
+                Text("LET'S FIND SOMETHING")
+                    .font(.custom("Raleway-SemiBold", size: 10))
+                    .foregroundColor(.white.opacity(0.8))
+                    .tracking(1.2)
+                    .padding(.bottom, 8)
+
+                Text("What shall we do with the little one today?")
+                    .font(.custom("Raleway-SemiBold", size: 18))
+                    .foregroundColor(.white)
+                    .lineSpacing(4)
+                    .padding(.bottom, 16)
+
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color.yugiMocha)
+                    Text("Find a class")
+                        .font(.custom("Raleway-SemiBold", size: 13))
+                        .foregroundColor(Color.yugiMocha)
+                }
+                .padding(.vertical, 9)
+                .padding(.horizontal, 16)
+                .background(Color.white)
+                .cornerRadius(20)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 22)
+            .padding(.bottom, 20)
             .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .background(Color.yugiOat)
-            .clipShape(Capsule())
+            .background(Color.yugiMocha)
+            .cornerRadius(16)
         }
         .buttonStyle(PlainButtonStyle())
         .padding(.horizontal, 20)
