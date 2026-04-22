@@ -148,6 +148,7 @@ struct ParentDashboardScreen: View {
     @State private var showingClassSearchSheet = false
     @State private var showingBookingsSheet    = false
     @State private var showingNearYouMap       = false
+    @State private var nearbyClassCount: Int?  = nil
 
     // Children tab state
     @State private var showingAddChild       = false
@@ -423,6 +424,7 @@ private extension ParentDashboardScreen {
         }
         .onAppear  { startHomeAnimation() }
         .onDisappear { resetHomeAnimation() }
+        .task { await fetchNearbyClassCount() }
     }
 
     func startHomeAnimation() {
@@ -778,26 +780,8 @@ private extension ParentDashboardScreen {
                             .fill(Color.white.opacity(0.3))
                     }
 
-                    // Decorative pin dots
-                    Circle()
-                        .fill(Color.yugiMocha)
-                        .frame(width: 12, height: 12)
-                        .shadow(color: Color.yugiMocha.opacity(0.25), radius: 4)
-                        .position(x: 60, y: 40)
-                    Circle()
-                        .fill(Color.yugiMocha)
-                        .frame(width: 12, height: 12)
-                        .shadow(color: Color.yugiMocha.opacity(0.25), radius: 4)
-                        .position(x: 140, y: 80)
-                    Circle()
-                        .fill(Color.yugiMocha)
-                        .frame(width: 12, height: 12)
-                        .shadow(color: Color.yugiMocha.opacity(0.25), radius: 4)
-                        .position(x: 230, y: 55)
-
                     // Bottom-left label pill
-                    // TODO: Replace "12" with dynamic count from nearby classes service
-                    Text("12 classes within 2mi")
+                    Text(nearbyLabel)
                         .font(.custom("Raleway-Medium", size: 12))
                         .foregroundColor(Color.yugiSoftBlack)
                         .padding(.vertical, 6)
@@ -829,6 +813,32 @@ private extension ParentDashboardScreen {
     }
     func timeStr(_ date: Date) -> String {
         let f = DateFormatter(); f.dateFormat = "HH:mm"; return f.string(from: date)
+    }
+
+    // MARK: Nearby class count
+
+    var nearbyLabel: String {
+        switch nearbyClassCount {
+        case nil: return "Tap to explore"
+        case 0:   return "Explore nearby"
+        case 1:   return "1 class within 2mi"
+        default:  return "\(nearbyClassCount!) classes within 2mi"
+        }
+    }
+
+    func fetchNearbyClassCount() async {
+        let lat    = LocationService.shared.latitude
+        let lng    = LocationService.shared.longitude
+        let urlStr = "\(APIConfig.baseURL)/classes/nearby?lat=\(lat)&lng=\(lng)&radiusMiles=2"
+        guard let url = URL(string: urlStr) else { return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            struct R: Decodable { struct I: Decodable {}; let data: [I] }
+            let response = try JSONDecoder().decode(R.self, from: data)
+            await MainActor.run { nearbyClassCount = response.data.count }
+        } catch {
+            // Leave nearbyClassCount nil — label shows "Tap to explore"
+        }
     }
 }
 
