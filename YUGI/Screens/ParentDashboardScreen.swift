@@ -147,6 +147,7 @@ struct ParentDashboardScreen: View {
     @State private var showingVenueCheckSheet  = false
     @State private var showingClassSearchSheet = false
     @State private var showingBookingsSheet    = false
+    @State private var showingNearYouMap       = false
 
     // Children tab state
     @State private var showingAddChild       = false
@@ -197,6 +198,7 @@ struct ParentDashboardScreen: View {
             .sheet(isPresented: $showingVenueCheckSheet)  { VenueCheckScreen() }
             .sheet(isPresented: $showingClassSearchSheet) { ClassSearchView() }
             .sheet(isPresented: $showingBookingsSheet)    { ClassBookingsScreen() }
+            .sheet(isPresented: $showingNearYouMap)       { NearYouMapScreen() }
             .sheet(isPresented: $showingAddChild) {
                 AddChildScreen { newChild in
                     guard apiService.isAuthenticated, apiService.authToken != nil else {
@@ -756,8 +758,7 @@ private extension ParentDashboardScreen {
                     .tracking(0.5)
                     .padding(.leading, 4)
                 Spacer()
-                // TODO: Navigate to map screen when one exists
-                Button(action: { showingClassSearchSheet = true }) {
+                Button(action: { showingNearYouMap = true }) {
                     Text("See map ›")
                         .font(.custom("Raleway-Medium", size: 13))
                         .foregroundColor(Color.yugiMocha)
@@ -768,7 +769,7 @@ private extension ParentDashboardScreen {
 
             // Map preview card
             // TODO: Replace Color.yugiOat placeholder with lightweight MapKit snapshot when performance-validated
-            Button(action: { showingClassSearchSheet = true }) {
+            Button(action: { showingNearYouMap = true }) {
                 ZStack(alignment: .bottomLeading) {
                     // Oat background with subtle diagonal-stripe overlay
                     ZStack {
