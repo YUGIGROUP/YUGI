@@ -171,13 +171,8 @@ struct ClassSearchView: View {
                 // Header
                 VStack(spacing: 16) {
                     Text("Find Your Perfect Class")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.custom("Raleway-Regular", size: 28))
                         .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Discover activities for your child and you")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                 }
                 .padding(.top, 40)

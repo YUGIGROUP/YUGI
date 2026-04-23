@@ -30,10 +30,10 @@ struct VenueCheckScreen: View {
                     // Header
                     VStack(spacing: 8) {
                         Text("Venue Check")
-                            .font(.system(size: 28, weight: .bold))
+                            .font(.custom("Raleway-Regular", size: 28))
                             .foregroundColor(.white)
                         Text("Search any venue to check accessibility & logistics")
-                            .font(.system(size: 16))
+                            .font(.custom("Raleway-Regular", size: 14))
                             .foregroundColor(.white.opacity(0.85))
                             .multilineTextAlignment(.center)
                     }
@@ -51,7 +51,7 @@ struct VenueCheckScreen: View {
                                 .foregroundColor(.white)
                                 .tint(.white)
                                 .padding(14)
-                                .background(Color.white.opacity(0.15))
+                                .background(Color.white.opacity(0.20))
                                 .cornerRadius(10)
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.35), lineWidth: 1))
                         }
@@ -66,7 +66,7 @@ struct VenueCheckScreen: View {
                                 .foregroundColor(.white)
                                 .tint(.white)
                                 .padding(14)
-                                .background(Color.white.opacity(0.15))
+                                .background(Color.white.opacity(0.20))
                                 .cornerRadius(10)
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.35), lineWidth: 1))
                         }
@@ -75,7 +75,7 @@ struct VenueCheckScreen: View {
                             HStack(spacing: 10) {
                                 if isLoading {
                                     ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: Color.yugiMocha))
+                                        .progressViewStyle(CircularProgressViewStyle(tint: Color.yugiDeepSage))
                                         .scaleEffect(0.9)
                                 } else {
                                     Image(systemName: "magnifyingglass")
@@ -84,7 +84,7 @@ struct VenueCheckScreen: View {
                                 Text(isLoading ? "Searching..." : "Search Venue")
                                     .font(.system(size: 17, weight: .semibold))
                             }
-                            .foregroundColor(Color.yugiMocha)
+                            .foregroundColor(Color.yugiDeepSage)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
                             .background(Color.white)
@@ -120,14 +120,19 @@ struct VenueCheckScreen: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
             }
-            .background(Color.yugiMocha.ignoresSafeArea())
+            .background(Color.yugiSage.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+                        ZStack {
+                            Circle()
+                                .fill(Color.yugiOat)
+                                .frame(width: 34, height: 34)
+                            Image(systemName: "xmark")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color.yugiDeepSage)
+                        }
                     }
                 }
             }
