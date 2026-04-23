@@ -54,100 +54,85 @@ struct ProviderBusinessProfileScreen: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Enhanced Header with Gradient
-                VStack(spacing: 20) {
-                    // Top Bar
-                    HStack {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Business Profile")
-                                .font(.custom("Raleway-Regular", size: 28))
-                                .foregroundColor(.white)
-                            
-                            Text(displayBusinessName)
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white.opacity(0.9))
-                        }
-                        
-                        Spacer()
-                        
-                        // Edit Button (no save functionality)
-                        Button {
-                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                                if !showingEditMode {
-                                    // Entering edit mode - initialize tempProfileImage with current profileImage
-                                    tempProfileImage = profileImage
-                                }
-                                showingEditMode.toggle()
-                            }
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "pencil.circle.fill")
-                                    .font(.system(size: 20, weight: .medium))
-                                Text("Edit")
-                                    .font(.system(size: 16, weight: .medium))
-                            }
+                // Slim header
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Business Profile")
+                            .font(.custom("Raleway-Regular", size: 28))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.white.opacity(0.2))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                    )
-                            )
-                        }
-                        .opacity(showingEditMode ? 0 : 1)
-                        .disabled(showingEditMode)
+
+                        Text(displayBusinessName)
+                            .font(.custom("Raleway-Regular", size: 14))
+                            .foregroundColor(.white.opacity(0.85))
                     }
-                    
-                    // Enhanced Tab Selector
-                    HStack(spacing: 0) {
-                        BusinessProfileTabButton(
-                            title: "Overview",
-                            isSelected: selectedTab == 0
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                selectedTab = 0
+
+                    Spacer()
+
+                    // Edit Button
+                    Button {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            if !showingEditMode {
+                                tempProfileImage = profileImage
                             }
+                            showingEditMode.toggle()
                         }
-                        
-                        BusinessProfileTabButton(
-                            title: "Settings",
-                            isSelected: selectedTab == 1
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                selectedTab = 1
-                            }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "pencil.circle.fill")
+                                .font(.system(size: 20, weight: .medium))
+                            Text("Edit")
+                                .font(.system(size: 16, weight: .medium))
                         }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.white.opacity(0.2))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                        )
                     }
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white.opacity(0.15))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                            )
-                    )
+                    .opacity(showingEditMode ? 0 : 1)
+                    .disabled(showingEditMode)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
-                .padding(.bottom, 24)
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
+                .background(Color.yugiMocha.ignoresSafeArea())
+
+                // Tab selector below header, on cream background
+                HStack(spacing: 0) {
+                    BusinessProfileTabButton(
+                        title: "Overview",
+                        isSelected: selectedTab == 0
+                    ) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedTab = 0
+                        }
+                    }
+
+                    BusinessProfileTabButton(
+                        title: "Settings",
+                        isSelected: selectedTab == 1
+                    ) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedTab = 1
+                        }
+                    }
+                }
                 .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color.yugiMocha,
-                            Color.yugiMocha.opacity(0.9),
-                            Color.yugiMocha.opacity(0.8)
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .ignoresSafeArea()
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.yugiOat)
                 )
-                
-                // Content with Enhanced Styling
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 20)
+                .background(Color.yugiCream)
+
+                // Content
                 TabView(selection: $selectedTab) {
                     // Overview Tab
                     BusinessOverviewTab(
@@ -397,15 +382,9 @@ struct BusinessOverviewTab: View {
                                 .foregroundColor(Color.yugiMocha)
                         }
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Business Profile Image")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(Color.yugiGray)
-                            
-                            Text("This image will appear on your classes")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color.yugiGray.opacity(0.6))
-                        }
+                        Text("Business Profile Image")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                     }
@@ -501,15 +480,9 @@ struct BusinessOverviewTab: View {
                                 .foregroundColor(Color.yugiMocha)
                         }
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Business Information")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(Color.yugiGray)
-                            
-                            Text("Core details about your business")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color.yugiGray.opacity(0.6))
-                        }
+                        Text("Business Information")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                     }
@@ -565,15 +538,9 @@ struct BusinessOverviewTab: View {
                                 .foregroundColor(Color.yugiMocha)
                         }
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Contact Information")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(Color.yugiGray)
-                            
-                            Text("How customers can reach you")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color.yugiGray.opacity(0.6))
-                        }
+                        Text("Contact Information")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                     }
@@ -632,14 +599,9 @@ struct BusinessOverviewTab: View {
                                 .font(.system(size: 20, weight: .medium))
                                 .foregroundColor(Color.yugiMocha)
                         }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Documents")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(Color.yugiGray)
-                            Text("Your uploaded certificates")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color.yugiGray.opacity(0.6))
-                        }
+                        Text("Documents")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(Color.yugiGray)
                         Spacer()
                         
                         // Add document button (only shown in edit mode)
@@ -861,15 +823,9 @@ struct BusinessSettingsTab: View {
                                 .foregroundColor(Color.yugiMocha)
                         }
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Profile Settings")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(Color.yugiGray)
-                            
-                            Text("Manage your account preferences")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color.yugiGray.opacity(0.6))
-                        }
+                        Text("Profile Settings")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(Color.yugiGray)
                         
                         Spacer()
                     }
@@ -965,13 +921,13 @@ struct BusinessProfileTabButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(isSelected ? .white : .white.opacity(0.7))
+                .font(.custom("Raleway-SemiBold", size: 14))
+                .foregroundColor(isSelected ? .white : Color.yugiSoftBlack)
                 .padding(.vertical, 12)
                 .padding(.horizontal, 24)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(isSelected ? Color.white.opacity(0.2) : Color.clear)
+                        .fill(isSelected ? Color.yugiMocha : Color.clear)
                 )
         }
         .buttonStyle(.plain)
