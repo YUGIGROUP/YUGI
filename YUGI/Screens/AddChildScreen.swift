@@ -29,7 +29,7 @@ struct AddChildScreen: View {
                 // Header
                 VStack(spacing: 16) {
                     Text(childToEdit == nil ? "Add Child" : "Edit Child")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.custom("Raleway-Regular", size: 28))
                         .foregroundColor(.white)
                     
                     Text(childToEdit == nil ? "Tell us about your child" : "Update your child's information")
@@ -93,7 +93,7 @@ struct AddChildScreen: View {
                                     
                                     // Year Picker
                                     Picker("Year", selection: $selectedYear) {
-                                        ForEach(2008...2024, id: \.self) { year in
+                                        ForEach(2008...Calendar.current.component(.year, from: Date()), id: \.self) { year in
                                             Text(formatYear(year)).tag(year)
                                         }
                                     }
