@@ -92,7 +92,7 @@ public struct ProviderBookingsScreen: View {
                 Spacer()
                 
                 Text("Bookings")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.custom("Raleway-Regular", size: 28))
                     .foregroundColor(.white)
                 
                 Spacer()

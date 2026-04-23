@@ -17,7 +17,7 @@ struct ProviderPaymentSettingsScreen: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Payment Settings")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.custom("Raleway-Regular", size: 28))
                                 .foregroundColor(.white)
                             
                             Text("Manage your earnings and payouts")

@@ -108,7 +108,7 @@ struct ProviderMyClassesScreen: View {
     private var headerView: some View {
         VStack(spacing: 16) {
             Text("My Classes")
-                .font(.system(size: 28, weight: .bold))
+                .font(.custom("Raleway-Regular", size: 28))
                 .foregroundColor(.white)
             
             Text("Manage your class listings and bookings")

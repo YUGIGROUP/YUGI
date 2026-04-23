@@ -32,7 +32,7 @@ struct ProviderChildrenBookingsScreen: View {
                 // Header
                 VStack(spacing: 16) {
                     Text("Children Bookings")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.custom("Raleway-Regular", size: 28))
                         .foregroundColor(.white)
                     
                     Text("Classes booked for your children")

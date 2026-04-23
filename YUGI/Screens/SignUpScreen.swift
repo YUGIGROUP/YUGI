@@ -223,11 +223,6 @@ struct SignUpScreen: View {
     
     private var providerSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Set up your provider account")
-                .font(.title2)
-                .bold()
-                .foregroundColor(.white)
-            
             if providerSubStep == 1 {
                 providerBasicInfoSection
             } else if providerSubStep == 2 {
@@ -240,6 +235,15 @@ struct SignUpScreen: View {
     
     private var providerBasicInfoSection: some View {
         VStack(alignment: .leading, spacing: 16) {
+            Text("Step 1 of 3")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
+                .tracking(1)
+
+            Text("Your business")
+                .font(.custom("Raleway-Regular", size: 28))
+                .foregroundColor(.white)
+
             YUGITextField(
                 text: $mobileNumber,
                 placeholder: "Mobile Number",
@@ -308,10 +312,15 @@ struct SignUpScreen: View {
     
     private var providerDocumentsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Required Documents")
-                .font(.headline)
+            Text("Step 2 of 3")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
+                .tracking(1)
+
+            Text("Required documents")
+                .font(.custom("Raleway-Regular", size: 28))
                 .foregroundColor(.white)
-            
+
             Text("Please upload your DBS certificate and profile picture. Qualifications are optional.")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.9))
@@ -416,10 +425,15 @@ struct SignUpScreen: View {
     
     private var providerPasswordSection: some View {
         VStack(alignment: .leading, spacing: 16) {
+            Text("Step 3 of 3")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
+                .tracking(1)
+
             Text("Create your password")
-                .font(.headline)
+                .font(.custom("Raleway-Regular", size: 28))
                 .foregroundColor(.white)
-            
+
             Text("Choose a strong password to secure your account")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.9))

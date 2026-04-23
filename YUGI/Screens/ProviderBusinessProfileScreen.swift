@@ -60,7 +60,7 @@ struct ProviderBusinessProfileScreen: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Business Profile")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.custom("Raleway-Regular", size: 28))
                                 .foregroundColor(.white)
                             
                             Text(displayBusinessName)

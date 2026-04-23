@@ -10,7 +10,7 @@ struct HelpSupportScreen: View {
                 // Header
                 VStack(spacing: 16) {
                     Text("Help & Support")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.custom("Raleway-Regular", size: 28))
                         .foregroundColor(.white)
                     
                     Text("Get in touch with our support team")

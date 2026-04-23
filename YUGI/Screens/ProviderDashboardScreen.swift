@@ -134,7 +134,7 @@ struct ProviderDashboardScreen: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Provider Dashboard")
-                                    .font(.system(size: 28, weight: .bold))
+                                    .font(.custom("Raleway-Regular", size: 28))
                                     .foregroundColor(.white)
                                 
                                 Text("Welcome back, \(displayBusinessName)")
