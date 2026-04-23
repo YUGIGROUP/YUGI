@@ -140,7 +140,6 @@ struct ParentDashboardScreen: View {
     @State private var showSearch     = false
     @State private var showNextUp     = false
     @State private var showVenueCheck = false
-    @State private var showForYou     = false
     @State private var showNearYou    = false
 
     // Home navigation
@@ -417,7 +416,6 @@ private extension ParentDashboardScreen {
                         nextUpSection
                         venueCheckHeroCard
                         nearYouSection
-                        forYouSection
                     }
                 }
             }
@@ -433,12 +431,11 @@ private extension ParentDashboardScreen {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) { showNextUp     = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.44) { showVenueCheck = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.56) { showNearYou    = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.68) { showForYou     = true }
     }
 
     func resetHomeAnimation() {
         showGreeting = false; showSearch = false; showNextUp = false
-        showVenueCheck = false; showForYou = false; showNearYou = false
+        showVenueCheck = false; showNearYou = false
     }
 
     var greetingText: String {
@@ -456,24 +453,17 @@ private extension ParentDashboardScreen {
     // MARK: 1. Greeting bar
 
     var greetingBar: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(greetingText)
-                .font(.custom("Raleway-Regular", size: 13))
-                .foregroundColor(.white.opacity(0.75))
-                .padding(.bottom, 4)
-            Text(firstName)
-                .font(.custom("Raleway-Medium", size: 26))
-                .foregroundColor(.white)
-                .tracking(-0.3)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
-        .padding(.bottom, 28)
-        .background(Color.yugiMocha.ignoresSafeArea(edges: .top))
-        .opacity(showGreeting ? 1 : 0)
-        .offset(y: showGreeting ? 0 : 12)
-        .animation(.easeOut(duration: 0.6), value: showGreeting)
+        Text("\(greetingText), \(firstName)")
+            .font(.custom("Raleway-SemiBold", size: 17))
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 20)
+            .background(Color.yugiMocha.ignoresSafeArea(edges: .top))
+            .opacity(showGreeting ? 1 : 0)
+            .offset(y: showGreeting ? 0 : 12)
+            .animation(.easeOut(duration: 0.6), value: showGreeting)
     }
 
     // MARK: 2. Find a class hero
@@ -671,103 +661,7 @@ private extension ParentDashboardScreen {
         .animation(.easeOut(duration: 0.6), value: showVenueCheck)
     }
 
-    // MARK: 5. For You section
-
-    // TODO: Replace with real recommended-classes API response
-    var sampleClasses: [SampleClassItem] {[
-        SampleClassItem(title: "Baby Sensory",  location: "Clapham",   distance: "0.4mi", price: "£12", pramOK: true,  color: Color.yugiDustyBlush),
-        SampleClassItem(title: "Toddler Yoga",  location: "Earlsfield",distance: "0.8mi", price: "£10", pramOK: false, color: Color.yugiSage),
-        SampleClassItem(title: "Messy Play",    location: "Balham",    distance: "1.2mi", price: "£14", pramOK: true,  color: Color.yugiOat),
-        SampleClassItem(title: "Storytime Fun", location: "Streatham", distance: "1.5mi", price: "£8",  pramOK: false, color: Color.yugiDustyBlush),
-        SampleClassItem(title: "Music Makers",  location: "Wimbledon", distance: "2.1mi", price: "£15", pramOK: true,  color: Color.yugiSage),
-    ]}
-
-    var forYouSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Row header
-            HStack {
-                Text("FOR YOU")
-                    .font(.custom("Raleway-Medium", size: 11))
-                    .foregroundColor(Color.yugiBodyText)
-                    .tracking(0.5)
-                    .padding(.leading, 4)
-                Spacer()
-                Button(action: { showingClassSearchSheet = true }) {
-                    Text("See all ›")
-                        .font(.custom("Raleway-Medium", size: 13))
-                        .foregroundColor(Color.yugiMocha)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 10)
-
-            // Horizontal scroll
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(sampleClasses) { item in
-                        // TODO: Wire to ClassDetailScreen once real data is wired
-                        Button(action: { showingClassSearchSheet = true }) {
-                            forYouCard(item)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-        }
-        .padding(.bottom, 24)
-        .opacity(showForYou ? 1 : 0)
-        .offset(y: showForYou ? 0 : 12)
-        .animation(.easeOut(duration: 0.6), value: showForYou)
-    }
-
-    func forYouCard(_ item: SampleClassItem) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Image placeholder
-            Rectangle()
-                .fill(item.color)
-                .frame(height: 90)
-
-            // Content
-            VStack(alignment: .leading, spacing: 0) {
-                Text(item.title)
-                    .font(.custom("Raleway-Medium", size: 13))
-                    .foregroundColor(Color.yugiSoftBlack)
-                    .lineLimit(1)
-                    .padding(.bottom, 4)
-
-                Text("\(item.location) · \(item.distance)")
-                    .font(.custom("Raleway-Regular", size: 11))
-                    .foregroundColor(Color.yugiBodyText)
-                    .padding(.bottom, 8)
-
-                HStack {
-                    Text(item.price)
-                        .font(.custom("Raleway-Medium", size: 13))
-                        .foregroundColor(Color.yugiSoftBlack)
-                    Spacer()
-                    if item.pramOK {
-                        Text("PRAM OK")
-                            .font(.custom("Raleway-Medium", size: 10))
-                            .foregroundColor(Color.yugiDeepSage)
-                            .tracking(0.3)
-                            .padding(.vertical, 3)
-                            .padding(.horizontal, 7)
-                            .background(Color.yugiSage)
-                            .clipShape(Capsule())
-                    }
-                }
-            }
-            .padding(12)
-        }
-        .frame(width: 180)
-        .background(Color.white)
-        .cornerRadius(16)
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.yugiOat, lineWidth: 1))
-        .clipped()
-    }
-
-    // MARK: 6. Near You section
+    // MARK: 5. Near You section
 
     var nearYouSection: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -1030,18 +924,6 @@ private struct DiagonalStripesShape: Shape {
         }
         return path
     }
-}
-
-// MARK: - Sample Class Model
-
-private struct SampleClassItem: Identifiable {
-    let id    = UUID()
-    let title:    String
-    let location: String
-    let distance: String
-    let price:    String
-    let pramOK:   Bool
-    let color:    Color
 }
 
 // MARK: - Supporting Views (preserved from original)
