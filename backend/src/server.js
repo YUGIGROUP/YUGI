@@ -138,7 +138,162 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Logging middleware for payment routes - runs BEFORE routes are mounted
+// ─── Stripe Connect redirect pages ───────────────────────────────────────────
+// Stripe sends providers here after onboarding. No auth required.
+
+app.get('/stripe/return', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payouts set up — YUGI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #FAF7F4;
+      color: #3A3836;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(58, 56, 54, 0.08);
+      max-width: 420px;
+      width: 100%;
+      padding: 40px;
+      text-align: center;
+    }
+    .check-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #B7C4B1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+    }
+    .check-circle::after {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 16px;
+      border-left: 3.5px solid #fff;
+      border-bottom: 3.5px solid #fff;
+      transform: rotate(-45deg) translate(2px, -3px);
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #A3867A;
+      margin-bottom: 14px;
+      letter-spacing: -0.01em;
+    }
+    p {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #3A3836;
+      margin-bottom: 28px;
+    }
+    footer {
+      font-size: 0.8rem;
+      color: #A3867A;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="check-circle"></div>
+    <h1>You're all set!</h1>
+    <p>Thanks for setting up payouts with Stripe. You can now close this page and return to the YUGI app.</p>
+    <footer>If you're stuck, email <a href="mailto:eva@yugiapp.ai" style="color:#A3867A;">eva@yugiapp.ai</a> and I'll help.</footer>
+  </div>
+</body>
+</html>`);
+});
+
+app.get('/stripe/refresh', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Link expired — YUGI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #FAF7F4;
+      color: #3A3836;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(58, 56, 54, 0.08);
+      max-width: 420px;
+      width: 100%;
+      padding: 40px;
+      text-align: center;
+    }
+    .refresh-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #A3867A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      font-size: 2rem;
+      color: #fff;
+      line-height: 1;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #A3867A;
+      margin-bottom: 14px;
+      letter-spacing: -0.01em;
+    }
+    p {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #3A3836;
+      margin-bottom: 28px;
+    }
+    footer {
+      font-size: 0.8rem;
+      color: #A3867A;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="refresh-circle">&#x21BB;</div>
+    <h1>Link expired</h1>
+    <p>Your Stripe onboarding link has expired for security. Please return to the YUGI app and tap "Continue setup" to get a fresh link.</p>
+    <footer>If you're stuck, email <a href="mailto:eva@yugiapp.ai" style="color:#A3867A;">eva@yugiapp.ai</a> and I'll help.</footer>
+  </div>
+</body>
+</html>`);
+});
+
+// ─── Logging middleware for payment routes - runs BEFORE routes are mounted ───
 app.use('/api/payments', (req, res, next) => {
   console.log('🔴🔴🔴 PAYMENT ROUTE HIT (SERVER LEVEL) 🔴🔴🔴');
   console.log('🔴 Method:', req.method);
