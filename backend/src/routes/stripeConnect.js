@@ -9,6 +9,22 @@ const { protect, requireUserType } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Returns the appropriate return_url and refresh_url based on the client platform.
+// iOS clients use a custom URL scheme so ASWebAuthenticationSession can intercept
+// the callback and close the web view. All other clients use the web landing pages.
+function getStripeReturnUrls(platform) {
+  if (platform === 'ios') {
+    return {
+      refresh_url: 'yugi://stripe/refresh',
+      return_url: 'yugi://stripe/return',
+    };
+  }
+  return {
+    refresh_url: `${process.env.APP_URL}/stripe/refresh`,
+    return_url: `${process.env.APP_URL}/stripe/return`,
+  };
+}
+
 // POST /api/stripe/connect/onboard
 // Starts (or resumes) Stripe Express onboarding for a provider.
 // If the provider already has a connected account, skips creation and
@@ -16,6 +32,7 @@ const router = express.Router();
 router.post('/onboard', [protect, requireUserType(['provider'])], async (req, res) => {
   const userId = req.user._id;
   try {
+    const { platform } = req.body || {};
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -45,12 +62,13 @@ router.post('/onboard', [protect, requireUserType(['provider'])], async (req, re
       await user.save();
     }
 
+    const { refresh_url, return_url } = getStripeReturnUrls(platform);
     let accountLink;
     try {
       accountLink = await stripe.accountLinks.create({
         account: user.stripeConnectedAccountId,
-        refresh_url: `${process.env.APP_URL}/stripe/refresh`,
-        return_url: `${process.env.APP_URL}/stripe/return`,
+        refresh_url,
+        return_url,
         type: 'account_onboarding',
       });
     } catch (stripeErr) {
@@ -116,6 +134,7 @@ router.get('/status', [protect, requireUserType(['provider'])], async (req, res)
 router.post('/refresh-link', [protect, requireUserType(['provider'])], async (req, res) => {
   const userId = req.user._id;
   try {
+    const { platform } = req.body || {};
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -123,12 +142,13 @@ router.post('/refresh-link', [protect, requireUserType(['provider'])], async (re
       return res.status(400).json({ message: 'No Stripe account found. Call /onboard first.' });
     }
 
+    const { refresh_url, return_url } = getStripeReturnUrls(platform);
     let accountLink;
     try {
       accountLink = await stripe.accountLinks.create({
         account: user.stripeConnectedAccountId,
-        refresh_url: `${process.env.APP_URL}/stripe/refresh`,
-        return_url: `${process.env.APP_URL}/stripe/return`,
+        refresh_url,
+        return_url,
         type: 'account_onboarding',
       });
     } catch (stripeErr) {
