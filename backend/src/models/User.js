@@ -74,7 +74,27 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  
+
+  // Stripe Connect fields (provider-specific)
+  stripeConnectedAccountId: {
+    // Stripe Express connected account ID - null until provider completes Stripe onboarding
+    type: String,
+    default: null
+  },
+  stripeOnboardingComplete: {
+    // True once Stripe has verified the provider's identity and bank details
+    type: Boolean,
+    default: false
+  },
+  stripeOnboardingStartedAt: {
+    type: Date,
+    default: null
+  },
+  stripePayoutsEnabled: {
+    type: Boolean,
+    default: false
+  },
+
   // Parent-specific fields
   children: [{
     name: String,
