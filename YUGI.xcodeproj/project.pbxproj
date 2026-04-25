@@ -10,6 +10,7 @@
 		110BE6B72E5DD03C00731469 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 110BE6B62E5DD03C00731469 /* GoogleService-Info.plist */; };
 		110BE6B92E5DF62A00731469 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 110BE6B82E5DF62A00731469 /* FirebaseAuth */; };
 		110BE6BB2E5DF62A00731469 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 110BE6BA2E5DF62A00731469 /* FirebaseFirestore */; };
+		11E253532F9D5812000E34C3 /* BetterSafariView in Frameworks */ = {isa = PBXBuildFile; productRef = 11E253522F9D5812000E34C3 /* BetterSafariView */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,9 +37,22 @@
 		1141A8C32DE8F972009F1376 /* YUGIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YUGIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		11EB8CCD2F9C24A1004E9B18 /* Exceptions for "YUGI" folder in "YUGI" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1141A8AB2DE8F96F009F1376 /* YUGI */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1141A8AE2DE8F96F009F1376 /* YUGI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				11EB8CCD2F9C24A1004E9B18 /* Exceptions for "YUGI" folder in "YUGI" target */,
+			);
 			path = YUGI;
 			sourceTree = "<group>";
 		};
@@ -61,6 +75,7 @@
 			files = (
 				110BE6B92E5DF62A00731469 /* FirebaseAuth in Frameworks */,
 				110BE6BB2E5DF62A00731469 /* FirebaseFirestore in Frameworks */,
+				11E253532F9D5812000E34C3 /* BetterSafariView in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,6 +139,7 @@
 			packageProductDependencies = (
 				110BE6B82E5DF62A00731469 /* FirebaseAuth */,
 				110BE6BA2E5DF62A00731469 /* FirebaseFirestore */,
+				11E253522F9D5812000E34C3 /* BetterSafariView */,
 			);
 			productName = YUGI;
 			productReference = 1141A8AC2DE8F96F009F1376 /* YUGI.app */;
@@ -209,6 +225,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				110BE6B52E5DCF5E00731469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				11E253512F9D5812000E34C3 /* XCRemoteSwiftPackageReference "BetterSafariView" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1141A8AD2DE8F96F009F1376 /* Products */;
@@ -419,6 +436,7 @@
 				DEVELOPMENT_TEAM = Y3N8CWT2Q5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YUGI/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "YUGI uses your location to find classes near you and score how doable they are.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -449,6 +467,7 @@
 				DEVELOPMENT_TEAM = Y3N8CWT2Q5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YUGI/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "YUGI uses your location to find classes near you and score how doable they are.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -590,6 +609,14 @@
 				minimumVersion = 12.1.0;
 			};
 		};
+		11E253512F9D5812000E34C3 /* XCRemoteSwiftPackageReference "BetterSafariView" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stleamist/BetterSafariView";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -602,6 +629,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 110BE6B52E5DCF5E00731469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		11E253522F9D5812000E34C3 /* BetterSafariView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 11E253512F9D5812000E34C3 /* XCRemoteSwiftPackageReference "BetterSafariView" */;
+			productName = BetterSafariView;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -98,6 +98,7 @@ struct ProviderDashboardScreen: View {
     @State private var shouldNavigateToBusinessProfile = false
     @State private var hasAcceptedTerms = false
     @State private var shouldNavigateToPaymentSettings = false
+    @State private var shouldNavigateToStripeConnect = false
     @State private var shouldNavigateToMyClasses = false
     @State private var shouldNavigateToClassSearch = false
     @State private var shouldNavigateToChildrenBookings = false
@@ -250,6 +251,9 @@ struct ProviderDashboardScreen: View {
                             onPaymentSettings: {
                                 shouldNavigateToPaymentSettings = true
                             },
+                            onStripeConnect: {
+                                shouldNavigateToStripeConnect = true
+                            },
                             onSupport: {
                                 showingHelpSupport = true
                             },
@@ -391,6 +395,9 @@ struct ProviderDashboardScreen: View {
             }
             .sheet(isPresented: $shouldNavigateToPaymentSettings) {
                 ProviderPaymentSettingsScreen()
+            }
+            .sheet(isPresented: $shouldNavigateToStripeConnect) {
+                StripeConnectOnboardingScreen()
             }
             .sheet(isPresented: $shouldNavigateToMyClasses) {
                 ProviderMyClassesScreen(businessName: displayBusinessName)
@@ -702,6 +709,7 @@ struct AccountManagementSection: View {
     let onViewTerms: () -> Void
     let onBusinessProfile: () -> Void
     let onPaymentSettings: () -> Void
+    let onStripeConnect: () -> Void
     let onSupport: () -> Void
     @Binding var shouldNavigateToChildrenBookings: Bool
     let children: [Child]
@@ -737,8 +745,8 @@ struct AccountManagementSection: View {
                     onPaymentSettings()
                 }
                 
+                StripeConnectStatusWidget(onTap: onStripeConnect)
 
-                
                 AccountActionButton(
                     title: "Help & Support",
                     subtitle: "Get help and contact support",
