@@ -10,18 +10,15 @@ const { protect, requireUserType } = require('../middleware/auth');
 const router = express.Router();
 
 // Returns the appropriate return_url and refresh_url based on the client platform.
-// iOS clients use a custom URL scheme so ASWebAuthenticationSession can intercept
-// the callback and close the web view. All other clients use the web landing pages.
+// Stripe requires HTTPS URLs. iOS clients pass platform: 'ios' so we append
+// ?platform=ios to the URLs — the /stripe/return and /stripe/refresh HTML pages
+// detect this and redirect via JavaScript to yugi://stripe/return (or refresh),
+// which ASWebAuthenticationSession on iOS intercepts to close the web view.
 function getStripeReturnUrls(platform) {
-  if (platform === 'ios') {
-    return {
-      refresh_url: 'yugi://stripe/refresh',
-      return_url: 'yugi://stripe/return',
-    };
-  }
+  const suffix = platform === 'ios' ? '?platform=ios' : '';
   return {
-    refresh_url: `${process.env.APP_URL}/stripe/refresh`,
-    return_url: `${process.env.APP_URL}/stripe/return`,
+    refresh_url: `${process.env.APP_URL}/stripe/refresh${suffix}`,
+    return_url: `${process.env.APP_URL}/stripe/return${suffix}`,
   };
 }
 

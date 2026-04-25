@@ -142,6 +142,22 @@ app.get('/api/health', (req, res) => {
 // Stripe sends providers here after onboarding. No auth required.
 
 app.get('/stripe/return', (req, res) => {
+  // If iOS client, redirect to custom scheme so ASWebAuthenticationSession can intercept
+  if (req.query.platform === 'ios') {
+    return res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Returning to YUGI…</title>
+  <meta http-equiv="refresh" content="0; url=yugi://stripe/return">
+  <script>window.location.replace('yugi://stripe/return');</script>
+</head>
+<body style="font-family: -apple-system, sans-serif; text-align: center; padding: 40px;">
+  <p>Returning to YUGI…</p>
+  <p style="color: #999; font-size: 14px;">If this page doesn't close automatically, <a href="yugi://stripe/return">tap here</a>.</p>
+</body>
+</html>`);
+  }
   res.setHeader('Content-Type', 'text/html');
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -221,6 +237,21 @@ app.get('/stripe/return', (req, res) => {
 });
 
 app.get('/stripe/refresh', (req, res) => {
+  if (req.query.platform === 'ios') {
+    return res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Returning to YUGI…</title>
+  <meta http-equiv="refresh" content="0; url=yugi://stripe/refresh">
+  <script>window.location.replace('yugi://stripe/refresh');</script>
+</head>
+<body style="font-family: -apple-system, sans-serif; text-align: center; padding: 40px;">
+  <p>Returning to YUGI…</p>
+  <p style="color: #999; font-size: 14px;">If this page doesn't close automatically, <a href="yugi://stripe/refresh">tap here</a>.</p>
+</body>
+</html>`);
+  }
   res.setHeader('Content-Type', 'text/html');
   res.send(`<!DOCTYPE html>
 <html lang="en">
