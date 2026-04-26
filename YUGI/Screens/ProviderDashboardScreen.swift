@@ -254,6 +254,7 @@ struct ProviderDashboardScreen: View {
                             onStripeConnect: {
                                 shouldNavigateToStripeConnect = true
                             },
+                            isStripeOnboardingSheetPresented: shouldNavigateToStripeConnect,
                             onSupport: {
                                 showingHelpSupport = true
                             },
@@ -710,6 +711,7 @@ struct AccountManagementSection: View {
     let onBusinessProfile: () -> Void
     let onPaymentSettings: () -> Void
     let onStripeConnect: () -> Void
+    let isStripeOnboardingSheetPresented: Bool
     let onSupport: () -> Void
     @Binding var shouldNavigateToChildrenBookings: Bool
     let children: [Child]
@@ -745,7 +747,10 @@ struct AccountManagementSection: View {
                     onPaymentSettings()
                 }
                 
-                StripeConnectStatusWidget(onTap: onStripeConnect)
+                StripeConnectStatusWidget(
+                    isOnboardingSheetPresented: isStripeOnboardingSheetPresented,
+                    onTap: onStripeConnect
+                )
 
                 AccountActionButton(
                     title: "Help & Support",

@@ -2,6 +2,7 @@ import SwiftUI
 import Combine
 
 struct StripeConnectStatusWidget: View {
+    let isOnboardingSheetPresented: Bool
     let onTap: () -> Void
 
     @StateObject private var service = StripeConnectService.shared
@@ -57,6 +58,9 @@ struct StripeConnectStatusWidget: View {
         }
         .buttonStyle(PlainButtonStyle())
         .onAppear(perform: loadStatus)
+        .onChange(of: isOnboardingSheetPresented) { _, isPresented in
+            if !isPresented { loadStatus() }
+        }
     }
 
     // MARK: - State-driven content
@@ -114,6 +118,8 @@ struct StripeConnectStatusWidget: View {
     // MARK: - Load status
 
     private func loadStatus() {
+        cancellables.removeAll()
+        isLoading = true
         service.checkStatus()
             .receive(on: DispatchQueue.main)
             .sink(
