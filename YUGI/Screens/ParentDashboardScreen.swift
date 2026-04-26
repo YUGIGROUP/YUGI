@@ -934,6 +934,9 @@ struct BookingCard: View {
     let onCancel: (() -> Void)?
     let onVenueAnalysis: (() -> Void)?
 
+    @State private var showingMapsChooser = false
+    @State private var mapsTargetBooking: EnhancedBooking?
+
     init(booking: Booking, enhancedBooking: EnhancedBooking? = nil,
          onCancel: (() -> Void)? = nil, onVenueAnalysis: (() -> Void)? = nil) {
         self.booking = booking; self.enhancedBooking = enhancedBooking
@@ -971,7 +974,10 @@ struct BookingCard: View {
                         .font(.system(size: 14)).foregroundColor(.white.opacity(0.8))
                     Spacer()
                 }
-                Button(action: { openInAppleMaps(enhancedBooking: eb) }) {
+                Button(action: {
+                    mapsTargetBooking = eb
+                    showingMapsChooser = true
+                }) {
                     HStack(spacing: 6) {
                         Image(systemName: "map").font(.system(size: 14))
                         Text("View in Maps").font(.system(size: 14, weight: .medium))
@@ -997,6 +1003,16 @@ struct BookingCard: View {
         }
         .padding(16)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white, lineWidth: 1))
+        .confirmationDialog("Open in Maps", isPresented: $showingMapsChooser, titleVisibility: .hidden) {
+            ForEach(MapsLauncher.availableApps()) { app in
+                Button(app.displayName) {
+                    if let b = mapsTargetBooking {
+                        MapsLauncher.open(app, forBooking: b)
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        }
     }
 
     private func formatDate(_ date: Date) -> String {
@@ -1004,17 +1020,6 @@ struct BookingCard: View {
     }
     private func formatTime(_ date: Date) -> String {
         let f = DateFormatter(); f.dateFormat = "h:mm a"; return f.string(from: date)
-    }
-    private func openInAppleMaps(enhancedBooking: EnhancedBooking) {
-        let coords = enhancedBooking.classInfo.location?.coordinates ?? Location.Coordinates(latitude: 51.5074, longitude: -0.1278)
-        let name = enhancedBooking.classInfo.location?.name ?? "Location TBD"
-        guard let encoded = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "maps://?q=\(encoded)&ll=\(coords.latitude),\(coords.longitude)") else { return }
-        if UIApplication.shared.canOpenURL(url) {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        } else if let gUrl = URL(string: "https://maps.google.com/?q=\(encoded)&ll=\(coords.latitude),\(coords.longitude)") {
-            UIApplication.shared.open(gUrl, options: [:], completionHandler: nil)
-        }
     }
 }
 

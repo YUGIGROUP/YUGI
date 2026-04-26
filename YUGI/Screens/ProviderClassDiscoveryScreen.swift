@@ -542,51 +542,10 @@ struct ProviderClassFiltersSheet: View {
 struct ProviderClassDetailSheet: View {
     let classItem: Class
     @Environment(\.dismiss) private var dismiss
+    @State private var showingMapsChooser = false
     
     private func openInAppleMaps() {
-        let coordinates = classItem.location?.coordinates ?? Location.Coordinates(latitude: 51.5074, longitude: -0.1278)
-        let venueName = classItem.location?.name ?? "Location TBD"
-        
-        print("🗺️ Attempting to open Apple Maps for venue: \(venueName)")
-        print("🗺️ Coordinates: \(coordinates.latitude), \(coordinates.longitude)")
-        
-        // URL encode the venue name
-        guard let encodedVenueName = venueName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "maps://?q=\(encodedVenueName)&ll=\(coordinates.latitude),\(coordinates.longitude)") else {
-            print("❌ Error: Could not create Apple Maps URL for venue: \(venueName)")
-            return
-        }
-        
-        print("🗺️ Created URL: \(url)")
-        
-        // Check if Apple Maps can be opened
-        let canOpen = UIApplication.shared.canOpenURL(url)
-        print("🗺️ Can open Apple Maps URL: \(canOpen)")
-        
-        // Open Apple Maps
-        if canOpen {
-            UIApplication.shared.open(url) { success in
-                if success {
-                    print("🗺️ Successfully opened Apple Maps for venue: \(venueName)")
-                } else {
-                    print("❌ Failed to open Apple Maps for venue: \(venueName)")
-                }
-            }
-        } else {
-            print("❌ Apple Maps is not available on this device")
-            // Fallback: Try to open in Safari with Google Maps
-            let googleMapsURL = "https://maps.google.com/?q=\(encodedVenueName)&ll=\(coordinates.latitude),\(coordinates.longitude)"
-            print("🗺️ Trying Google Maps fallback: \(googleMapsURL)")
-            if let googleURL = URL(string: googleMapsURL) {
-                UIApplication.shared.open(googleURL) { success in
-                    if success {
-                        print("🗺️ Successfully opened Google Maps for venue: \(venueName)")
-                    } else {
-                        print("❌ Failed to open Google Maps for venue: \(venueName)")
-                    }
-                }
-            }
-        }
+        showingMapsChooser = true
     }
     
     var body: some View {
@@ -680,6 +639,14 @@ struct ProviderClassDetailSheet: View {
                     }
                     .foregroundColor(Color.yugiMocha)
                 }
+            }
+            .confirmationDialog("Open in Maps", isPresented: $showingMapsChooser, titleVisibility: .hidden) {
+                ForEach(MapsLauncher.availableApps()) { app in
+                    Button(app.displayName) {
+                        MapsLauncher.open(app, forClass: classItem)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
             }
         }
     }

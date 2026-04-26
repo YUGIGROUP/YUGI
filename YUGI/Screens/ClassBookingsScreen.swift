@@ -202,6 +202,7 @@ struct BookingDetailCard: View {
     let enhancedBooking: EnhancedBooking
     let onCancel: () -> Void
     let onViewAnalysis: () -> Void
+    @State private var showingMapsChooser = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -330,6 +331,14 @@ struct BookingDetailCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white, lineWidth: 1)
         )
+        .confirmationDialog("Open in Maps", isPresented: $showingMapsChooser, titleVisibility: .hidden) {
+            ForEach(MapsLauncher.availableApps()) { app in
+                Button(app.displayName) {
+                    MapsLauncher.open(app, forBooking: enhancedBooking)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -345,49 +354,7 @@ struct BookingDetailCard: View {
     }
     
     private func openInAppleMaps() {
-        let coordinates = enhancedBooking.classInfo.location?.coordinates ?? Location.Coordinates(latitude: 51.5074, longitude: -0.1278)
-        let venueName = enhancedBooking.classInfo.location?.name ?? "Location TBD"
-        
-        print("🗺️ Attempting to open Apple Maps for venue: \(venueName)")
-        print("🗺️ Coordinates: \(coordinates.latitude), \(coordinates.longitude)")
-        
-        // URL encode the venue name
-        guard let encodedVenueName = venueName.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed),
-              let url = URL(string: "maps://?q=\(encodedVenueName)&ll=\(coordinates.latitude),\(coordinates.longitude)") else {
-            print("❌ Error: Could not create Apple Maps URL for venue: \(venueName)")
-            return
-        }
-        
-        print("🗺️ Created URL: \(url)")
-        
-        // Check if Apple Maps can be opened
-        let canOpen = UIApplication.shared.canOpenURL(url)
-        print("🗺️ Can open Apple Maps URL: \(canOpen)")
-        
-        // Open Apple Maps
-        if canOpen {
-            UIApplication.shared.open(url) { success in
-                if success {
-                    print("🗺️ Successfully opened Apple Maps for venue: \(venueName)")
-                } else {
-                    print("❌ Failed to open Apple Maps for venue: \(venueName)")
-                }
-            }
-        } else {
-            print("❌ Apple Maps is not available on this device")
-            // Fallback: Try to open in Safari with Google Maps
-            let googleMapsURL = "https://maps.google.com/?q=\(encodedVenueName)&ll=\(coordinates.latitude),\(coordinates.longitude)"
-            print("🗺️ Trying Google Maps fallback: \(googleMapsURL)")
-            if let googleURL = URL(string: googleMapsURL) {
-                UIApplication.shared.open(googleURL) { success in
-                    if success {
-                        print("🗺️ Successfully opened Google Maps for venue: \(venueName)")
-                    } else {
-                        print("❌ Failed to open Google Maps for venue: \(venueName)")
-                    }
-                }
-            }
-        }
+        showingMapsChooser = true
     }
 }
 

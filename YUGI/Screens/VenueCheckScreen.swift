@@ -20,6 +20,7 @@ struct VenueCheckScreen: View {
     @State private var summaryText = ""
     @State private var isSummaryStreaming = false
     @State private var summaryAvailable = false
+    @State private var showingMapsChooser = false
 
     private let apiService = APIService.shared
 
@@ -136,6 +137,16 @@ struct VenueCheckScreen: View {
                     }
                 }
             }
+            .confirmationDialog("Open in Maps", isPresented: $showingMapsChooser, titleVisibility: .hidden) {
+                ForEach(MapsLauncher.availableApps()) { app in
+                    Button(app.displayName) {
+                        if let d = venueData {
+                            MapsLauncher.open(app, forVenueAnalysis: d)
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            }
         }
     }
 
@@ -217,6 +228,26 @@ struct VenueCheckScreen: View {
                 }
 
                 parentFriendlyScore(access)
+
+                if venueCheckHasAddressOrCoords(data) {
+                    Button(action: openVenueInMaps) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
+                                .font(.system(size: 13, weight: .medium))
+                            Text("View in Maps")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundColor(Color.yugiMocha)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9)
+                        .background(Color.clear)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.yugiMocha, lineWidth: 1.5)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -572,6 +603,17 @@ struct VenueCheckScreen: View {
             .filter { !$0.isEmpty }
             .joined(separator: "-")
         return "yugi-\(slug)"
+    }
+
+    private func venueCheckHasAddressOrCoords(_ data: VenueAnalysisAPIData) -> Bool {
+        if data.coordinates != nil { return true }
+        if let f = data.formattedAddress, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return true }
+        let parts = [data.address.street, data.address.city].filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        return !parts.isEmpty
+    }
+
+    private func openVenueInMaps() {
+        showingMapsChooser = true
     }
 
     private func searchVenue() {
