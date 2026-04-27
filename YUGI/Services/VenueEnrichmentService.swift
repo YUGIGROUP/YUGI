@@ -146,6 +146,9 @@ final class VenueEnrichmentService {
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token = APIService.shared.authToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
 
         URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
             guard let self else { return }
