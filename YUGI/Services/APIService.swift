@@ -1895,6 +1895,19 @@ struct VenueAnalysisAPIData: Codable {
     let formattedAddress: String?
     let source: String
     let lastUpdated: String
+      enum CodingKeys: String, CodingKey {
+        case venueName
+        case placeId
+        case address
+        case coordinates
+        case parkingInfo
+        case babyChangingFacilities
+        case accessibilityNotes
+        case venueAccessibility
+        case formattedAddress
+        case source
+        case lastUpdated
+    }
     
     struct VenueCoordinates: Codable {
         let latitude: Double
