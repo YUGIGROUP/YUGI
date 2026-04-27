@@ -1401,6 +1401,7 @@ router.post('/venues/analyze', protect, async (req, res) => {
           postalCode: addressObj.postalCode || '',
           country:    'United Kingdom',
         };
+    console.log(`🔧 Analyze response placeId for ${venueName}: ${venueData.placeId || 'MISSING'}`);
 
     res.json({
       success: true,
