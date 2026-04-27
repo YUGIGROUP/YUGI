@@ -354,6 +354,7 @@ class VenueDataService {
     };
 
     return {
+      placeId:                placeData.id || null,
       parkingInfo:            this._buildParkingInfo(parking, stations, venueAccessibility),
       babyChangingFacilities: this._buildBabyChangingText(hasBabyChanging),
       accessibilityNotes:     this._buildAccessibilityNotes(accessibility),

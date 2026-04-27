@@ -597,12 +597,10 @@ struct ClassCard: View {
         }
         .onAppear {
             guard enrichment == nil, let loc = classItem.location else { return }
-            let slug = "\(loc.name)-\(loc.address.city)"
-                .lowercased()
-                .components(separatedBy: CharacterSet.alphanumerics.inverted)
-                .filter { !$0.isEmpty }
-                .joined(separator: "-")
-            let placeId = classItem.googlePlaceId ?? "yugi-\(slug)"
+            guard let placeId = classItem.googlePlaceId, !placeId.isEmpty else {
+                print("ClassDiscoveryView: skipping enrichment, no Google placeId on class \(classItem.id)")
+                return
+            }
             VenueEnrichmentService.shared.fetchEnrichment(
                 placeId: placeId,
                 venueName: loc.name

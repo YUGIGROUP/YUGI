@@ -547,11 +547,10 @@ struct ClassDetailsCard: View {
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         .onAppear {
             guard enrichment == nil, let loc = classItem.location else { return }
-            let slug = "\(loc.name)-\(loc.address.city)"
-                .lowercased()
-                .components(separatedBy: CharacterSet.alphanumerics.inverted)
-                .filter { !$0.isEmpty }.joined(separator: "-")
-            let placeId = classItem.googlePlaceId ?? "yugi-\(slug)"
+            guard let placeId = classItem.googlePlaceId, !placeId.isEmpty else {
+                print("BookingView: skipping enrichment, no Google placeId on class \(classItem.id)")
+                return
+            }
             VenueEnrichmentService.shared.fetchEnrichment(
                 placeId: placeId, venueName: loc.name
             ) { self.enrichment = $0 }

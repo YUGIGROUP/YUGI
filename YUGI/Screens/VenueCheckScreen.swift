@@ -596,15 +596,6 @@ struct VenueCheckScreen: View {
 
     // MARK: - API Call
 
-    private static func syntheticPlaceId(name: String, loc: String) -> String {
-        let slug = "\(name)-\(loc)"
-            .lowercased()
-            .components(separatedBy: CharacterSet.alphanumerics.inverted)
-            .filter { !$0.isEmpty }
-            .joined(separator: "-")
-        return "yugi-\(slug)"
-    }
-
     private func venueCheckHasAddressOrCoords(_ data: VenueAnalysisAPIData) -> Bool {
         if data.coordinates != nil { return true }
         if let f = data.formattedAddress, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return true }
@@ -643,17 +634,22 @@ struct VenueCheckScreen: View {
                         location: loc,
                         venueLocation: response.data.coordinates.map { (lat: $0.latitude, lng: $0.longitude) }
                     )
-                    // Fetch enrichment async — never blocks UI
-                    self.enrichmentLoading = true
-                    VenueEnrichmentService.shared.fetchEnrichment(
-                        placeId: Self.syntheticPlaceId(name: name, loc: loc),
-                        venueName: name
-                    ) { result in
-                        self.enrichmentLoading = false
-                        self.enrichment = result
-                        if let result {
-                            self.generateVenueSummary(result)
+                    // Only call enrichment if we have a real Google Place ID — never use synthetic IDs
+                    // (synthetic IDs pollute MongoDB cache with empty data for 90 days)
+                    if let realPlaceId = response.data.placeId, !realPlaceId.isEmpty {
+                        self.enrichmentLoading = true
+                        VenueEnrichmentService.shared.fetchEnrichment(
+                            placeId: realPlaceId,
+                            venueName: name
+                        ) { result in
+                            self.enrichmentLoading = false
+                            self.enrichment = result
+                            if let result {
+                                self.generateVenueSummary(result)
+                            }
                         }
+                    } else {
+                        print("VenueCheckScreen: skipping enrichment, no Google placeId returned for \(name)")
                     }
                 }
             )

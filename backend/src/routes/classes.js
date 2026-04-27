@@ -1406,6 +1406,7 @@ router.post('/venues/analyze', protect, async (req, res) => {
       success: true,
       data: {
         venueName: venueData.officialName || venueName,
+        placeId: venueData.placeId || venueData.googlePlaceId || venueData.place_id || null,
         address: responseAddress,
         coordinates: coordinates,
         parkingInfo: venueData.parkingInfo,

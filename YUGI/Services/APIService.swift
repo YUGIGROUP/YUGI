@@ -1885,6 +1885,7 @@ struct VenueAnalysisResponse: Codable {
 
 struct VenueAnalysisAPIData: Codable {
     let venueName: String
+    let placeId: String?
     let address: Address
     let coordinates: VenueCoordinates?
     let parkingInfo: String
