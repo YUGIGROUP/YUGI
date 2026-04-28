@@ -11,24 +11,53 @@ struct VenueEnrichmentParking: Decodable {
     let costInfo: String?
     let ticketless: Bool?
     let evCharging: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case totalSpaces
+        case carParkNames
+        case type
+        case blueBadgeBays
+        case parentBays
+        case costInfo
+        case ticketless
+        case evCharging
+    }
 }
 
 struct VenueEnrichmentBabyChanging: Decodable {
     let available: Bool?
     let location: String?
     let details: String?
+
+    enum CodingKeys: String, CodingKey {
+        case available
+        case location
+        case details
+    }
 }
 
 struct VenueEnrichmentPramAccess: Decodable {
     let stepFreeAccess: Bool?
     let liftAvailable: Bool?
     let details: String?
+
+    enum CodingKeys: String, CodingKey {
+        case stepFreeAccess
+        case liftAvailable
+        case details
+    }
 }
 
 struct VenueEnrichmentPublicTransport: Decodable {
     let nearestStation: String?
     let walkingTime: String?
     let busRoutes: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case nearestStation
+        case walkingTime
+        case busRoutes
+    }
 }
 
 struct VenueEnrichedData: Decodable {
@@ -37,6 +66,14 @@ struct VenueEnrichedData: Decodable {
     let pramAccess: VenueEnrichmentPramAccess?
     let publicTransport: VenueEnrichmentPublicTransport?
     let additionalNotes: String?
+
+    enum CodingKeys: String, CodingKey {
+        case parking
+        case babyChanging
+        case pramAccess
+        case publicTransport
+        case additionalNotes
+    }
 }
 
 struct VenueEnrichmentResponse: Decodable {
@@ -46,6 +83,15 @@ struct VenueEnrichmentResponse: Decodable {
     let sources: [String]
     let confidence: String
     let cachedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case placeId
+        case venueName
+        case enrichedData
+        case sources
+        case confidence
+        case cachedAt
+    }
 
     /// Whether this response contains any meaningful enrichment data.
     var hasData: Bool {
@@ -162,7 +208,6 @@ final class VenueEnrichmentService {
                 return
             }
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
             if let result = try? decoder.decode(VenueEnrichmentResponse.self, from: data) {
                 print("VenueEnrichmentService: enrichment received for \(venueName), hasData=\(result.hasData)")
                 self.deliver(placeId: placeId, result: result, completion: completion)
