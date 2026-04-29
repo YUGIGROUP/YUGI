@@ -165,7 +165,7 @@ router.get('/:placeId/enrichment', protect, async (req, res) => {
 
     const message = await anthropic.messages.create({
       model:      'claude-haiku-4-5-20251001',
-      max_tokens: 4096,
+      max_tokens: 8192,
       tools:      [{ type: 'web_search_20250305', name: 'web_search' }],
       system:     SYSTEM_PROMPT,
       messages:   [{
