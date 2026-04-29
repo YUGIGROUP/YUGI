@@ -405,12 +405,12 @@ class VenueDataService {
     const p     = parkingOptions || {};
     const parts = [];
 
-    if      (p.freeParkingLot   || p.freeGarageParking)  parts.push('Free parking available on-site.');
-    else if (p.paidParkingLot   || p.paidGarageParking)  parts.push('Paid parking available on-site.');
-    else if (p.freeStreetParking)                         parts.push('Free street parking available.');
+    if      (p.freeParkingLot   || p.freeGarageParking)  parts.push('Google indicates free parking on-site — verify on arrival.');
+    else if (p.paidParkingLot   || p.paidGarageParking)  parts.push('Google indicates paid parking on-site — verify on arrival.');
+    else if (p.freeStreetParking)                         parts.push('Free street parking nearby (check restrictions).');
     else if (p.paidStreetParking)                         parts.push('Paid street parking nearby (check restrictions).');
-    else if (p.valetParking)                              parts.push('Valet parking available.');
-    else                                                  parts.push('Street parking available nearby.');
+    else if (p.valetParking)                              parts.push('Valet parking listed by Google — verify on arrival.');
+    else                                                  parts.push('No on-site parking confirmed — check street parking nearby.');
 
     if (venueAccessibility && venueAccessibility.accessibleParking === true) {
       parts.push('Accessible parking bays available.');
@@ -477,26 +477,11 @@ class VenueDataService {
 
   getDefaultVenueData(venueName) {
     console.log(`🏢 Using default venue data for: ${venueName}`);
-    const name = (venueName || '').toLowerCase();
-
-    let parkingInfo            = 'Street parking available nearby.';
-    let babyChangingFacilities = 'Baby changing facilities not confirmed \u2014 contact venue.';
-    let accessibilityNotes     = 'Accessibility not confirmed \u2014 contact venue for pram/buggy access details.';
-
-    if (name.includes('community') || name.includes('centre') || name.includes('center')
-        || name.includes('church')  || name.includes('hall')) {
-      parkingInfo            = 'Free parking available on-site.';
-      babyChangingFacilities = 'Baby changing facilities available.';
-      accessibilityNotes     = 'Pram/buggy friendly: pram/buggy accessible entrance.';
-    } else if (name.includes('library') || name.includes('museum')) {
-      parkingInfo            = 'Limited parking \u2014 street parking recommended.';
-      babyChangingFacilities = 'Baby changing facilities available.';
-      accessibilityNotes     = 'Pram/buggy friendly: accessible entrance, accessible restroom.';
-    } else if (name.includes('park') || name.includes('garden')) {
-      parkingInfo            = 'Free parking available.';
-      babyChangingFacilities = 'Portable changing facilities recommended.';
-      accessibilityNotes     = 'Partially accessible \u2014 some areas may have uneven terrain.';
-    }
+    const parkingInfo = 'No parking information available — please check with venue.';
+    const babyChangingFacilities =
+      'Baby changing facilities not confirmed — please contact venue.';
+    const accessibilityNotes =
+      'Accessibility not confirmed — please contact venue for pram/buggy access details.';
 
     return {
       parkingInfo,
