@@ -603,7 +603,8 @@ struct ClassCard: View {
             }
             VenueEnrichmentService.shared.fetchEnrichment(
                 placeId: placeId,
-                venueName: loc.name
+                venueName: loc.name,
+                address: loc.address.formatted
             ) { self.enrichment = $0 }
         }
         .sheet(isPresented: $showingProviderProfile) {

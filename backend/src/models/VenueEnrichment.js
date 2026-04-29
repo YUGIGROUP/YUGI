@@ -9,24 +9,32 @@ const parkingSchema = new mongoose.Schema({
   costInfo:      { type: String, default: null },
   ticketless:    { type: Boolean, default: null },
   evCharging:    { type: Boolean, default: null },
+  source:        { type: Number, default: null },
+  confidence:    { type: String, default: null }, // 'high' | 'medium' | 'low'
 }, { _id: false });
 
 const babyChangingSchema = new mongoose.Schema({
   available: { type: Boolean, default: null },
   location:  { type: String, default: null },
   details:   { type: String, default: null },
+  source:    { type: Number, default: null },
+  confidence:{ type: String, default: null }, // 'high' | 'medium' | 'low'
 }, { _id: false });
 
 const pramAccessSchema = new mongoose.Schema({
   stepFreeAccess: { type: Boolean, default: null },
   liftAvailable:  { type: Boolean, default: null },
   details:        { type: String, default: null },
+  source:         { type: Number, default: null },
+  confidence:     { type: String, default: null }, // 'high' | 'medium' | 'low'
 }, { _id: false });
 
 const publicTransportSchema = new mongoose.Schema({
   nearestStation: { type: String, default: null },
   walkingTime:    { type: String, default: null },
   busRoutes:      [String],
+  source:         { type: Number, default: null },
+  confidence:     { type: String, default: null }, // 'high' | 'medium' | 'low'
 }, { _id: false });
 
 const enrichedDataSchema = new mongoose.Schema({
@@ -35,6 +43,7 @@ const enrichedDataSchema = new mongoose.Schema({
   pramAccess:      { type: pramAccessSchema,      default: {} },
   publicTransport: { type: publicTransportSchema, default: {} },
   additionalNotes: { type: String, default: null },
+  venueVerified:   { type: Boolean, default: null },
 }, { _id: false });
 
 const venueEnrichmentSchema = new mongoose.Schema({

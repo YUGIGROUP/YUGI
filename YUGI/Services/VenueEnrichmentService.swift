@@ -11,6 +11,8 @@ struct VenueEnrichmentParking: Decodable {
     let costInfo: String?
     let ticketless: Bool?
     let evCharging: Bool?
+    let source: Int?
+    let confidence: String?
 
     enum CodingKeys: String, CodingKey {
         case totalSpaces
@@ -21,6 +23,8 @@ struct VenueEnrichmentParking: Decodable {
         case costInfo
         case ticketless
         case evCharging
+        case source
+        case confidence
     }
 }
 
@@ -28,11 +32,15 @@ struct VenueEnrichmentBabyChanging: Decodable {
     let available: Bool?
     let location: String?
     let details: String?
+    let source: Int?
+    let confidence: String?
 
     enum CodingKeys: String, CodingKey {
         case available
         case location
         case details
+        case source
+        case confidence
     }
 }
 
@@ -40,11 +48,15 @@ struct VenueEnrichmentPramAccess: Decodable {
     let stepFreeAccess: Bool?
     let liftAvailable: Bool?
     let details: String?
+    let source: Int?
+    let confidence: String?
 
     enum CodingKeys: String, CodingKey {
         case stepFreeAccess
         case liftAvailable
         case details
+        case source
+        case confidence
     }
 }
 
@@ -52,11 +64,15 @@ struct VenueEnrichmentPublicTransport: Decodable {
     let nearestStation: String?
     let walkingTime: String?
     let busRoutes: [String]?
+    let source: Int?
+    let confidence: String?
 
     enum CodingKeys: String, CodingKey {
         case nearestStation
         case walkingTime
         case busRoutes
+        case source
+        case confidence
     }
 }
 
@@ -66,6 +82,7 @@ struct VenueEnrichedData: Decodable {
     let pramAccess: VenueEnrichmentPramAccess?
     let publicTransport: VenueEnrichmentPublicTransport?
     let additionalNotes: String?
+    let venueVerified: Bool?
 
     enum CodingKeys: String, CodingKey {
         case parking
@@ -73,6 +90,7 @@ struct VenueEnrichedData: Decodable {
         case pramAccess
         case publicTransport
         case additionalNotes
+        case venueVerified
     }
 }
 
@@ -169,6 +187,7 @@ final class VenueEnrichmentService {
     func fetchEnrichment(
         placeId: String,
         venueName: String,
+        address: String? = nil,
         completion: @escaping (VenueEnrichmentResponse?) -> Void
     ) {
         lock.lock()
@@ -180,7 +199,11 @@ final class VenueEnrichmentService {
             deliver(placeId: placeId, result: nil, completion: completion)
             return
         }
-        components.queryItems = [URLQueryItem(name: "venueName", value: venueName)]
+        var queryItems: [URLQueryItem] = [URLQueryItem(name: "venueName", value: venueName)]
+        if let address, !address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            queryItems.append(URLQueryItem(name: "address", value: address))
+        }
+        components.queryItems = queryItems
 
         guard let url = components.url else {
             deliver(placeId: placeId, result: nil, completion: completion)

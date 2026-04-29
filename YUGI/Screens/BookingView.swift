@@ -552,7 +552,9 @@ struct ClassDetailsCard: View {
                 return
             }
             VenueEnrichmentService.shared.fetchEnrichment(
-                placeId: placeId, venueName: loc.name
+                placeId: placeId,
+                venueName: loc.name,
+                address: loc.address.formatted
             ) { self.enrichment = $0 }
         }
     }

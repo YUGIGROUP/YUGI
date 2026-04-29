@@ -640,7 +640,8 @@ struct VenueCheckScreen: View {
                         self.enrichmentLoading = true
                         VenueEnrichmentService.shared.fetchEnrichment(
                             placeId: realPlaceId,
-                            venueName: name
+                            venueName: name,
+                            address: response.data.formattedAddress ?? response.data.address.formatted
                         ) { result in
                             self.enrichmentLoading = false
                             self.enrichment = result

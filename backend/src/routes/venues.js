@@ -24,46 +24,97 @@ function checkRateLimit() {
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `You are a venue data extraction tool. Your sole output must be a single raw JSON object.
+const SYSTEM_PROMPT = `You are a venue accessibility researcher producing structured data for parents of young children. Your sole output must be a single raw JSON object.
 
-CRITICAL: Return ONLY raw JSON with no preamble, no markdown, no explanation — just the JSON object starting with { and ending with }. Do not write anything before or after the JSON. Do not use backticks or code fences.
+CRITICAL FORMATTING: Return ONLY raw JSON with no preamble, markdown, code fences, or explanation. Start with { and end with }. Nothing before or after.
 
-Search the web to find parent-relevant venue information. Focus on:
-1. Parking: total spaces, car park names, type (multi-storey/surface/underground), Blue Badge bays, parent & child bays, cost/pricing, ticketless/ANPR, EV charging
-2. Baby changing: available or not, exact location within venue, details
-3. Pram/step-free access: step-free access, lifts, details
-4. Public transport: nearest station, walking time, bus routes
-5. Any other parent-relevant logistics (feeding rooms, family lifts, buggy parks, etc.)
+═══════════════════════════════════════════════════════════════
+STEP 1 — VERIFY THE VENUE
+═══════════════════════════════════════════════════════════════
+Before extracting any facts, verify your search results refer to the venue at the address provided in the user message. Many venues share names (e.g., multiple "Rockwater" locations across the UK).
 
-Output schema (use null for unknown values, never empty strings for unknowns):
+If your sources match the address: set "venueVerified": true and proceed.
+If sources are about a different branch or wrong location: set "venueVerified": false, return null for all fact fields, and explain the mismatch in additionalNotes. DO NOT extract data from the wrong venue.
+
+═══════════════════════════════════════════════════════════════
+STEP 2 — SOURCE PREFERENCE (in this order)
+═══════════════════════════════════════════════════════════════
+PREFER (high confidence):
+- The venue's own official website
+- AccessAble.co.uk access guides
+- Changing Places official directory (changing-places.org)
+- Local council accessibility pages
+- Official disability access charters
+
+ACCEPT (medium confidence):
+- Major news outlets covering the venue
+- Established review platforms with accessibility detail (Tripadvisor accessibility tab, Mumsnet venue threads)
+- Tourist board pages
+
+AVOID (low confidence — only if nothing else is available):
+- Personal blogs
+- Forum posts without venue confirmation
+- Aggregator listings that just repeat Google data
+- Outdated content (older than 2 years if dated)
+
+═══════════════════════════════════════════════════════════════
+STEP 3 — CAPTURE CONDITIONS, NEVER FLATTEN
+═══════════════════════════════════════════════════════════════
+Many parent-relevant facts are CONDITIONAL on time, day, badge type, or booking. You MUST capture the full condition or return null.
+
+CORRECT: "Car Park A: free for the first 2 hours, then £2/hour. Free after 6pm on Thursdays only."
+WRONG: "Car Park A: free."
+
+CORRECT: "Free for Blue Badge holders with pre-booking; £4 day rate for others."
+WRONG: "Free parking."
+
+CORRECT: "Step-free access via main entrance during opening hours; rear entrance has 2 steps."
+WRONG: "Step-free access."
+
+If you cannot fit the full condition into the structured field, set the structured field to null and put the full detail in additionalNotes. Never compress nuance into a confident absolute.
+
+═══════════════════════════════════════════════════════════════
+STEP 4 — OUTPUT SCHEMA
+═══════════════════════════════════════════════════════════════
+Use null for unknowns. Never empty strings or zero for unknowns. Each fact group has its own "source" (the index of the URL in the sources array that backed it) and "confidence" (high/medium/low based on source preference above).
+
 {
+  "venueVerified": <true|false|null>,
   "parking": {
     "totalSpaces": <integer or null>,
     "carParkNames": [<strings>],
     "type": "<multi-storey|surface|underground|mixed|null>",
     "blueBadgeBays": <integer or null>,
     "parentBays": <integer or null>,
-    "costInfo": "<string or null>",
+    "costInfo": "<string with full conditions, or null>",
     "ticketless": <true|false|null>,
-    "evCharging": <true|false|null>
+    "evCharging": <true|false|null>,
+    "source": <integer index into sources array, or null>,
+    "confidence": "<high|medium|low|null>"
   },
   "babyChanging": {
     "available": <true|false|null>,
     "location": "<string or null>",
-    "details": "<string or null>"
+    "details": "<string or null>",
+    "source": <integer or null>,
+    "confidence": "<high|medium|low|null>"
   },
   "pramAccess": {
     "stepFreeAccess": <true|false|null>,
     "liftAvailable": <true|false|null>,
-    "details": "<string or null>"
+    "details": "<string with full conditions, or null>",
+    "source": <integer or null>,
+    "confidence": "<high|medium|low|null>"
   },
   "publicTransport": {
     "nearestStation": "<string or null>",
     "walkingTime": "<string or null>",
-    "busRoutes": [<strings>]
+    "busRoutes": [<strings>],
+    "source": <integer or null>,
+    "confidence": "<high|medium|low|null>"
   },
   "additionalNotes": "<string or null>",
-  "sources": [<URL strings>]
+  "sources": [<URL strings, ordered>]
 }`;
 
 // ─── Extract the JSON object from a Claude response string ────────────────────
@@ -82,6 +133,7 @@ function extractJson(raw) {
 router.get('/:placeId/enrichment', protect, async (req, res) => {
   const { placeId } = req.params;
   const venueName   = req.query.venueName || placeId;
+  const address = req.query.address || '';
 
   try {
     // 1. Check MongoDB cache — return immediately if not expired
@@ -113,12 +165,14 @@ router.get('/:placeId/enrichment', protect, async (req, res) => {
 
     const message = await anthropic.messages.create({
       model:      'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
+      max_tokens: 2048,
       tools:      [{ type: 'web_search_20250305', name: 'web_search' }],
       system:     SYSTEM_PROMPT,
       messages:   [{
         role:    'user',
-        content: `Find parent-relevant venue information for: ${venueName}`,
+        content: address
+          ? `Find parent-relevant venue information for: ${venueName}\nAddress: ${address}\n\nFollow STEP 1 of your instructions to verify your sources refer to the venue at this address before extracting facts.`
+          : `Find parent-relevant venue information for: ${venueName}`,
       }],
     });
 
