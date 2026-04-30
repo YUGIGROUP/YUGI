@@ -78,6 +78,9 @@ STEP 4 — OUTPUT SCHEMA
 ═══════════════════════════════════════════════════════════════
 Use null for unknowns. Never empty strings or zero for unknowns. Each fact group has its own "source" (the index of the URL in the sources array that backed it) and "confidence" (high/medium/low based on source preference above).
 
+IMPORTANT: Each free-text field has a strict character limit shown in its description. Do not exceed it. If you have more detail to share, put it in additionalNotes (capped at 600 chars). Headline facts go in the dedicated fields; long-form context goes in additionalNotes. Be disciplined — the response must fit within 8192 output tokens including any tool use.
+Default cap for any other free-text "notes", "info", or "details" field is 150 characters unless this schema specifies otherwise.
+
 {
   "venueVerified": <true|false|null>,
   "parking": {
@@ -86,7 +89,7 @@ Use null for unknowns. Never empty strings or zero for unknowns. Each fact group
     "type": "<multi-storey|surface|underground|mixed|null>",
     "blueBadgeBays": <integer or null>,
     "parentBays": <integer or null>,
-    "costInfo": "<string with full conditions, or null>",
+    "costInfo": "<string max 200 chars; headline fact only (e.g. 'Free for Blue Badge after 6pm Thu; otherwise £1.40/hour from Car Park A'), or null>",
     "ticketless": <true|false|null>,
     "evCharging": <true|false|null>,
     "source": <integer index into sources array, or null>,
@@ -95,25 +98,25 @@ Use null for unknowns. Never empty strings or zero for unknowns. Each fact group
   "babyChanging": {
     "available": <true|false|null>,
     "location": "<string or null>",
-    "details": "<string or null>",
+    "details": "<string max 150 chars, or null>",
     "source": <integer or null>,
     "confidence": "<high|medium|low|null>"
   },
   "pramAccess": {
     "stepFreeAccess": <true|false|null>,
     "liftAvailable": <true|false|null>,
-    "details": "<string with full conditions, or null>",
+    "details": "<string max 200 chars with key conditions, or null>",
     "source": <integer or null>,
     "confidence": "<high|medium|low|null>"
   },
   "publicTransport": {
-    "nearestStation": "<string or null>",
-    "walkingTime": "<string or null>",
+    "nearestStation": "<string max 150 chars, or null>",
+    "walkingTime": "<string max 150 chars, or null>",
     "busRoutes": [<strings>],
     "source": <integer or null>,
     "confidence": "<high|medium|low|null>"
   },
-  "additionalNotes": "<string or null>",
+  "additionalNotes": "<string max 600 chars for longer-form detail, or null>",
   "sources": [<URL strings, ordered>]
 }`;
 
