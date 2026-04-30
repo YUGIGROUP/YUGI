@@ -213,6 +213,7 @@ final class VenueEnrichmentService {
         EventTracker.shared.trackVenueEnrichmentRequested(placeId: placeId, venueName: venueName)
 
         var request = URLRequest(url: url, timeoutInterval: 30)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let token = APIService.shared.authToken {
