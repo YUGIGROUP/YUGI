@@ -102,3 +102,5 @@ iOSInjectionProject/
 # MongoDB binaries (should not be in repository)
 mongodb-macos-x86_64-*.tgz
 mongodb-macos-x86_64-*/ 
+# Claude Code local state
+.claude/
