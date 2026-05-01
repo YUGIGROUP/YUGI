@@ -79,6 +79,14 @@ STEP 4 — OUTPUT SCHEMA
 Use null for unknowns. Never empty strings or zero for unknowns. Each fact group has its own "source" (the index of the URL in the sources array that backed it) and "confidence" (high/medium/low based on source preference above).
 
 IMPORTANT: Each free-text field has a strict character limit shown in its description. Do not exceed it. If you have more detail to share, put it in additionalNotes (capped at 600 chars). Headline facts go in the dedicated fields; long-form context goes in additionalNotes. Be disciplined — the response must fit within 8192 output tokens including any tool use.
+PARKING DATA POLICY: If any source mentions parking at the venue — even informally (e.g. "paid parking available", "free parking on-site", "limited parking") — populate parking.costInfo with what was found, attributed to the source. Examples:
+- Tagvenue says "on-site paid parking available" → costInfo: "Paid parking on-site (per Tagvenue listing)" with confidence "low"
+- Venue's own page mentions "free customer parking" → costInfo: "Free customer parking" with confidence "high"
+- Multiple sources mention parking but disagree → use the most authoritative; mention the disagreement in additionalNotes
+Only leave parking.costInfo as null if NO source mentions parking at all. Do NOT bury parking information in additionalNotes when the structured costInfo field is the right home for it. additionalNotes is for context that doesn't fit any structured field, not a fallback for laziness.
+
+The same principle applies to babyChanging, pramAccess, and publicTransport — populate the structured fields whenever a source mentions the relevant facts, even informally, with appropriate confidence tier. Use null only when no source mentions it.
+
 Default cap for any other free-text "notes", "info", or "details" field is 150 characters unless this schema specifies otherwise.
 
 {
