@@ -1,7 +1,9 @@
 const express         = require('express');
 const router          = express.Router();
 const Anthropic       = require('@anthropic-ai/sdk');
-const VenueEnrichment = require('../models/VenueEnrichment');
+const VenueEnrichment     = require('../models/VenueEnrichment');
+const User                = require('../models/User');
+const VenueFactFeedback   = require('../models/VenueFactFeedback');
 const { protect } = require('../middleware/auth');
 
 // ─── Rate limiter: max 50 Claude enrichments per hour globally ────────────────
@@ -239,6 +241,160 @@ router.get('/:placeId/enrichment', protect, async (req, res) => {
   } catch (err) {
     console.error(`❌ Venue enrichment error for ${venueName}:`, err.message);
     return res.json({ placeId, venueName, enrichedData: {}, sources: [], confidence: 'web_enriched', cachedAt: null });
+  }
+});
+
+const FEEDBACK_SOURCES = ['save_prompt', 'mark_visited', 'report_inaccuracy'];
+const REPORT_TYPES = ['broken', 'no_longer_true', 'wrong_location', 'never_existed', 'other'];
+
+// ─── POST /api/venues/:placeId/save ───────────────────────────────────────────
+
+router.post('/:placeId/save', protect, async (req, res) => {
+  const { venueName: rawName } = req.body;
+  if (typeof rawName !== 'string' || rawName.trim().length === 0 || rawName.trim().length > 200) {
+    return res.status(400).json({ success: false, message: 'venueName required' });
+  }
+
+  try {
+    const user = await User.findById(req.user._id || req.user.id);
+
+    const existing = user.savedVenues.find((v) => v.placeId === req.params.placeId);
+    if (existing) {
+      return res.status(200).json({ success: true, savedVenue: existing, alreadySaved: true });
+    }
+
+    user.savedVenues.push({
+      placeId:   req.params.placeId,
+      venueName: rawName.trim(),
+      savedAt:   new Date(),
+    });
+    await user.save();
+    const savedVenue = user.savedVenues[user.savedVenues.length - 1];
+    return res.status(200).json({ success: true, savedVenue, alreadySaved: false });
+  } catch (err) {
+    console.error('POST /:placeId/save error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to save venue' });
+  }
+});
+
+// ─── DELETE /api/venues/:placeId/save ─────────────────────────────────────────
+
+router.delete('/:placeId/save', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id || req.user.id);
+
+    const beforeCount = user.savedVenues.length;
+    user.savedVenues = user.savedVenues.filter((v) => v.placeId !== req.params.placeId);
+    await user.save();
+    return res.status(200).json({ success: true, removed: beforeCount > user.savedVenues.length });
+  } catch (err) {
+    console.error('DELETE /:placeId/save error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to remove saved venue' });
+  }
+});
+
+// ─── POST /api/venues/:placeId/feedback ───────────────────────────────────────
+
+router.post('/:placeId/feedback', protect, async (req, res) => {
+  const { venueName: rawVenueName, source, facts, overallComment } = req.body;
+  const parentId = req.user._id || req.user.id;
+
+  if (typeof rawVenueName !== 'string' || rawVenueName.trim().length === 0 || rawVenueName.trim().length > 200) {
+    return res.status(400).json({ success: false, message: 'venueName must be a non-empty string at most 200 characters' });
+  }
+  if (!FEEDBACK_SOURCES.includes(source)) {
+    return res.status(400).json({ success: false, message: 'source must be save_prompt, mark_visited, or report_inaccuracy' });
+  }
+  if (!Array.isArray(facts) || facts.length < 1) {
+    return res.status(400).json({ success: false, message: 'facts must be a non-empty array' });
+  }
+
+  for (let i = 0; i < facts.length; i++) {
+    const f = facts[i];
+    if (!f || typeof f !== 'object') {
+      return res.status(400).json({ success: false, message: `facts[${i}] must be an object` });
+    }
+    if (typeof f.factPath !== 'string' || f.factPath.trim().length === 0) {
+      return res.status(400).json({ success: false, message: `facts[${i}].factPath must be a non-empty string` });
+    }
+    if (typeof f.agreed !== 'boolean') {
+      return res.status(400).json({ success: false, message: `facts[${i}].agreed must be a boolean` });
+    }
+    if (f.comment !== undefined && f.comment !== null) {
+      if (typeof f.comment !== 'string' || f.comment.length > 500) {
+        return res.status(400).json({ success: false, message: `facts[${i}].comment must be a string at most 500 characters` });
+      }
+    }
+    if (f.reportType !== undefined && f.reportType !== null) {
+      if (!REPORT_TYPES.includes(f.reportType)) {
+        return res.status(400).json({ success: false, message: `facts[${i}].reportType must be one of: ${REPORT_TYPES.join(', ')}` });
+      }
+    }
+  }
+
+  if (overallComment !== undefined && overallComment !== null) {
+    if (typeof overallComment !== 'string' || overallComment.length > 500) {
+      return res.status(400).json({ success: false, message: 'overallComment must be a string at most 500 characters' });
+    }
+  }
+
+  const venueName = rawVenueName.trim();
+  const placeId = req.params.placeId;
+
+  try {
+    const events = facts.map((fact) => {
+      const evt = {
+        placeId,
+        venueName,
+        factPath: fact.factPath.trim(),
+        parentId,
+        agreed: fact.agreed,
+        source,
+      };
+      if (fact.comment !== undefined && fact.comment !== null && fact.comment !== '') {
+        evt.comment = fact.comment;
+      }
+      if (fact.reportType !== undefined && fact.reportType !== null) {
+        evt.reportType = fact.reportType;
+      }
+      return evt;
+    });
+
+    if (
+      overallComment !== undefined &&
+      overallComment !== null &&
+      overallComment.trim() !== ''
+    ) {
+      events.push({
+        placeId,
+        venueName,
+        factPath: 'overall',
+        parentId,
+        agreed: true,
+        comment: overallComment.trim(),
+        source,
+      });
+    }
+
+    const created = await VenueFactFeedback.insertMany(events);
+
+    try {
+      const user = await User.findById(parentId);
+      if (user) {
+        const sv = user.savedVenues.find((v) => v.placeId === placeId);
+        if (sv) {
+          sv.feedbackSubmitted = true;
+          await user.save();
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to mark savedVenue feedbackSubmitted:', e.message);
+    }
+
+    return res.status(201).json({ success: true, eventsCreated: created.length });
+  } catch (err) {
+    console.error('POST /:placeId/feedback error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to submit feedback' });
   }
 });
 
