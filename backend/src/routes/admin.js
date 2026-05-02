@@ -365,4 +365,15 @@ router.get('/stats', protect, requireAdmin, async (req, res) => {
   }
 });
 
-module.exports = router; 
+router.post('/aggregate-parent-verification', protect, requireAdmin, async (req, res) => {
+  try {
+    const { aggregateAll } = require('../services/parentVerificationAggregator');
+    const result = await aggregateAll();
+    return res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    console.error('Manual aggregation trigger error:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+module.exports = router;

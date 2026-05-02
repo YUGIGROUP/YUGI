@@ -446,10 +446,30 @@ function startNotificationJob() {
   console.log('🔔 Notification job started (every 5 minutes)');
 }
 
+function startParentVerificationJob() {
+  const { aggregateAll } = require('./services/parentVerificationAggregator');
+  const INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+  async function runAggregation() {
+    try {
+      await aggregateAll();
+    } catch (err) {
+      console.error('Parent verification aggregation error:', err.message);
+    }
+  }
+
+  runAggregation();
+  setInterval(runAggregation, INTERVAL_MS);
+  console.log('📊 Parent verification aggregator started (every 6 hours)');
+}
+
 if (process.env.MONGODB_URI) {
-  // Start notification job only when DB is connected
+  // Start background jobs only when DB is connected
   const mongoose = require('mongoose');
-  mongoose.connection.once('open', startNotificationJob);
+  mongoose.connection.once('open', () => {
+    startNotificationJob();
+    startParentVerificationJob();
+  });
 }
 
 app.listen(PORT, '0.0.0.0', () => {
