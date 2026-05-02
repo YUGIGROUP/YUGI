@@ -37,13 +37,38 @@ const publicTransportSchema = new mongoose.Schema({
   confidence:     { type: String, default: null }, // 'high' | 'medium' | 'low'
 }, { _id: false });
 
+const parentVerificationFactSummaryEntrySchema = new mongoose.Schema({
+  confirmations: { type: Number, default: 0 },
+  disputes:      { type: Number, default: 0 },
+  lastConfirmed: { type: Date },
+  lastDisputed:  { type: Date },
+}, { _id: false });
+
+const parentVerificationSchema = new mongoose.Schema({
+  totalConfirmations:  { type: Number, default: 0 },
+  totalDisputes:       { type: Number, default: 0 },
+  recentDisputes30d:   { type: Number, default: 0 },
+  factSummary:         {
+    type: Map,
+    of: parentVerificationFactSummaryEntrySchema,
+    default: () => new Map(),
+  },
+  confidenceTier: {
+    type: String,
+    enum: ['ai_high', 'ai_medium', 'ai_low', 'parent_verified', 'disputed'],
+    default: 'ai_medium',
+  },
+  lastAggregatedAt: { type: Date },
+}, { _id: false });
+
 const enrichedDataSchema = new mongoose.Schema({
-  parking:         { type: parkingSchema,         default: {} },
-  babyChanging:    { type: babyChangingSchema,    default: {} },
-  pramAccess:      { type: pramAccessSchema,      default: {} },
-  publicTransport: { type: publicTransportSchema, default: {} },
-  additionalNotes: { type: String, default: null },
-  venueVerified:   { type: Boolean, default: null },
+  parking:              { type: parkingSchema,              default: {} },
+  babyChanging:         { type: babyChangingSchema,         default: {} },
+  pramAccess:           { type: pramAccessSchema,           default: {} },
+  publicTransport:      { type: publicTransportSchema,      default: {} },
+  additionalNotes:      { type: String, default: null },
+  venueVerified:        { type: Boolean, default: null },
+  parentVerification:   { type: parentVerificationSchema,    default: {} },
 }, { _id: false });
 
 const venueEnrichmentSchema = new mongoose.Schema({

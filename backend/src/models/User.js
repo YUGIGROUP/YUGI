@@ -101,7 +101,18 @@ const userSchema = new mongoose.Schema({
     age: Number,
     dateOfBirth: Date
   }],
-  
+  savedVenues: {
+    type: [{
+      placeId: { type: String, required: true },
+      venueName: { type: String, required: true },
+      savedAt: { type: Date, default: Date.now },
+      promptedAt: { type: Date },
+      promptDismissed: { type: Boolean, default: false },
+      feedbackSubmitted: { type: Boolean, default: false },
+    }],
+    default: [],
+  },
+
   // Account status
   isActive: {
     type: Boolean,
