@@ -54,7 +54,7 @@ const parentVerificationSchema = new mongoose.Schema({
   },
   confidenceTier: {
     type: String,
-    enum: ['ai_high', 'ai_medium', 'ai_low', 'parent_verified', 'disputed'],
+    enum: ['ai_high', 'ai_medium', 'ai_low', 'parent_verified', 'disputed', 'mixed'],
     default: 'ai_medium',
   },
   lastAggregatedAt: { type: Date },
