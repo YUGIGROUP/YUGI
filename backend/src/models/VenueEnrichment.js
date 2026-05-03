@@ -48,10 +48,9 @@ const parentVerificationSchema = new mongoose.Schema({
   totalConfirmations:  { type: Number, default: 0 },
   totalDisputes:       { type: Number, default: 0 },
   recentDisputes30d:   { type: Number, default: 0 },
-  factSummary:         {
-    type: Map,
-    of: parentVerificationFactSummaryEntrySchema,
-    default: () => new Map(),
+  factSummary: {
+    type: mongoose.Schema.Types.Mixed,
+    default: () => ({}),
   },
   confidenceTier: {
     type: String,
