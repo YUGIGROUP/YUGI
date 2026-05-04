@@ -258,11 +258,11 @@ struct VenueCheckScreen: View {
             // Accessibility card
             venueCard(title: "Accessibility", systemImage: "figure.roll") {
                 VStack(spacing: 10) {
-                    accessibilityRow("Pram / Buggy Accessible Entrance", value: access?.pramAccessibleEntrance)
-                    accessibilityRow("Accessible Restroom", value: access?.accessibleRestroom)
-                    accessibilityRow("Accessible Seating", value: access?.accessibleSeating)
-                    accessibilityRow("Accessible Parking", value: access?.accessibleParking)
-                    accessibilityRow("Baby Changing", value: access?.hasBabyChanging ?? enrichment?.enrichedData.babyChanging?.available)
+                    accessibilityRow("Pram / Buggy Accessible Entrance", value: access?.pramAccessibleEntrance, factPath: "pramAccess.stepFreeAccess")
+                    accessibilityRow("Accessible Restroom", value: access?.accessibleRestroom, factPath: "accessibility.accessibleRestroom")
+                    accessibilityRow("Accessible Seating", value: access?.accessibleSeating, factPath: "accessibility.accessibleSeating")
+                    accessibilityRow("Accessible Parking", value: access?.accessibleParking, factPath: "parking.accessible")
+                    accessibilityRow("Baby Changing", value: access?.hasBabyChanging ?? enrichment?.enrichedData.babyChanging?.available, factPath: "babyChanging.available")
                 }
             }
 
@@ -284,7 +284,19 @@ struct VenueCheckScreen: View {
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.9))
                             .fixedSize(horizontal: false, vertical: true)
-                        sourceLabel(enrichment!.sourceLabel)
+                        HStack(spacing: 8) {
+                            sourceLabel(enrichment!.sourceLabel)
+                            Spacer()
+                            if let pid = venueData?.placeId, !pid.isEmpty {
+                                FactFlagButton(
+                                    placeId: pid,
+                                    venueName: venueName,
+                                    factPath: "parking.costInfo",
+                                    factDisplayName: "Parking",
+                                    currentValue: nil
+                                )
+                            }
+                        }
                     } else {
                         if let parkingType = access?.parkingType {
                             HStack(spacing: 8) {
@@ -361,7 +373,19 @@ struct VenueCheckScreen: View {
                                 .font(.system(size: 14)).foregroundColor(.white.opacity(0.85))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                        sourceLabel(enrichment!.sourceLabel)
+                        HStack(spacing: 8) {
+                            sourceLabel(enrichment!.sourceLabel)
+                            Spacer()
+                            if let pid = venueData?.placeId, !pid.isEmpty {
+                                FactFlagButton(
+                                    placeId: pid,
+                                    venueName: venueName,
+                                    factPath: "pramAccess.liftAvailable",
+                                    factDisplayName: "Step-Free & Pram Access",
+                                    currentValue: nil
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -514,7 +538,7 @@ struct VenueCheckScreen: View {
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.3), lineWidth: 1))
     }
 
-    private func accessibilityRow(_ label: String, value: Bool?) -> some View {
+    private func accessibilityRow(_ label: String, value: Bool?, factPath: String? = nil) -> some View {
         HStack(spacing: 10) {
             Text(accessibilityEmoji(value))
                 .font(.system(size: 18))
@@ -525,6 +549,15 @@ struct VenueCheckScreen: View {
             Text(accessibilityStatusText(value))
                 .font(.system(size: 13))
                 .foregroundColor(accessibilityColor(value))
+            if let factPath, let pid = venueData?.placeId, !pid.isEmpty {
+                FactFlagButton(
+                    placeId: pid,
+                    venueName: venueName,
+                    factPath: factPath,
+                    factDisplayName: label,
+                    currentValue: accessibilityStatusText(value)
+                )
+            }
         }
     }
 
