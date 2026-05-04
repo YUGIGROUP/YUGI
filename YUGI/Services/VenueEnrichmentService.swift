@@ -242,6 +242,68 @@ final class VenueEnrichmentService {
         }.resume()
     }
 
+    func submitFactReport(
+        placeId: String,
+        venueName: String,
+        factPath: String,
+        reportType: String,
+        comment: String?,
+        completion: @escaping (Bool) -> Void
+    ) {
+        guard let url = URL(string: "\(Self.baseURL)/api/venues/\(placeId)/feedback") else {
+            DispatchQueue.main.async { completion(false) }
+            return
+        }
+
+        var fact: [String: Any] = [
+            "factPath": factPath,
+            "agreed": false,
+            "reportType": reportType,
+        ]
+        if let comment {
+            fact["comment"] = comment
+        }
+        let payload: [String: Any] = [
+            "venueName": venueName,
+            "source": "report_inaccuracy",
+            "facts": [fact],
+        ]
+
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload) else {
+            DispatchQueue.main.async { completion(false) }
+            return
+        }
+
+        var request = URLRequest(url: url, timeoutInterval: 30)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.httpMethod = "POST"
+        request.httpBody = httpBody
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token = APIService.shared.authToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error {
+                print("VenueEnrichmentService: submitFactReport failed for \(placeId): \(error.localizedDescription)")
+                DispatchQueue.main.async { completion(false) }
+                return
+            }
+            guard let http = response as? HTTPURLResponse else {
+                DispatchQueue.main.async { completion(false) }
+                return
+            }
+            let code = http.statusCode
+            if code == 200 || code == 201 {
+                print("VenueEnrichmentService: fact report submitted for \(placeId) factPath=\(factPath)")
+                DispatchQueue.main.async { completion(true) }
+            } else {
+                DispatchQueue.main.async { completion(false) }
+            }
+        }.resume()
+    }
+
     private func deliver(
         placeId: String,
         result: VenueEnrichmentResponse?,
