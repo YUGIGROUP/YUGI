@@ -20,9 +20,11 @@ final class FeedbackCoordinator: ObservableObject {
     /// Booking IDs the parent has dismissed during this session — won't be re-shown.
     private var dismissedThisSession: Set<String> = []
 
-    func openFeedback(bookingId: String, className: String) {
-        guard !dismissedThisSession.contains(bookingId) else { return }
+    @discardableResult
+    func openFeedback(bookingId: String, className: String) -> Bool {
+        guard !dismissedThisSession.contains(bookingId) else { return false }
         pendingFeedback = FeedbackContext(bookingId: bookingId, className: className)
+        return true
     }
 
     /// Call when the parent taps "Not now" or swipes the sheet away without submitting.
@@ -33,52 +35,65 @@ final class FeedbackCoordinator: ObservableObject {
         }
     }
 
-    // MARK: - Pending feedback fetch (called on app foreground)
+    // MARK: - Pending feedback (GET /api/feedback/pending)
 
-    /// Fetches the first unreviewed booking from the server and presents the feedback
-    /// carousel automatically — unless the parent has already dismissed it this session.
-    func fetchAndShowPendingFeedback() {
-            print("🎯 FeedbackCoordinator: fetchAndShowPendingFeedback called")
-            guard let token = UserDefaults.standard.string(forKey: "authToken") else {
-                print("🎯 FeedbackCoordinator: No auth token found")
-                return
-            }
-            guard let url = URL(string: "https://yugi-production.up.railway.app/api/feedback/pending") else { return }
+    func hasPendingFeedback() async -> Bool {
+        await fetchFirstPendingBookingFeedback() != nil
+    }
 
-            var request = URLRequest(url: url)
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-            print("🎯 FeedbackCoordinator: Calling /api/feedback/pending")
-
-            URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-                if let error = error {
-                    print("🎯 FeedbackCoordinator: Error: \(error.localizedDescription)")
-                    return
-                }
-                if let http = response as? HTTPURLResponse {
-                    print("🎯 FeedbackCoordinator: Response status: \(http.statusCode)")
-                }
-                guard let self = self,
-                      let data = data,
-                      let http = response as? HTTPURLResponse, http.statusCode == 200,
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let pending = json["pending"] as? [[String: Any]],
-                      let first = pending.first,
-                      let bookingId = first["bookingId"] as? String,
-                      let className = first["className"] as? String
-                else {
-                    print("🎯 FeedbackCoordinator: No pending feedback or parse failed")
-                    if let data = data, let raw = String(data: data, encoding: .utf8) {
-                        print("🎯 FeedbackCoordinator: Raw: \(raw.prefix(300))")
-                    }
-                    return
-                }
-
-                print("🎯 FeedbackCoordinator: Found pending - \(bookingId) \(className)")
-
-                DispatchQueue.main.async {
-                    self.openFeedback(bookingId: bookingId, className: className)
-                }
-            }.resume()
+    func fetchFirstPendingBookingFeedback() async -> FeedbackContext? {
+        guard let token = UserDefaults.standard.string(forKey: "authToken"),
+              let url = URL(string: "\(APIConfig.baseURL)/feedback/pending") else {
+            return nil
         }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        print("🎯 FeedbackCoordinator: GET \(url.absoluteString)")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                print("🎯 FeedbackCoordinator: Unexpected status \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                return nil
+            }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let pending = json["pending"] as? [[String: Any]],
+                  let first = pending.first,
+                  let bookingId = Self.string(fromMongoJSON: first["bookingId"]),
+                  let className = first["className"] as? String else {
+                print("🎯 FeedbackCoordinator: No pending feedback or parse failed")
+                if let raw = String(data: data, encoding: .utf8) {
+                    print("🎯 FeedbackCoordinator: Raw: \(raw.prefix(300))")
+                }
+                return nil
+            }
+
+            print("🎯 FeedbackCoordinator: Found pending - \(bookingId) \(className)")
+            return FeedbackContext(bookingId: bookingId, className: className)
+        } catch {
+            print("🎯 FeedbackCoordinator: Error: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    /// Presents the first pending booking feedback sheet if any (respects session dismissals).
+    func fetchAndShowPendingFeedback() {
+        print("🎯 FeedbackCoordinator: fetchAndShowPendingFeedback called")
+        Task { @MainActor in
+            guard let ctx = await fetchFirstPendingBookingFeedback() else { return }
+            _ = openFeedback(bookingId: ctx.bookingId, className: ctx.className)
+        }
+    }
+
+    private static func string(fromMongoJSON value: Any?) -> String? {
+        if let s = value as? String { return s }
+        if let dict = value as? [String: Any] {
+            if let oid = dict["$oid"] as? String { return oid }
+        }
+        return nil
+    }
 }

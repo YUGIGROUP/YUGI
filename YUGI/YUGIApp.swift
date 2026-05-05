@@ -6,8 +6,6 @@ struct YUGIApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @ObservedObject private var feedbackCoordinator = FeedbackCoordinator.shared
     @StateObject private var promptManager = FeedbackPromptManager.shared
-    @Environment(\.scenePhase) private var scenePhase
-    @State private var hasScheduledPromptCheckThisLaunch = false
 
     init() {
         FirebaseApp.configure()
@@ -38,15 +36,6 @@ struct YUGIApp: App {
                             }
                         )
                         .presentationDragIndicator(.visible)
-                    }
-                }
-                .onChange(of: scenePhase) { newPhase in
-                    guard newPhase == .active, !hasScheduledPromptCheckThisLaunch else { return }
-                    hasScheduledPromptCheckThisLaunch = true
-
-                    Task {
-                        try? await Task.sleep(nanoseconds: 5_000_000_000)
-                        await promptManager.checkForPendingPrompt()
                     }
                 }
         }
