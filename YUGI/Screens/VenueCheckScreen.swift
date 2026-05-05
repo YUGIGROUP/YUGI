@@ -149,6 +149,12 @@ struct VenueCheckScreen: View {
                 }
                 Button("Cancel", role: .cancel) { }
             }
+            .onAppear {
+                FeedbackPromptManager.shared.setVenueSearchActive(true)
+            }
+            .onDisappear {
+                FeedbackPromptManager.shared.setVenueSearchActive(false)
+            }
         }
     }
 

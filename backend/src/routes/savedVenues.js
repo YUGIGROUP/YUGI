@@ -58,6 +58,68 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// GET /api/saved-venues/pending-prompt
+router.get('/pending-prompt', auth, async (req, res) => {
+  try {
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+
+    const savedVenue = await SavedVenue.findOne({
+      userId: req.user.id,
+      savedAt: { $gte: sevenDaysAgo, $lte: twentyFourHoursAgo },
+      promptShown: false,
+      feedbackSubmitted: false,
+    })
+      .sort({ savedAt: -1 })
+      .select('placeId venueName savedAt')
+      .lean();
+
+    if (!savedVenue) {
+      return res.status(200).json({ pending: false });
+    }
+
+    return res.status(200).json({
+      pending: true,
+      savedVenue: {
+        placeId: savedVenue.placeId,
+        venueName: savedVenue.venueName,
+        savedAt: savedVenue.savedAt,
+      },
+    });
+  } catch (err) {
+    console.error('GET /api/saved-venues/pending-prompt error:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch pending venue prompt' });
+  }
+});
+
+// POST /api/saved-venues/:placeId/mark-prompt-shown
+router.post('/:placeId/mark-prompt-shown', auth, async (req, res) => {
+  try {
+    const { placeId } = req.params;
+
+    const updated = await SavedVenue.findOneAndUpdate(
+      { userId: req.user.id, placeId },
+      {
+        $set: {
+          promptShown: true,
+          promptShownAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Saved venue not found' });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('POST /api/saved-venues/:placeId/mark-prompt-shown error:', err.message);
+    return res.status(500).json({ error: 'Failed to mark venue prompt shown' });
+  }
+});
+
 // GET /api/saved-venues/:placeId
 router.get('/:placeId', auth, async (req, res) => {
   try {

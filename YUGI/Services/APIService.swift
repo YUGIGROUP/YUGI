@@ -1161,6 +1161,58 @@ class APIService: ObservableObject, @unchecked Sendable {
         }
     }
 
+    func getPendingPrompt() async -> PendingPrompt? {
+        guard let token = authToken,
+              let url = URL(string: "\(APIConfig.baseURL)/saved-venues/pending-prompt") else {
+            return nil
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = HTTPMethod.GET.rawValue
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                return nil
+            }
+
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let payload = try decoder.decode(PendingPromptResponse.self, from: data)
+            return payload.pending ? payload.savedVenue : nil
+        } catch {
+            print("APIService: getPendingPrompt failed: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    func markPromptShown(placeId: String) async -> Bool {
+        guard let token = authToken,
+              let encodedPlaceId = placeId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+              let url = URL(string: "\(APIConfig.baseURL)/saved-venues/\(encodedPlaceId)/mark-prompt-shown") else {
+            return false
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = HTTPMethod.POST.rawValue
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { return false }
+            return (200...299).contains(httpResponse.statusCode)
+        } catch {
+            print("APIService: markPromptShown failed for \(placeId): \(error.localizedDescription)")
+            return false
+        }
+    }
+
     // MARK: - AI Class Generation
 
     struct GeneratedClassListing: Codable {
@@ -1967,6 +2019,17 @@ struct VenueAnalysisResponse: Codable {
 struct SavedVenueStatusResponse: Codable {
     let saved: Bool
     let savedAt: Date?
+}
+
+struct PendingPrompt: Codable {
+    let placeId: String
+    let venueName: String
+    let savedAt: Date
+}
+
+struct PendingPromptResponse: Codable {
+    let pending: Bool
+    let savedVenue: PendingPrompt?
 }
 
 struct VenueAnalysisAPIData: Codable {
