@@ -199,14 +199,40 @@ struct VenueCheckScreen: View {
 
             // Venue header card
             VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 10) {
-                    Image(systemName: "building.2.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.white)
-                    Text(data.venueName)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                        .fixedSize(horizontal: false, vertical: true)
+                HStack(alignment: .top, spacing: 8) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "building.2.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(.white)
+                        Text(data.venueName)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                    if let placeId = data.placeId, !placeId.isEmpty {
+                        SaveVenueButton(isSaved: $isVenueSaved) { targetSavedState in
+                            if targetSavedState {
+                                let didSave = await apiService.saveVenue(placeId: placeId, venueName: data.venueName)
+                                if didSave {
+                                    await MainActor.run {
+                                        savedAt = Date()
+                                    }
+                                }
+                                return didSave
+                            } else {
+                                let didUnsave = await apiService.unsaveVenue(placeId: placeId)
+                                if didUnsave {
+                                    await MainActor.run {
+                                        savedAt = nil
+                                    }
+                                }
+                                return didUnsave
+                            }
+                        }
+                        .padding(.top, -4)
+                        .padding(.trailing, -4)
+                    }
                 }
 
                 let displayAddress: String = {
@@ -226,28 +252,6 @@ struct VenueCheckScreen: View {
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.85))
                             .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-
-                if let placeId = data.placeId, !placeId.isEmpty {
-                    SaveVenueButton(isSaved: $isVenueSaved) { targetSavedState in
-                        if targetSavedState {
-                            let didSave = await apiService.saveVenue(placeId: placeId, venueName: data.venueName)
-                            if didSave {
-                                await MainActor.run {
-                                    savedAt = Date()
-                                }
-                            }
-                            return didSave
-                        } else {
-                            let didUnsave = await apiService.unsaveVenue(placeId: placeId)
-                            if didUnsave {
-                                await MainActor.run {
-                                    savedAt = nil
-                                }
-                            }
-                            return didUnsave
-                        }
                     }
                 }
 

@@ -9,21 +9,11 @@ struct SaveVenueButton: View {
 
     var body: some View {
         Button(action: handleTap) {
-            HStack(spacing: 8) {
-                Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                    .font(.system(size: 13, weight: .semibold))
-                Text(isSaved ? "Saved" : "Save")
-                    .font(.custom("Raleway-Regular", size: 14))
-            }
-            .foregroundColor(Color.yugiSoftBlack)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(isSaved ? Color.yugiSage : Color.yugiCloud)
-            .overlay(
-                Capsule()
-                    .stroke(Color.yugiSage, lineWidth: isSaved ? 0 : 1.5)
-            )
-            .clipShape(Capsule())
+            Image(systemName: isSaved ? "heart.fill" : "heart")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(isSaved ? Color.yugiMocha : Color.yugiSoftBlack.opacity(0.7))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
             .opacity(isProcessing ? 0.75 : 1.0)
         }
         .disabled(isProcessing)
