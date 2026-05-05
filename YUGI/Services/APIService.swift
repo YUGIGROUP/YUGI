@@ -1080,6 +1080,87 @@ class APIService: ObservableObject, @unchecked Sendable {
         return request(endpoint: "/classes/venues/analyze", method: .POST, body: body)
     }
 
+    // MARK: - Saved Venues
+
+    func saveVenue(placeId: String, venueName: String) async -> Bool {
+        guard let token = authToken,
+              let url = URL(string: "\(APIConfig.baseURL)/saved-venues") else {
+            return false
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = HTTPMethod.POST.rawValue
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let payload: [String: Any] = [
+            "placeId": placeId,
+            "venueName": venueName
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { return false }
+            return (200...299).contains(httpResponse.statusCode)
+        } catch {
+            print("APIService: saveVenue failed for \(placeId): \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    func unsaveVenue(placeId: String) async -> Bool {
+        guard let token = authToken,
+              let url = URL(string: "\(APIConfig.baseURL)/saved-venues/\(placeId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? placeId)") else {
+            return false
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = HTTPMethod.DELETE.rawValue
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { return false }
+            return (200...299).contains(httpResponse.statusCode)
+        } catch {
+            print("APIService: unsaveVenue failed for \(placeId): \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    func isVenueSaved(placeId: String) async -> (saved: Bool, savedAt: Date?) {
+        guard let token = authToken,
+              let url = URL(string: "\(APIConfig.baseURL)/saved-venues/\(placeId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? placeId)") else {
+            return (false, nil)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = HTTPMethod.GET.rawValue
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                return (false, nil)
+            }
+
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let payload = try decoder.decode(SavedVenueStatusResponse.self, from: data)
+            return (payload.saved, payload.savedAt)
+        } catch {
+            print("APIService: isVenueSaved failed for \(placeId): \(error.localizedDescription)")
+            return (false, nil)
+        }
+    }
+
     // MARK: - AI Class Generation
 
     struct GeneratedClassListing: Codable {
@@ -1881,6 +1962,11 @@ struct ClassResponse: Codable {
 
 struct VenueAnalysisResponse: Codable {
     let data: VenueAnalysisAPIData
+}
+
+struct SavedVenueStatusResponse: Codable {
+    let saved: Bool
+    let savedAt: Date?
 }
 
 struct VenueAnalysisAPIData: Codable {

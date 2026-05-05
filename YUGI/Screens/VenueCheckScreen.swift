@@ -15,6 +15,8 @@ struct VenueCheckScreen: View {
     @State private var cancellables = Set<AnyCancellable>()
     @State private var enrichment: VenueEnrichmentResponse? = nil
     @State private var enrichmentLoading = false
+    @State private var isVenueSaved = false
+    @State private var savedAt: Date? = nil
 
     // MARK: - Venue Intelligence Summary (Foundation Models)
     @State private var summaryText = ""
@@ -224,6 +226,28 @@ struct VenueCheckScreen: View {
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.85))
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                if let placeId = data.placeId, !placeId.isEmpty {
+                    SaveVenueButton(isSaved: $isVenueSaved) { targetSavedState in
+                        if targetSavedState {
+                            let didSave = await apiService.saveVenue(placeId: placeId, venueName: data.venueName)
+                            if didSave {
+                                await MainActor.run {
+                                    savedAt = Date()
+                                }
+                            }
+                            return didSave
+                        } else {
+                            let didUnsave = await apiService.unsaveVenue(placeId: placeId)
+                            if didUnsave {
+                                await MainActor.run {
+                                    savedAt = nil
+                                }
+                            }
+                            return didUnsave
+                        }
                     }
                 }
 
@@ -650,6 +674,8 @@ struct VenueCheckScreen: View {
         venueData = nil
         enrichment = nil
         enrichmentLoading = false
+        isVenueSaved = false
+        savedAt = nil
 
         apiService.fetchVenueAnalysis(venueName: name, location: loc)
             .receive(on: DispatchQueue.main)
@@ -662,6 +688,14 @@ struct VenueCheckScreen: View {
                 },
                 receiveValue: { response in
                     venueData = response.data
+                    if let placeId = response.data.placeId, !placeId.isEmpty {
+                        Task {
+                            await loadSavedVenueState(placeId: placeId)
+                        }
+                    } else {
+                        isVenueSaved = false
+                        savedAt = nil
+                    }
                     EventTracker.shared.trackVenueChecked(
                         venueName: name,
                         location: loc,
@@ -688,6 +722,14 @@ struct VenueCheckScreen: View {
                 }
             )
             .store(in: &cancellables)
+    }
+
+    private func loadSavedVenueState(placeId: String) async {
+        let status = await apiService.isVenueSaved(placeId: placeId)
+        await MainActor.run {
+            self.isVenueSaved = status.saved
+            self.savedAt = status.savedAt
+        }
     }
 
     // MARK: - Venue Intelligence Summary generation

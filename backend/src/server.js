@@ -17,6 +17,7 @@ const adminRoutes = require('./routes/admin');
 const eventsRoutes = require('./routes/events');
 const intakeRoutes = require('./routes/intake');
 const venueRoutes = require('./routes/venues');
+const savedVenuesRoutes = require('./routes/savedVenues');
 
 const feedbackRoutes = require('./routes/feedback');
 const supportRoutes = require('./routes/support');
@@ -361,6 +362,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/intake', intakeRoutes);
 app.use('/api/venues', venueRoutes);
+app.use('/api/saved-venues', savedVenuesRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/stripe/connect', stripeConnectRoutes);
