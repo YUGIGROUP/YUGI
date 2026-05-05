@@ -209,6 +209,9 @@ struct AuthScreen: View {
                     }
                     // Unified feedback prompts (post-booking priority, then post-save)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        // DEBUG: uncomment to reset cooldown for testing
+                        // FeedbackOrchestrator.shared.DEBUG_resetCooldownState()
+
                         Task { await FeedbackOrchestrator.shared.checkAndPresentBestPrompt() }
                     }
                     

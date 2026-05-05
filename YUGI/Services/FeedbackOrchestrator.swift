@@ -35,15 +35,24 @@ final class FeedbackOrchestrator: ObservableObject {
     }
 
     func canShowPrompt() -> Bool {
-        if hasShownThisSession { return false }
-
-        let history = prunedHistoryTimestamps()
-        if history.count >= 3 { return false }
-
-        if let last = lastShownDate(), Date().timeIntervalSince(last) < twentyFourHours {
+        if hasShownThisSession {
+            print("🎯 Orchestrator: canShowPrompt: blocked by hasShownThisSession")
             return false
         }
 
+        let history = prunedHistoryTimestamps()
+        if history.count >= 3 {
+            print("🎯 Orchestrator: canShowPrompt: blocked by 7d cap (count=\(history.count))")
+            return false
+        }
+
+        if let last = lastShownDate(), Date().timeIntervalSince(last) < twentyFourHours {
+            let hoursAgo = Date().timeIntervalSince(last) / 3600
+            print("🎯 Orchestrator: canShowPrompt: blocked by 24h cooldown (last shown \(String(format: "%.1f", hoursAgo)) hours ago)")
+            return false
+        }
+
+        print("🎯 Orchestrator: canShowPrompt: allowed")
         return true
     }
 
@@ -55,27 +64,59 @@ final class FeedbackOrchestrator: ObservableObject {
         var history = prunedHistoryTimestamps()
         history.append(now)
         UserDefaults.standard.set(history, forKey: Self.historyKey)
+
+        let countAfter = prunedHistoryTimestamps().count
+        print("🎯 Orchestrator: marked prompt shown, hasShownThisSession=true, history count=\(countAfter)")
     }
 
     /// Parent sign-in entry point: post-booking first, else post-save (unless venue search is active).
     func checkAndPresentBestPrompt() async {
-        guard APIService.shared.authToken != nil else { return }
-        guard canShowPrompt() else { return }
+        print("🎯 Orchestrator: checkAndPresentBestPrompt called")
 
+        if APIService.shared.authToken == nil {
+            print("🎯 Orchestrator: auth gate failed — authToken is nil")
+            return
+        }
+        print("🎯 Orchestrator: auth gate passed")
+
+        let promptAllowed = canShowPrompt()
+        print("🎯 Orchestrator: canShowPrompt result: \(promptAllowed)" + (promptAllowed ? "" : " (see canShowPrompt logs above for reason)"))
+        guard promptAllowed else { return }
+
+        print("🎯 Orchestrator: checking for pending booking feedback...")
         if let ctx = await FeedbackCoordinator.shared.fetchFirstPendingBookingFeedback() {
+            print("🎯 Orchestrator: found pending booking: \(ctx.bookingId) (\(ctx.className))")
             let opened = FeedbackCoordinator.shared.openFeedback(bookingId: ctx.bookingId, className: ctx.className)
             if opened {
                 didShowPrompt()
                 return
             }
-            // First pending booking exists but was dismissed this session — fall through to post-save.
+            print("🎯 Orchestrator: pending booking not opened (e.g. dismissed this session) — falling through to venue save check")
+        } else {
+            print("🎯 Orchestrator: no pending booking")
         }
 
-        guard !FeedbackPromptManager.shared.isVenueSearchActive else { return }
+        guard !FeedbackPromptManager.shared.isVenueSearchActive else {
+            print("🎯 Orchestrator: skipping pending venue save — VenueCheckScreen active")
+            return
+        }
 
+        print("🎯 Orchestrator: checking for pending venue save...")
         if let prompt = await APIService.shared.getPendingPrompt() {
+            print("🎯 Orchestrator: found pending save: \(prompt.placeId) (\(prompt.venueName))")
             FeedbackPromptManager.shared.presentPrompt(prompt: prompt)
             didShowPrompt()
+        } else {
+            print("🎯 Orchestrator: no pending save")
         }
     }
+
+#if DEBUG
+    func DEBUG_resetCooldownState() {
+        UserDefaults.standard.removeObject(forKey: Self.lastShownKey)
+        UserDefaults.standard.removeObject(forKey: Self.historyKey)
+        hasShownThisSession = false
+        print("🎯 Orchestrator: DEBUG cooldown state reset — lastShown cleared, history cleared, session flag reset")
+    }
+#endif
 }
