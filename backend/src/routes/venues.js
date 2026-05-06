@@ -4,6 +4,7 @@ const Anthropic       = require('@anthropic-ai/sdk');
 const VenueEnrichment     = require('../models/VenueEnrichment');
 const User                = require('../models/User');
 const VenueFactFeedback   = require('../models/VenueFactFeedback');
+const SavedVenue          = require('../models/SavedVenue');
 const { protect } = require('../middleware/auth');
 
 // ─── Rate limiter: max 50 Claude enrichments per hour globally ────────────────
@@ -378,17 +379,20 @@ router.post('/:placeId/feedback', protect, async (req, res) => {
 
     const created = await VenueFactFeedback.insertMany(events);
 
-    try {
-      const user = await User.findById(parentId);
-      if (user) {
-        const sv = user.savedVenues.find((v) => v.placeId === placeId);
-        if (sv) {
-          sv.feedbackSubmitted = true;
-          await user.save();
-        }
+    if (source === 'save_prompt') {
+      try {
+        await SavedVenue.findOneAndUpdate(
+          { userId: req.user.id, placeId },
+          {
+            $set: {
+              feedbackSubmitted: true,
+              feedbackSubmittedAt: new Date(),
+            },
+          }
+        );
+      } catch (e) {
+        console.warn('Failed to mark SavedVenue feedbackSubmitted:', e.message);
       }
-    } catch (e) {
-      console.warn('Failed to mark savedVenue feedbackSubmitted:', e.message);
     }
 
     return res.status(201).json({ success: true, eventsCreated: created.length });
