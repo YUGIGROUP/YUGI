@@ -1213,6 +1213,54 @@ class APIService: ObservableObject, @unchecked Sendable {
         }
     }
 
+    func submitVenueFeedback(
+        placeId: String,
+        venueName: String,
+        source: String = "save_prompt",
+        facts: [VenueFactSubmission],
+        overallComment: String? = nil
+    ) async -> Bool {
+        guard let token = authToken,
+              let encodedPlaceId = placeId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+              let url = URL(string: "\(APIConfig.baseURL)/venues/\(encodedPlaceId)/feedback") else {
+            return false
+        }
+
+        struct VenueFeedbackPayload: Encodable {
+            let venueName: String
+            let source: String
+            let facts: [VenueFactSubmission]
+            let overallComment: String?
+        }
+
+        let payload = VenueFeedbackPayload(
+            venueName: venueName,
+            source: source,
+            facts: facts,
+            overallComment: overallComment
+        )
+
+        guard let data = try? JSONEncoder().encode(payload) else {
+            return false
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = HTTPMethod.POST.rawValue
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = data
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return false }
+            return http.statusCode == 200 || http.statusCode == 201
+        } catch {
+            print("APIService: submitVenueFeedback failed for \(placeId): \(error.localizedDescription)")
+            return false
+        }
+    }
+
     // MARK: - AI Class Generation
 
     struct GeneratedClassListing: Codable {
@@ -2030,6 +2078,12 @@ struct PendingPrompt: Codable {
 struct PendingPromptResponse: Codable {
     let pending: Bool
     let savedVenue: PendingPrompt?
+}
+
+struct VenueFactSubmission: Encodable {
+    let factPath: String
+    let agreed: Bool
+    let comment: String?
 }
 
 struct VenueAnalysisAPIData: Codable {

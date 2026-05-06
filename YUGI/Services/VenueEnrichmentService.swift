@@ -83,6 +83,7 @@ struct VenueEnrichedData: Decodable {
     let publicTransport: VenueEnrichmentPublicTransport?
     let additionalNotes: String?
     let venueVerified: Bool?
+    let parentVerification: VenueEnrichmentParentVerification?
 
     enum CodingKeys: String, CodingKey {
         case parking
@@ -91,7 +92,26 @@ struct VenueEnrichedData: Decodable {
         case publicTransport
         case additionalNotes
         case venueVerified
+        case parentVerification
     }
+}
+
+struct VenueEnrichmentFactSummaryEntry: Decodable {
+    let confirmations: Int?
+    let disputes: Int?
+    let recentDisputes: Int?
+    let lastConfirmed: String?
+    let lastDisputed: String?
+    let confidenceTier: String?
+}
+
+struct VenueEnrichmentParentVerification: Decodable {
+    let totalConfirmations: Int?
+    let totalDisputes: Int?
+    let recentDisputes30d: Int?
+    let factSummary: [String: VenueEnrichmentFactSummaryEntry]?
+    let confidenceTier: String?
+    let lastAggregatedAt: String?
 }
 
 struct VenueEnrichmentResponse: Decodable {
