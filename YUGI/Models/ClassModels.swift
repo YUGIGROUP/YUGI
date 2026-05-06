@@ -55,6 +55,8 @@ struct NearestStation: Codable {
     let name: String
     let distance: Int?
     let type: String?
+    /// TfL-confirmed step-free (AccessViaLift Yes); absent or nil when unknown / not confirmed.
+    let stepFreeAccess: String?
 }
 
 struct VenueAccessibility: Codable {

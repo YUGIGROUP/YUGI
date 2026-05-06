@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { getStepFreeForStation } = require('./tflStepFreeService');
 
 // ─── Field masks for Places API (New) ────────────────────────────────────────
 
@@ -237,6 +238,19 @@ class VenueDataService {
           return unique;
         }, [])
         .slice(0, 3); // 3 nearest unique
+
+      await Promise.all(
+        stations.map(async (station) => {
+          if (station.type !== 'tube') return;
+          try {
+            const result = await getStepFreeForStation(station.name);
+            station.stepFreeAccess =
+              result.resolvedStepFree === 'confirmed' ? 'yes' : null;
+          } catch (_err) {
+            /* TfL enrichment must never break Google Places nearest-stations */
+          }
+        })
+      );
 
       console.log(`🚇 Found ${stations.length} nearby stations for (${lat}, ${lng})`);
       return stations;

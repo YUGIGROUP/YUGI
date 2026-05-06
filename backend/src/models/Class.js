@@ -171,7 +171,8 @@ const classSchema = new mongoose.Schema({
     nearestStations: [{
       name:     { type: String },
       distance: { type: Number }, // metres (approximate straight-line)
-      type:     { type: String }  // 'tube' | 'rail' | 'bus'
+      type:     { type: String }, // 'tube' | 'rail' | 'bus'
+      stepFreeAccess: { type: String }, // 'yes' when TfL AccessViaLift confirmed; omitted/null otherwise
     }],
     weatherForecast: { type: String, default: null },
     lastVerified:    { type: Date,   default: null }

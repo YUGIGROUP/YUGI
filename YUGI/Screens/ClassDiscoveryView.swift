@@ -917,10 +917,17 @@ struct ClassCardDetails: View {
                                     .font(.system(size: 12))
                                     .foregroundColor(Color.yugiMocha)
                                     .frame(width: 16)
-                                if let dist = station.distance {
-                                    Text("\(station.name) (\(dist)m)")
-                                } else {
-                                    Text(station.name)
+                                HStack(spacing: 4) {
+                                    if let dist = station.distance {
+                                        Text("\(station.name) (\(dist)m)")
+                                    } else {
+                                        Text(station.name)
+                                    }
+                                    if station.stepFreeAccess == "yes" {
+                                        Image(systemName: "figure.roll")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(Color.yugiSage)
+                                    }
                                 }
                             }
                             .font(.system(size: 13))

@@ -476,6 +476,11 @@ struct VenueCheckScreen: View {
                                 Text(station.name)
                                     .font(.system(size: 15))
                                     .foregroundColor(.white)
+                                if station.stepFreeAccess == "yes" {
+                                    Image(systemName: "figure.roll")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(Color.yugiSage)
+                                }
                                 Spacer()
                                 if let dist = station.distance {
                                     Text(formatDistance(dist))
