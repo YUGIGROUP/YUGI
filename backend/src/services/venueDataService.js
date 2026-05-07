@@ -191,22 +191,43 @@ class VenueDataService {
   async _findNearbyTransitStations(lat, lng) {
     if (!this.googleApiKey) return [];
     try {
-      const resp = await axios.post(
-        'https://places.googleapis.com/v1/places:searchNearby',
-        {
-          includedTypes: [
-            'transit_station', 'subway_station', 'train_station',
-            'light_rail_station', 'bus_station',
-          ],
-          maxResultCount: 10,
-          locationRestriction: {
-            circle: { center: { latitude: lat, longitude: lng }, radius: 1500 },
+      const [respA, respB] = await Promise.all([
+        axios.post(
+          'https://places.googleapis.com/v1/places:searchNearby',
+          {
+            includedTypes: [
+              'transit_station', 'subway_station', 'train_station',
+              'light_rail_station', 'bus_station',
+            ],
+            maxResultCount: 10,
+            locationRestriction: {
+              circle: { center: { latitude: lat, longitude: lng }, radius: 1500 },
+            },
           },
-        },
-        { headers: { 'X-Goog-Api-Key': this.googleApiKey, 'X-Goog-FieldMask': NEARBY_FIELD_MASK } }
-      );
+          { headers: { 'X-Goog-Api-Key': this.googleApiKey, 'X-Goog-FieldMask': NEARBY_FIELD_MASK } }
+        ),
+        axios.post(
+          'https://places.googleapis.com/v1/places:searchNearby',
+          {
+            includedTypes: ['subway_station'],
+            maxResultCount: 10,
+            locationRestriction: {
+              circle: { center: { latitude: lat, longitude: lng }, radius: 1500 },
+            },
+          },
+          { headers: { 'X-Goog-Api-Key': this.googleApiKey, 'X-Goog-FieldMask': NEARBY_FIELD_MASK } }
+        ),
+      ]);
 
-      const places = (resp.data && resp.data.places) || [];
+      const placesA = (respA.data && respA.data.places) || [];
+      const placesB = (respB.data && respB.data.places) || [];
+      const mergedById = new Map();
+      [...placesA, ...placesB].forEach((p) => {
+        const key = p.id || `${(p.displayName && p.displayName.text) || ''}:${p.location && p.location.latitude}:${p.location && p.location.longitude}`;
+        if (!mergedById.has(key)) mergedById.set(key, p);
+      });
+      const places = Array.from(mergedById.values());
+      console.log(`🚉 merged Google Places: queryA=${placesA.length} queryB=${placesB.length} unique=${places.length}`);
       const toBaseName = (name = '') => name.toLowerCase().replace(/\s*station\s*/gi, '').trim();
 
       places.forEach((p) => {
@@ -244,8 +265,15 @@ class VenueDataService {
         // Deduplicate by base name (e.g. "South Wimbledon station" and "South Wimbledon" → keep closest)
         .reduce((unique, station) => {
           const base = toBaseName(station.name);
-          const existing = unique.find(s => toBaseName(s.name) === base);
-          if (!existing) unique.push(station);
+          const existingIndex = unique.findIndex(s => toBaseName(s.name) === base);
+          if (existingIndex === -1) {
+            unique.push(station);
+            return unique;
+          }
+          const existing = unique[existingIndex];
+          if (station.type === 'tube' && existing.type !== 'tube') {
+            unique[existingIndex] = station;
+          }
           return unique;
         }, [])
         .slice(0, 3); // 3 nearest unique
