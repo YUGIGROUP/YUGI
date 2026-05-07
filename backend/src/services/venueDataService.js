@@ -207,6 +207,17 @@ class VenueDataService {
       );
 
       const places = (resp.data && resp.data.places) || [];
+      const toBaseName = (name = '') => name.toLowerCase().replace(/\s*station\s*/gi, '').trim();
+
+      places.forEach((p) => {
+        const name     = (p.displayName && p.displayName.text) || '';
+        const stLat    = p.location && p.location.latitude;
+        const stLng    = p.location && p.location.longitude;
+        const distance = (stLat && stLng) ? haversineMetres(lat, lng, stLat, stLng) : null;
+        const types    = p.types || [];
+        const placeId  = p.id || '';
+        console.log(`🔍 RAW Google Place: name="${name}" types=${JSON.stringify(types)} placeId="${placeId}" distance=${distance !== null ? distance : 'null'}m`);
+      });
 
       const stations = places
         .map(p => {
@@ -232,8 +243,8 @@ class VenueDataService {
         .sort((a, b) => (a.distance !== null ? a.distance : 9999) - (b.distance !== null ? b.distance : 9999))
         // Deduplicate by base name (e.g. "South Wimbledon station" and "South Wimbledon" → keep closest)
         .reduce((unique, station) => {
-          const base = station.name.toLowerCase().replace(/\s*station\s*/gi, '').trim();
-          const existing = unique.find(s => s.name.toLowerCase().replace(/\s*station\s*/gi, '').trim() === base);
+          const base = toBaseName(station.name);
+          const existing = unique.find(s => toBaseName(s.name) === base);
           if (!existing) unique.push(station);
           return unique;
         }, [])
@@ -251,6 +262,25 @@ class VenueDataService {
           }
         })
       );
+
+      stations.forEach((station) => {
+        const stationBase = toBaseName(station.name);
+        const matchingPlaces = places.filter((p) => {
+          const placeName = (p.displayName && p.displayName.text) || '';
+          return toBaseName(placeName) === stationBase;
+        });
+        const bestMatch = matchingPlaces.reduce((best, p) => {
+          const stLat = p.location && p.location.latitude;
+          const stLng = p.location && p.location.longitude;
+          const pDistance = (stLat && stLng) ? haversineMetres(lat, lng, stLat, stLng) : null;
+          if (!best) return { place: p, distance: pDistance };
+          const bestDistance = best.distance !== null ? best.distance : 9999;
+          const currentDistance = pDistance !== null ? pDistance : 9999;
+          return currentDistance < bestDistance ? { place: p, distance: pDistance } : best;
+        }, null);
+        const googleTypes = (bestMatch && bestMatch.place && bestMatch.place.types) || [];
+        console.log(`🔍 FINAL mapped station: name="${station.name}" ourType="${station.type}" googleTypes=${JSON.stringify(googleTypes)}`);
+      });
 
       console.log(`🚇 Found ${stations.length} nearby stations for (${lat}, ${lng})`);
       return stations;
