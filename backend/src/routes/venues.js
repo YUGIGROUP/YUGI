@@ -142,6 +142,51 @@ function extractJson(raw) {
   return raw.slice(start, end + 1);
 }
 
+function stripCitationTags(text) {
+  if (!text) return text;
+  // Remove citation wrappers while preserving the factual inner text.
+  return text.replace(/<cite[^>]*>(.*?)<\/cite>/gs, '$1');
+}
+
+function stripCitationTagsWithCount(text) {
+  if (!text) return { text, count: 0 };
+  const matches = text.match(/<cite[^>]*>(.*?)<\/cite>/gs);
+  return {
+    text: stripCitationTags(text),
+    count: matches ? matches.length : 0,
+  };
+}
+
+function stripCitationTagsDeep(value) {
+  if (typeof value === 'string') {
+    const stripped = stripCitationTagsWithCount(value);
+    return { value: stripped.text, count: stripped.count };
+  }
+
+  if (Array.isArray(value)) {
+    let count = 0;
+    const cleaned = value.map((item) => {
+      const result = stripCitationTagsDeep(item);
+      count += result.count;
+      return result.value;
+    });
+    return { value: cleaned, count };
+  }
+
+  if (value && typeof value === 'object') {
+    let count = 0;
+    const cleaned = {};
+    for (const [key, nestedValue] of Object.entries(value)) {
+      const result = stripCitationTagsDeep(nestedValue);
+      cleaned[key] = result.value;
+      count += result.count;
+    }
+    return { value: cleaned, count };
+  }
+
+  return { value, count: 0 };
+}
+
 // ─── GET /api/venues/:placeId/enrichment ─────────────────────────────────────
 
 router.get('/:placeId/enrichment', protect, async (req, res) => {
@@ -203,13 +248,27 @@ router.get('/:placeId/enrichment', protect, async (req, res) => {
       return res.json({ placeId, venueName, enrichedData: {}, sources: [], confidence: 'web_enriched', cachedAt: null });
     }
 
-    // 6. Parse JSON — gracefully degrade on failure
+    // 6. Strip citation tags before JSON parse, then parse JSON
+    let citationTagsStripped = 0;
+    const strippedJson = stripCitationTagsWithCount(jsonText);
+    const sanitizedJsonText = strippedJson.text;
+    citationTagsStripped += strippedJson.count;
+
+    // Parse JSON — gracefully degrade on failure
     let parsed;
     try {
-      parsed = JSON.parse(jsonText);
+      parsed = JSON.parse(sanitizedJsonText);
     } catch (parseErr) {
-      console.error(`❌ JSON parse failed for ${venueName}:`, jsonText.substring(0, 300));
+      console.error(`❌ JSON parse failed for ${venueName}:`, sanitizedJsonText.substring(0, 300));
       return res.json({ placeId, venueName, enrichedData: {}, sources: [], confidence: 'web_enriched', cachedAt: null });
+    }
+
+    // Belt-and-braces cleanup for any citation tags that survived parsing.
+    const deepSanitized = stripCitationTagsDeep(parsed);
+    parsed = deepSanitized.value;
+    citationTagsStripped += deepSanitized.count;
+    if (citationTagsStripped > 0) {
+      console.log(`🧹 Stripped ${citationTagsStripped} citation tags from enrichment response`);
     }
 
     const { sources = [], ...enrichedData } = parsed;
