@@ -684,7 +684,6 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
       return transformClassForIOS(mockDoc);
     }));
 
-    console.log(`📤 RESPONSE to iOS — nearestStations: ${JSON.stringify(venueData.venueAccessibility?.nearestStations || null, null, 2)}`);
     res.json({
       success: true,
       data: transformedClasses,
@@ -1403,6 +1402,7 @@ router.post('/venues/analyze', protect, async (req, res) => {
           country:    'United Kingdom',
         };
 
+    console.log(`📤 RESPONSE to iOS — nearestStations: ${JSON.stringify(venueData.venueAccessibility?.nearestStations || null, null, 2)}`);
     res.json({
       success: true,
       data: {
