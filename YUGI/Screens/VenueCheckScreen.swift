@@ -477,9 +477,17 @@ struct VenueCheckScreen: View {
                                     .font(.system(size: 15))
                                     .foregroundColor(.white)
                                 if station.stepFreeAccess == "yes" {
-                                    Image(systemName: "figure.roll")
-                                        .font(.system(size: 13))
-                                        .foregroundColor(Color.yugiSage)
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "figure.roll")
+                                            .font(.system(size: 11))
+                                        Text("step-free")
+                                            .font(.system(size: 11, weight: .medium))
+                                    }
+                                    .foregroundColor(Color.yugiSoftBlack)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.yugiSage)
+                                    .cornerRadius(8)
                                 }
                                 Spacer()
                                 if let dist = station.distance {
