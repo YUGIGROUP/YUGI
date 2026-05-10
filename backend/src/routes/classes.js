@@ -841,6 +841,7 @@ router.post('/', [
     const normalizedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
     return ['Baby', 'Toddler', 'Preschool', 'School Age', 'Wellness', 'SEND'].includes(normalizedValue);
   }).withMessage('Category must be one of: baby, toddler, wellness (case insensitive)'),
+  body('tier').isIn(['community', 'class', 'drop_off']).withMessage('tier must be community, class, or drop_off'),
   body('individualChildSpots').isInt({ min: 0, max: 15 }),
   body('siblingPairs').isInt({ min: 0, max: 15 }),
   body('siblingPrice').isFloat({ min: 0 }),

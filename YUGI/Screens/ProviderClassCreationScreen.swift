@@ -1,6 +1,34 @@
 import SwiftUI
 import Combine
 
+enum ListingTier: String, Codable, CaseIterable {
+    case community = "community"
+    case `class` = "class"
+    case dropOff = "drop_off"
+
+    var cardTitle: String {
+        switch self {
+        case .community: return "Community meet-up"
+        case .class: return "Class I'm teaching"
+        case .dropOff: return "Drop-off activity"
+        }
+    }
+
+    var cardDescription: String {
+        switch self {
+        case .community:
+            return "Parents stay. Casual social — pram walks, coffee mornings, playgroups."
+        case .class:
+            return "Baby massage, music, swim — parents present in the room."
+        case .dropOff:
+            return "Parents leave. I'm in charge of the children. Holiday camps, forest school, sports."
+        }
+    }
+
+    /// Short label for review / confirmation (matches card titles).
+    var eventTypeDisplayName: String { cardTitle }
+}
+
 struct ProviderClassCreationScreen: View {
     let businessName: String
     let onClassPublished: ((ClassCreationData) -> Void)?
@@ -10,10 +38,12 @@ struct ProviderClassCreationScreen: View {
     @State private var currentStep = 0
     @State private var isSaving = false
     @State private var showingSuccessAlert = false
+    @State private var showingTierHelpSheet = false
     
     private let steps = [
+        "What kind of event?",
         "Basic Info & Pricing",
-        "Schedule", 
+        "Schedule",
         "Location & Details",
         "Review & Publish"
     ]
@@ -29,12 +59,14 @@ struct ProviderClassCreationScreen: View {
                     VStack(spacing: 24) {
                         switch currentStep {
                         case 0:
-                            basicInfoSection
+                            tierSelectionSection
                         case 1:
-                            scheduleSection
+                            basicInfoSection
                         case 2:
-                            locationDetailsSection
+                            scheduleSection
                         case 3:
+                            locationDetailsSection
+                        case 4:
                             reviewSection
                         default:
                             EmptyView()
@@ -73,6 +105,9 @@ struct ProviderClassCreationScreen: View {
             )
             .animation(.easeInOut(duration: 0.3), value: showingSuccessAlert)
             .animation(.easeInOut(duration: 0.2), value: isSaving)
+            .sheet(isPresented: $showingTierHelpSheet) {
+                TierSelectionHelpSheet()
+            }
         }
         .onAppear {
             if let data = initialData {
@@ -110,6 +145,54 @@ struct ProviderClassCreationScreen: View {
         .padding()
         .background(Color.white)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+    }
+
+    private var tierSelectionSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Choose the option that best describes what you're listing. You can change this later if you need to.")
+                .font(.system(size: 15))
+                .foregroundColor(Color.yugiGray.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(spacing: 14) {
+                ForEach(ListingTier.allCases, id: \.self) { tier in
+                    Button {
+                        classData.tier = tier
+                    } label: {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(tier.cardTitle)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(Color.yugiGray)
+                            Text(tier.cardDescription)
+                                .font(.system(size: 14))
+                                .foregroundColor(Color.yugiGray.opacity(0.72))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(18)
+                        .background(classData.tier == tier ? Color.yugiSage.opacity(0.22) : Color.yugiCloud)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(
+                                    classData.tier == tier ? Color.yugiSage : Color.yugiMocha.opacity(0.35),
+                                    lineWidth: classData.tier == tier ? 2 : 1
+                                )
+                        )
+                        .cornerRadius(14)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            Button {
+                showingTierHelpSheet = true
+            } label: {
+                Text("Not sure?")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(Color.yugiMocha)
+            }
+            .padding(.top, 4)
+        }
     }
     
     private var basicInfoSection: some View {
@@ -936,6 +1019,10 @@ struct ProviderClassCreationScreen: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 12) {
+                    Text("Event type: \(classData.tier.eventTypeDisplayName)")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color.yugiGray)
+
                     HStack {
                         Image(systemName: "textformat")
                             .font(.system(size: 16))
@@ -1271,6 +1358,8 @@ struct ProviderClassCreationScreen: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.yugiMocha.opacity(0.3), lineWidth: 1)
                 )
+                .disabled(currentStep == 0 && !canProceedFromTierStep)
+                .opacity((currentStep == 0 && !canProceedFromTierStep) ? 0.45 : 1)
             } else {
                 Button(action: {
                     isSaving = true
@@ -1300,6 +1389,101 @@ struct ProviderClassCreationScreen: View {
         .padding(.horizontal)
     }
 
+    /// Tier always has a non-optional default (`.class`). Hook remains if we ever require an explicit tap.
+    private var canProceedFromTierStep: Bool { true }
+
+}
+
+// MARK: - Tier help sheet
+
+private struct TierSelectionHelpSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    helpBlock(
+                        title: "Community meet-up",
+                        guidance: "Parents stay with their children. Low-structure social time — great for meeting other families without a formal lesson plan.",
+                        examples: [
+                            "Pram walking group in the park",
+                            "Coffee morning at a café play corner",
+                            "Stay-and-play at a community centre",
+                            "Picnic meet-up for new parents",
+                            "Bump-to-baby social circle",
+                            "Informal playground gathering"
+                        ]
+                    )
+                    helpBlock(
+                        title: "Class I'm teaching",
+                        guidance: "You lead an activity while parents or carers remain present and responsible for their child.",
+                        examples: [
+                            "Baby massage course",
+                            "Music or sensory class",
+                            "Parent-and-baby swim session",
+                            "Messy play or art session",
+                            "Baby yoga or movement class",
+                            "Story-time rhythm & rhyme group"
+                        ]
+                    )
+                    helpBlock(
+                        title: "Drop-off activity",
+                        guidance: "Parents leave and you are in charge of the children for the session — similar to camp, club, or wrap-around care.",
+                        examples: [
+                            "School holiday multi-sport camp",
+                            "Forest school drop-off day",
+                            "After-school drama club",
+                            "Half-day gymnastics camp",
+                            "Morning-only preschool-style club",
+                            "Outdoor adventure club (parents not staying)"
+                        ]
+                    )
+                }
+                .padding(20)
+            }
+            .background(Color.yugiCloud.ignoresSafeArea())
+            .navigationTitle("Which event type?")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(Color.yugiMocha)
+                }
+            }
+        }
+    }
+
+    private func helpBlock(title: String, guidance: String, examples: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(Color.yugiGray)
+            Text(guidance)
+                .font(.system(size: 15))
+                .foregroundColor(Color.yugiGray.opacity(0.82))
+                .fixedSize(horizontal: false, vertical: true)
+            Text("Examples:")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Color.yugiGray)
+                .padding(.top, 4)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(examples, id: \.self) { line in
+                    Text("• \(line)")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.yugiGray.opacity(0.78))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.yugiMocha.opacity(0.2), lineWidth: 1)
+        )
+    }
 }
 
 // MARK: - Supporting Models
@@ -1342,6 +1526,7 @@ enum ChildSpotsOption: String, CaseIterable {
 }
 
 struct ClassCreationData {
+    var tier: ListingTier = .class
     var className = ""
     var category: ClassCategory = .baby
     var description = ""

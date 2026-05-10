@@ -2244,6 +2244,7 @@ struct IntakeResponseData: Codable {
 extension ClassCreationData {
     func toDictionary() -> [String: Any] {
         var dict: [String: Any] = [
+            "tier": tier.rawValue,
             "name": className,
             "description": description,
             "category": category.rawValue,

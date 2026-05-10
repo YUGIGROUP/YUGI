@@ -23,6 +23,12 @@ const classSchema = new mongoose.Schema({
     required: true,
     set: normalizeCategory // Normalize to capitalized format when saving
   },
+  tier: {
+    type: String,
+    enum: ['community', 'class', 'drop_off'],
+    required: true,
+    default: 'class'
+  },
   
   // Provider Info
   provider: {
