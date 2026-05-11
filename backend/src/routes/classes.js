@@ -1,6 +1,8 @@
 const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Class = require('../models/Class');
+const User = require('../models/User');
+const { sendAdminNotification } = require('../services/pushNotificationService');
 const { protect, optionalAuth, requireProviderVerification } = require('../middleware/auth');
 const venueDataService = require('../services/venueDataService');
 const { scoreClasses } = require('../services/doabilityService');
@@ -885,6 +887,18 @@ router.post('/', [
       provider: req.user.id
     };
 
+    // Tier-specific verification defaults
+    if (classData.tier === 'community') {
+      classData.verificationStatus = 'not_required';
+      classData.needsContentReview = true;
+      classData.isPublished = true;
+    } else {
+      // tier === 'class' or 'drop_off'
+      classData.verificationStatus = 'pending';
+      classData.needsContentReview = false;
+      classData.isPublished = false;
+    }
+
     // Convert classDates strings to Date objects if provided
     if (req.body.classDates && Array.isArray(req.body.classDates) && req.body.classDates.length > 0) {
       classData.classDates = req.body.classDates.map(dateStr => {
@@ -943,6 +957,43 @@ router.post('/', [
       }
     } catch (e) {
       console.warn('⚠️ Could not fetch Google Place ID at class creation:', e.message);
+    }
+
+    try {
+      const tier = savedClass.tier;
+      let title;
+      let body;
+      let payload;
+      if (tier === 'community') {
+        title = 'New community listing';
+        body = `${savedClass.name} — Tier 0, content review`;
+        payload = { type: 'new_listing', tier: 'community', classId: savedClass._id.toString() };
+      } else if (tier === 'class') {
+        title = 'New class listing';
+        body = `${savedClass.name} — Tier 1, verification pending`;
+        payload = { type: 'new_listing', tier: 'class', classId: savedClass._id.toString() };
+      } else if (tier === 'drop_off') {
+        title = 'New drop-off listing';
+        body = `${savedClass.name} — Tier 2, DBS verification pending`;
+        payload = { type: 'new_listing', tier: 'drop_off', classId: savedClass._id.toString() };
+      } else {
+        title = 'New listing';
+        body = `${savedClass.name}`;
+        payload = { type: 'new_listing', tier: String(tier), classId: savedClass._id.toString() };
+      }
+
+      const admins = await User.find({ isAdmin: true, deviceToken: { $ne: null }, devicePlatform: 'ios' })
+        .select('deviceToken')
+        .lean();
+
+      await Promise.all(
+        admins.map(admin =>
+          sendAdminNotification({ deviceToken: admin.deviceToken, title, body, payload })
+            .catch(err => console.error('Admin listing push failed:', err.message))
+        )
+      );
+    } catch (notifyErr) {
+      console.error('Admin listing notification batch failed:', notifyErr.message);
     }
 
     console.log('✅ Class created successfully:', savedClass.name);

@@ -29,7 +29,24 @@ const classSchema = new mongoose.Schema({
     required: true,
     default: 'class'
   },
-  
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected', 'not_required'],
+    default: 'pending'
+  },
+  needsContentReview: {
+    type: Boolean,
+    default: false
+  },
+  verifiedAt: {
+    type: Date,
+    default: null
+  },
+  verifiedBy: {
+    type: String,
+    default: null
+  },
+
   // Provider Info
   provider: {
     type: mongoose.Schema.Types.ObjectId,

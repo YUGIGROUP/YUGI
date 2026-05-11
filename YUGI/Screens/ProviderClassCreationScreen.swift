@@ -39,15 +39,33 @@ struct ProviderClassCreationScreen: View {
     @State private var isSaving = false
     @State private var showingSuccessAlert = false
     @State private var showingTierHelpSheet = false
-    
-    private let steps = [
-        "What kind of event?",
-        "Basic Info & Pricing",
-        "Schedule",
-        "Location & Details",
-        "Review & Publish"
-    ]
-    
+
+    private var steps: [String] {
+        var s = ["What kind of event?", "Basic Info & Pricing", "Schedule", "Location & Details"]
+        if classData.tier != .community {
+            s.append("Verification Required")
+        }
+        s.append("Review & Publish")
+        return s
+    }
+
+    private var publishSuccessTitle: String {
+        classData.tier == .community
+            ? "Class Published Successfully!"
+            : "Listing submitted — under review"
+    }
+
+    private var publishSuccessMessage: String {
+        if classData.tier == .community {
+            return "Your class has been published and is now visible to parents."
+        }
+        return "We've received your details. Now send us the documents listed in the previous step and we'll have your listing live within 48 hours.\n\nNeed to send your documents? eva@yugiapp.ai"
+    }
+
+    private var publishButtonTitle: String {
+        classData.tier == .community ? "Publish Class" : "Submit for Verification"
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -67,7 +85,17 @@ struct ProviderClassCreationScreen: View {
                         case 3:
                             locationDetailsSection
                         case 4:
-                            reviewSection
+                            if classData.tier == .community {
+                                reviewSection
+                            } else {
+                                verificationRequiredSection
+                            }
+                        case 5:
+                            if classData.tier != .community {
+                                reviewSection
+                            } else {
+                                EmptyView()
+                            }
                         default:
                             EmptyView()
                         }
@@ -85,8 +113,8 @@ struct ProviderClassCreationScreen: View {
                 Group {
                     if showingSuccessAlert {
                         SuccessPopup(
-                            title: "Class Published Successfully!",
-                            message: "Your class has been published and is now visible to parents.",
+                            title: publishSuccessTitle,
+                            message: publishSuccessMessage,
                             onContinue: {
                                 onClassPublished?(classData)
                                 dismiss()
@@ -193,8 +221,81 @@ struct ProviderClassCreationScreen: View {
             }
             .padding(.top, 4)
         }
+        .onChange(of: classData.tier) { _, _ in
+            if currentStep >= steps.count {
+                currentStep = max(0, steps.count - 1)
+            }
+        }
     }
-    
+
+    private var verificationRequiredSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Almost there — we just need to verify you")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(Color.yugiGray)
+
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Before your listing goes live, please email the following to eva@yugiapp.ai:")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(Color.yugiSoftBlack)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    if classData.tier == .class {
+                        verificationCheckRow("Insurance certificate")
+                        verificationCheckRow("Qualification(s)")
+                    } else if classData.tier == .dropOff {
+                        verificationCheckRow("Insurance certificate")
+                        verificationCheckRow("Qualification(s)")
+                        verificationCheckRow("Enhanced DBS (with Children's Barred List)")
+                        verificationCheckRow("Ofsted URN (if caring for under-8s for 2+ hours)")
+                    }
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.yugiCloud)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.yugiSage, lineWidth: 2)
+            )
+            .cornerRadius(14)
+
+            Text("We'll review within 48 hours and notify you when your listing is live.")
+                .font(.system(size: 14))
+                .foregroundColor(Color.yugiGray.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(tierVerificationWhyFooter)
+                .font(.system(size: 13))
+                .italic()
+                .foregroundColor(Color.yugiGray.opacity(0.65))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func verificationCheckRow(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(Color.yugiSage)
+            Text(text)
+                .font(.system(size: 15))
+                .foregroundColor(Color.yugiGray)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var tierVerificationWhyFooter: String {
+        switch classData.tier {
+        case .class:
+            return "Why? Every YUGI provider is verified before parents can book. Parents can trust who they're booking — and so can you."
+        case .dropOff:
+            return "Why? Drop-off providers go through the strictest YUGI verification because parents leave their children with you."
+        case .community:
+            return ""
+        }
+    }
+
     private var basicInfoSection: some View {
         VStack(spacing: 24) {
             // Business Image Note
@@ -1374,7 +1475,7 @@ struct ProviderClassCreationScreen: View {
                         isSaving = false
                     }
                 }) {
-                    Text("Publish Class")
+                    Text(publishButtonTitle)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white)
                         .padding()
