@@ -242,8 +242,9 @@ struct ProviderClassCreationScreen: View {
 
                 VStack(alignment: .leading, spacing: 10) {
                     if classData.tier == .class {
-                        verificationCheckRow("Insurance certificate")
-                        verificationCheckRow("Qualification(s)")
+                        verificationCheckRow("Insurance certificate", optional: false, showRequiredTag: true)
+                        verificationCheckRow("Qualification(s)", optional: true)
+                        verificationCheckRow("Enhanced DBS check", optional: true)
                     } else if classData.tier == .dropOff {
                         verificationCheckRow("Insurance certificate")
                         verificationCheckRow("Qualification(s)")
@@ -274,21 +275,73 @@ struct ProviderClassCreationScreen: View {
         }
     }
 
-    private func verificationCheckRow(_ text: String) -> some View {
+    private func verificationCheckRow(_ text: String, optional: Bool = false, showRequiredTag: Bool = false) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(Color.yugiSage)
-            Text(text)
-                .font(.system(size: 15))
-                .foregroundColor(Color.yugiGray)
-                .fixedSize(horizontal: false, vertical: true)
+            Group {
+                if optional {
+                    Image(systemName: "circle")
+                        .font(.system(size: 18, weight: .regular))
+                        .foregroundColor(Color.yugiGray.opacity(0.42))
+                        .padding(3)
+                        .background(
+                            Circle()
+                                .fill(Color.white.opacity(0.55))
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.yugiCloud, lineWidth: 2)
+                                )
+                        )
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(Color.yugiSage)
+                }
+            }
+            .frame(width: 24, height: 24, alignment: .top)
+            .padding(.top, 1)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(text)
+                        .font(.system(size: 15))
+                        .foregroundColor(Color.yugiGray)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if optional {
+                        Text("OPTIONAL")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.yugiMocha)
+                            .clipShape(Capsule())
+                    } else if showRequiredTag {
+                        Text("REQUIRED")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.yugiMocha)
+                            .clipShape(Capsule())
+                    }
+
+                    Spacer(minLength: 0)
+                }
+
+                if optional {
+                    Text("if you have one — boosts your verification badge")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.yugiGray.opacity(0.55))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
     }
 
     private var tierVerificationWhyFooter: String {
         switch classData.tier {
         case .class:
-            return "Why? Every YUGI provider is verified before parents can book. Parents can trust who they're booking — and so can you."
+            return "Why? Every YUGI provider must be insured before parents can book. Uploading qualifications or DBS is optional — when you do, parents see a stronger verification badge on your listing."
         case .dropOff:
             return "Why? Drop-off providers go through the strictest YUGI verification because parents leave their children with you."
         case .community:
