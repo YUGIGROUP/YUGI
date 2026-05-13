@@ -543,6 +543,7 @@ struct ClassSearchResultCard: View {
     
     private var cardContent: some View {
         VStack(spacing: 16) {
+            VerificationPillView(tier: classItem.tier, verificationStatus: classItem.verificationStatus)
             providerAndRatingSection
             ClassCardDetails(classItem: classItem)
             actionButtonsSection
