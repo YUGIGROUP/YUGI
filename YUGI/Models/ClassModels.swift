@@ -141,6 +141,9 @@ struct Class: Identifiable, Codable {
     let venueAccessibility: VenueAccessibility?
     let intakeQuestions: [IntakeQuestion]?
     let googlePlaceId: String?
+    let tier: String?
+    let verificationStatus: String?
+    let isPublished: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id, name, description, category, provider, providerName, location
@@ -148,6 +151,55 @@ struct Class: Identifiable, Codable {
         case averageRating, ageRange, isFavorite, isActive
         case doability = "_doability"
         case venueAccessibility, intakeQuestions, googlePlaceId
+        case tier, verificationStatus, isPublished
+    }
+
+    init(
+        id: String,
+        name: String,
+        description: String,
+        category: ClassCategory,
+        provider: String,
+        providerName: String?,
+        location: Location?,
+        schedule: Schedule,
+        pricing: Pricing,
+        maxCapacity: Int,
+        currentEnrollment: Int,
+        averageRating: Double,
+        ageRange: String,
+        isFavorite: Bool,
+        isActive: Bool?,
+        doability: DoabilityInfo?,
+        venueAccessibility: VenueAccessibility?,
+        intakeQuestions: [IntakeQuestion]?,
+        googlePlaceId: String?,
+        tier: String? = nil,
+        verificationStatus: String? = nil,
+        isPublished: Bool? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.category = category
+        self.provider = provider
+        self.providerName = providerName
+        self.location = location
+        self.schedule = schedule
+        self.pricing = pricing
+        self.maxCapacity = maxCapacity
+        self.currentEnrollment = currentEnrollment
+        self.averageRating = averageRating
+        self.ageRange = ageRange
+        self.isFavorite = isFavorite
+        self.isActive = isActive
+        self.doability = doability
+        self.venueAccessibility = venueAccessibility
+        self.intakeQuestions = intakeQuestions
+        self.googlePlaceId = googlePlaceId
+        self.tier = tier
+        self.verificationStatus = verificationStatus
+        self.isPublished = isPublished
     }
     
     var isAvailable: Bool {

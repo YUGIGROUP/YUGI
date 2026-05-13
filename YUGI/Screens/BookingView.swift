@@ -505,6 +505,8 @@ struct ClassDetailsCard: View {
                 Spacer()
             }
             
+            VerificationPillView(tier: classItem.tier, verificationStatus: classItem.verificationStatus)
+            
             // Details
             VStack(alignment: .leading, spacing: 12) {
                 BookingDetailRow(icon: "calendar", text: formatSchedule(classItem.schedule))

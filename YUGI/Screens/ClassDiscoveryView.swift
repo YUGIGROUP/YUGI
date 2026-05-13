@@ -240,7 +240,8 @@ struct ClassDiscoveryView: View {
                 ageRange: class_.ageRange,
                 isFavorite: class_.isFavorite,
                 isActive: class_.isActive,
-                doability: class_.doability, venueAccessibility: class_.venueAccessibility, intakeQuestions: nil, googlePlaceId: nil
+                doability: class_.doability, venueAccessibility: class_.venueAccessibility, intakeQuestions: nil, googlePlaceId: nil,
+                tier: class_.tier, verificationStatus: class_.verificationStatus, isPublished: class_.isPublished
             )
             
             // Update the class in the view model using the index
@@ -645,6 +646,7 @@ struct ClassCard: View {
     
     private var cardContent: some View {
         VStack(spacing: 16) {
+            VerificationPillView(tier: classItem.tier, verificationStatus: classItem.verificationStatus)
             providerAndRatingSection
             ClassCardDetails(classItem: classItem, enrichment: enrichment)
             actionButtonsSection
