@@ -440,25 +440,15 @@ router.post('/:placeId/feedback', protect, async (req, res) => {
 
     if (source === 'save_prompt') {
       try {
-        console.log('🔍 [save_prompt] looking for SavedVenue:', {
-          userId: req.user.id,
-          userIdType: typeof req.user.id,
-          placeId,
-          placeIdType: typeof placeId,
-        });
-
-        const result = await SavedVenue.findOneAndUpdate(
+        await SavedVenue.findOneAndUpdate(
           { userId: req.user.id, placeId },
           {
             $set: {
               feedbackSubmitted: true,
               feedbackSubmittedAt: new Date(),
             },
-          },
-          { new: true }
+          }
         );
-
-        console.log('🔍 [save_prompt] update result:', result ? 'matched and updated' : 'NO MATCH');
       } catch (e) {
         console.warn('Failed to mark SavedVenue feedbackSubmitted:', e.message);
       }

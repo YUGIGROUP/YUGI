@@ -64,13 +64,6 @@ router.get('/pending-prompt', auth, async (req, res) => {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    console.log('🔍 [pending-prompt] looking with filter:', {
-      userId: req.user.id,
-      userIdType: typeof req.user.id,
-      savedAtGte: sevenDaysAgo.toISOString(),
-      savedAtLte: twentyFourHoursAgo.toISOString(),
-    });
-
     const savedVenue = await SavedVenue.findOne({
       userId: req.user.id,
       savedAt: { $gte: sevenDaysAgo, $lte: twentyFourHoursAgo },
@@ -81,13 +74,6 @@ router.get('/pending-prompt', auth, async (req, res) => {
       .sort({ savedAt: -1 })
       .select('placeId venueName savedAt')
       .lean();
-
-    console.log('🔍 [pending-prompt] result:', savedVenue ? JSON.stringify(savedVenue) : 'NO MATCH');
-
-    const userVenuesAll = await SavedVenue.find({ userId: req.user.id })
-      .select('placeId venueName savedAt promptShown feedbackSubmitted didNotVisit')
-      .lean();
-    console.log('🔍 [pending-prompt] ALL saves for this user:', JSON.stringify(userVenuesAll));
 
     if (!savedVenue) {
       return res.status(200).json({ pending: false });
@@ -112,13 +98,6 @@ router.post('/:placeId/mark-prompt-shown', auth, async (req, res) => {
   try {
     const { placeId } = req.params;
 
-    console.log('🔍 [mark-prompt-shown] looking for SavedVenue:', {
-      userId: req.user.id,
-      userIdType: typeof req.user.id,
-      placeId,
-      placeIdType: typeof placeId,
-    });
-
     const updated = await SavedVenue.findOneAndUpdate(
       { userId: req.user.id, placeId },
       {
@@ -129,8 +108,6 @@ router.post('/:placeId/mark-prompt-shown', auth, async (req, res) => {
       },
       { new: true }
     );
-
-    console.log('🔍 [mark-prompt-shown] update result:', updated ? 'matched and updated' : 'NO MATCH');
 
     if (!updated) {
       return res.status(404).json({ error: 'Saved venue not found' });
