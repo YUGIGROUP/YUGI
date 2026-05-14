@@ -61,9 +61,15 @@ router.get('/', auth, async (req, res) => {
 // GET /api/saved-venues/pending-prompt
 router.get('/pending-prompt', auth, async (req, res) => {
   try {
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    console.log('🔍 [pending-prompt] looking with filter:', {
+      userId: req.user.id,
+      userIdType: typeof req.user.id,
+      savedAtGte: sevenDaysAgo.toISOString(),
+      savedAtLte: twentyFourHoursAgo.toISOString(),
+    });
 
     const savedVenue = await SavedVenue.findOne({
       userId: req.user.id,
@@ -75,6 +81,13 @@ router.get('/pending-prompt', auth, async (req, res) => {
       .sort({ savedAt: -1 })
       .select('placeId venueName savedAt')
       .lean();
+
+    console.log('🔍 [pending-prompt] result:', savedVenue ? JSON.stringify(savedVenue) : 'NO MATCH');
+
+    const userVenuesAll = await SavedVenue.find({ userId: req.user.id })
+      .select('placeId venueName savedAt promptShown feedbackSubmitted didNotVisit')
+      .lean();
+    console.log('🔍 [pending-prompt] ALL saves for this user:', JSON.stringify(userVenuesAll));
 
     if (!savedVenue) {
       return res.status(200).json({ pending: false });
