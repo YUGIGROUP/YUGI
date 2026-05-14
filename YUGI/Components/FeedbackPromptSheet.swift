@@ -14,7 +14,7 @@ struct FeedbackPromptSheet: View {
                 .font(.custom("Raleway-SemiBold", size: 22))
                 .foregroundColor(Color.yugiSoftBlack)
 
-            Text("30 seconds of feedback helps the next mum trust YUGI.")
+            Text("Help the next generation of mums.")
                 .font(.custom("Raleway-Regular", size: 15))
                 .foregroundColor(Color.yugiBodyText)
 
@@ -29,7 +29,7 @@ struct FeedbackPromptSheet: View {
                         dismiss()
                     }
                 } label: {
-                    Text("Share feedback")
+                    Text("Yes, I went!")
                         .font(.custom("Raleway-SemiBold", size: 16))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -41,9 +41,20 @@ struct FeedbackPromptSheet: View {
 
                 Button {
                     Task {
-                        _ = await apiService.markPromptShown(placeId: prompt.placeId)
+                        _ = await apiService.markNotVisited(placeId: prompt.placeId)
                         dismiss()
                     }
+                } label: {
+                    Text("No, I didn't make it")
+                        .font(.custom("Raleway-Regular", size: 16))
+                        .foregroundColor(Color.yugiSoftBlack.opacity(0.7))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    dismiss()
                 } label: {
                     Text("Maybe later")
                         .font(.custom("Raleway-Regular", size: 16))

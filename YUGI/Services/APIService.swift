@@ -1213,6 +1213,29 @@ class APIService: ObservableObject, @unchecked Sendable {
         }
     }
 
+    func markNotVisited(placeId: String) async -> Bool {
+        guard let token = authToken,
+              let encodedPlaceId = placeId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+              let url = URL(string: "\(APIConfig.baseURL)/saved-venues/\(encodedPlaceId)/mark-not-visited") else {
+            return false
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = HTTPMethod.POST.rawValue
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { return false }
+            return (200...299).contains(httpResponse.statusCode)
+        } catch {
+            print("APIService: markNotVisited failed for \(placeId): \(error.localizedDescription)")
+            return false
+        }
+    }
+
     func submitVenueFeedback(
         placeId: String,
         venueName: String,

@@ -7,7 +7,7 @@ struct VenueFeedbackScreen: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var currentCard = 0
+    @State private var currentCard: Int
     @State private var selectedFactPath = "pramAccess.stepFreeAccess"
     @State private var selectedFactQuestion = "Was it easy to get in with a pram?"
     @State private var selectedAgreement: Bool? = nil
@@ -26,6 +26,12 @@ struct VenueFeedbackScreen: View {
         ("accessibility.accessibleRestroom", "Was the accessible restroom available?"),
         ("parking.costInfo", "Was the parking info accurate?")
     ]
+
+    init(placeId: String, venueName: String, startAtCard: Int = 0) {
+        self.placeId = placeId
+        self.venueName = venueName
+        _currentCard = State(initialValue: startAtCard)
+    }
 
     var body: some View {
         ZStack {

@@ -5,11 +5,13 @@ struct VenueFeedbackContext: Identifiable {
     let id: String
     let placeId: String
     let venueName: String
+    let startAtCard: Int
 
-    init(placeId: String, venueName: String) {
+    init(placeId: String, venueName: String, startAtCard: Int = 0) {
         self.id = placeId
         self.placeId = placeId
         self.venueName = venueName
+        self.startAtCard = startAtCard
     }
 }
 
@@ -46,7 +48,8 @@ struct YUGIApp: App {
                             onShareFeedback: {
                                 venueFeedbackContext = VenueFeedbackContext(
                                     placeId: prompt.placeId,
-                                    venueName: prompt.venueName
+                                    venueName: prompt.venueName,
+                                    startAtCard: 1
                                 )
                                 promptManager.dismissPrompt()
                             }
@@ -57,7 +60,8 @@ struct YUGIApp: App {
                 .sheet(item: $venueFeedbackContext) { context in
                     VenueFeedbackScreen(
                         placeId: context.placeId,
-                        venueName: context.venueName
+                        venueName: context.venueName,
+                        startAtCard: context.startAtCard
                     )
                 }
         }

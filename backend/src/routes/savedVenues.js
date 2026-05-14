@@ -70,6 +70,7 @@ router.get('/pending-prompt', auth, async (req, res) => {
       savedAt: { $gte: sevenDaysAgo, $lte: twentyFourHoursAgo },
       promptShown: false,
       feedbackSubmitted: false,
+      didNotVisit: false,
     })
       .sort({ savedAt: -1 })
       .select('placeId venueName savedAt')
@@ -117,6 +118,33 @@ router.post('/:placeId/mark-prompt-shown', auth, async (req, res) => {
   } catch (err) {
     console.error('POST /api/saved-venues/:placeId/mark-prompt-shown error:', err.message);
     return res.status(500).json({ error: 'Failed to mark venue prompt shown' });
+  }
+});
+
+// Mark a saved venue as not visited — parent saved it but didn't go.
+// Captures negative-space data + prevents re-prompting.
+router.post('/:placeId/mark-not-visited', auth, async (req, res) => {
+  try {
+    const { placeId } = req.params;
+    const updated = await SavedVenue.findOneAndUpdate(
+      { userId: req.user.id, placeId },
+      {
+        $set: {
+          didNotVisit: true,
+          didNotVisitAt: new Date(),
+          promptShown: true,
+          promptShownAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'SavedVenue not found' });
+    }
+    return res.json({ success: true, savedVenue: updated });
+  } catch (err) {
+    console.error('mark-not-visited error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to mark not visited' });
   }
 });
 

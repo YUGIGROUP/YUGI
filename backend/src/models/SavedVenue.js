@@ -37,6 +37,14 @@ const savedVenueSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  didNotVisit: {
+    type: Boolean,
+    default: false,
+  },
+  didNotVisitAt: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true, versionKey: false });
 
 savedVenueSchema.index({ userId: 1, placeId: 1 }, { unique: true });
