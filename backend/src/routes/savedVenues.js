@@ -99,6 +99,13 @@ router.post('/:placeId/mark-prompt-shown', auth, async (req, res) => {
   try {
     const { placeId } = req.params;
 
+    console.log('🔍 [mark-prompt-shown] looking for SavedVenue:', {
+      userId: req.user.id,
+      userIdType: typeof req.user.id,
+      placeId,
+      placeIdType: typeof placeId,
+    });
+
     const updated = await SavedVenue.findOneAndUpdate(
       { userId: req.user.id, placeId },
       {
@@ -109,6 +116,8 @@ router.post('/:placeId/mark-prompt-shown', auth, async (req, res) => {
       },
       { new: true }
     );
+
+    console.log('🔍 [mark-prompt-shown] update result:', updated ? 'matched and updated' : 'NO MATCH');
 
     if (!updated) {
       return res.status(404).json({ error: 'Saved venue not found' });
