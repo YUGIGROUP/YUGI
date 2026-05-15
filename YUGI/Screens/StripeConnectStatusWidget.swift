@@ -8,58 +8,86 @@ struct StripeConnectStatusWidget: View {
     @StateObject private var service = StripeConnectService.shared
     @State private var status: StripeConnectStatus = .notStarted
     @State private var isLoading = true
+    @State private var loadError = false
     @State private var cancellables = Set<AnyCancellable>()
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                Image(systemName: iconName)
-                    .font(.system(size: 20))
-                    .foregroundColor(iconColor)
+        HStack(spacing: 12) {
+            Button(action: onTap) {
+                HStack(spacing: 12) {
+                    Image(systemName: iconName)
+                        .font(.system(size: 20))
+                        .foregroundColor(iconColor)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
 
-                    Text(subtitle)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-
-                Spacer()
-
-                // Right-side indicator: pill for states needing attention, chevron otherwise
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(0.7)
-                } else if let pill = pillLabel {
-                    Text(pill)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(pillTextColor)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(pillBackground)
-                        .cornerRadius(10)
-                } else {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.6))
+                        Text(subtitle)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
                 }
             }
-            .padding(16)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-            )
+            .buttonStyle(PlainButtonStyle())
+
+            Spacer()
+
+            trailingIndicator
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding(16)
+        .background(Color.white.opacity(0.1))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
         .onAppear(perform: loadStatus)
         .onChange(of: isOnboardingSheetPresented) { _, isPresented in
             if !isPresented { loadStatus() }
+        }
+    }
+
+    @ViewBuilder
+    private var trailingIndicator: some View {
+        if isLoading {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .scaleEffect(0.7)
+        } else if loadError {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(Color.yugiBodyText)
+                Text("Couldn't load status")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color.yugiBodyText)
+                Button("Retry", action: loadStatus)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color.yugiMocha)
+                    .buttonStyle(PlainButtonStyle())
+            }
+            .padding(12)
+            .background(Color.yugiOat.opacity(0.5))
+            .cornerRadius(10)
+        } else if let pill = pillLabel {
+            Button(action: onTap) {
+                Text(pill)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(pillTextColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(pillBackground)
+                    .cornerRadius(10)
+            }
+            .buttonStyle(PlainButtonStyle())
+        } else {
+            Button(action: onTap) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .buttonStyle(PlainButtonStyle())
         }
     }
 
@@ -120,11 +148,18 @@ struct StripeConnectStatusWidget: View {
     private func loadStatus() {
         cancellables.removeAll()
         isLoading = true
+        loadError = false
         service.checkStatus()
             .receive(on: DispatchQueue.main)
             .sink(
-                receiveCompletion: { _ in isLoading = false },
+                receiveCompletion: { completion in
+                    isLoading = false
+                    if case .failure = completion {
+                        loadError = true
+                    }
+                },
                 receiveValue: { response in
+                    loadError = false
                     status = StripeConnectStatus(from: response)
                     isLoading = false
                 }

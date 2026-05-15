@@ -58,7 +58,7 @@ struct APIConfig {
     
     // Test network connectivity to help debug connection issues
     private static func testNetworkConnectivity() {
-        let testURL = baseURL.replacingOccurrences(of: "/api", with: "/health")
+        let testURL = "\(baseURL)/health"
         print("🔗 APIConfig: Testing connectivity to: \(testURL)")
         
         guard let url = URL(string: testURL) else {
