@@ -70,6 +70,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  verificationSubmittedAt: {
+    type: Date,
+    default: null,
+  },
   rejectionReason: {
     type: String,
     trim: true
