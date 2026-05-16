@@ -22,9 +22,6 @@ class ProviderBusinessService: ObservableObject {
     @Published var contactInfo: ContactInfo
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var dbsCertificateImage: UIImage?
-    @Published var qualificationsImage: UIImage?
-    
     private var cancellables = Set<AnyCancellable>()
     private let apiService = APIService.shared
     
@@ -84,20 +81,6 @@ class ProviderBusinessService: ObservableObject {
             contactInfo.address = savedAddress
         }
         
-        // Load DBS certificate image
-        if let dbsData = UserDefaults.standard.data(forKey: "providerDBSCertificate"),
-           let dbsImage = UIImage(data: dbsData) {
-            dbsCertificateImage = dbsImage
-        } else {
-            dbsCertificateImage = nil
-        }
-        // Load qualifications image
-        if let qualData = UserDefaults.standard.data(forKey: "providerQualifications"),
-           let qualImage = UIImage(data: qualData) {
-            qualificationsImage = qualImage
-        } else {
-            qualificationsImage = nil
-        }
     }
     
     func saveBusinessData() {

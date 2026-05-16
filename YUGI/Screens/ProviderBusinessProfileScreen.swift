@@ -11,10 +11,10 @@ struct ProviderBusinessProfileScreen: View {
     
     // Document management state
     @State private var showingDocumentUploadSheet = false
-    @State private var showingDocumentViewer = false
-    @State private var selectedDocumentType: DocumentType = .dbs
-    @State private var selectedDocumentData: Data?
-    @State private var documentUpdateTrigger = false // Add this to trigger UI updates
+    @State private var selectedDocumentType: DocumentType = .insurance
+    @State private var providerDocuments: [ProviderDocument] = []
+    @State private var isLoadingDocuments = false
+    @State private var isDeletingDocument = false
     
     // Profile image management state
     @State private var showingImagePicker = false
@@ -23,29 +23,6 @@ struct ProviderBusinessProfileScreen: View {
     @State private var tempProfileImage: UIImage?
     @State private var isUpdatingProfileImage = false
     @State private var cancellables = Set<AnyCancellable>()
-    
-    enum DocumentType: String, CaseIterable {
-        case dbs = "DBS Certificate"
-        case qualifications = "Qualifications"
-        
-        var icon: String {
-            switch self {
-            case .dbs:
-                return "shield.checkered"
-            case .qualifications:
-                return "graduationcap.fill"
-            }
-        }
-        
-        var description: String {
-            switch self {
-            case .dbs:
-                return "Enhanced DBS check certificate"
-            case .qualifications:
-                return "Professional qualifications and training certificates"
-            }
-        }
-    }
     
     private var displayBusinessName: String {
         businessService.businessInfo.name.isEmpty ? businessName : businessService.businessInfo.name
@@ -139,13 +116,15 @@ struct ProviderBusinessProfileScreen: View {
                         businessInfo: $businessService.businessInfo,
                         contactInfo: $businessService.contactInfo,
                         showingEditMode: showingEditMode,
-                        selectedDocumentType: $selectedDocumentType,
-                        showingDocumentUploadSheet: $showingDocumentUploadSheet,
-                        showingDocumentViewer: $showingDocumentViewer,
-                        selectedDocumentData: $selectedDocumentData,
-                        isDocumentUploaded: isDocumentUploaded,
-                        getDocumentData: getDocumentData,
-                        deleteDocument: deleteDocument,
+                        providerDocuments: providerDocuments,
+                        isLoadingDocuments: isLoadingDocuments,
+                        onUpload: { type in
+                            selectedDocumentType = type
+                            showingDocumentUploadSheet = true
+                        },
+                        onReplace: { type, documentId in
+                            replaceDocument(type: type, documentId: documentId)
+                        },
                         profileImage: $profileImage,
                         tempProfileImage: $tempProfileImage,
                         showingImagePicker: $showingImagePicker,
@@ -232,50 +211,59 @@ struct ProviderBusinessProfileScreen: View {
             .ignoresSafeArea()
         )
         .sheet(isPresented: $showingDocumentUploadSheet) {
-            DocumentUploadSheet(documentType: selectedDocumentType)
-        }
-        .sheet(isPresented: $showingDocumentViewer) {
-            DocumentViewerSheet(
+            DocumentUploadFlowSheet(
                 documentType: selectedDocumentType,
-                documentData: selectedDocumentData
+                onSuccess: {
+                    showingDocumentUploadSheet = false
+                    loadProviderDocuments()
+                }
             )
         }
-    }
-    
-    // MARK: - Document Management Helper Functions
-    
-    private func isDocumentUploaded(_ type: DocumentType) -> Bool {
-        _ = documentUpdateTrigger // Use the trigger to ensure this function is called
-        switch type {
-        case .dbs:
-            return UserDefaults.standard.bool(forKey: "providerDBSUploaded") || 
-                   UserDefaults.standard.data(forKey: "providerDBSCertificate") != nil
-        case .qualifications:
-            return UserDefaults.standard.bool(forKey: "providerQualificationsUploaded") || 
-                   UserDefaults.standard.data(forKey: "providerQualifications") != nil
-        }
-    }
-    
-    private func getDocumentData(_ type: DocumentType) -> Data? {
-        _ = documentUpdateTrigger // Use the trigger to ensure this function is called
-        switch type {
-        case .dbs:
-            return UserDefaults.standard.data(forKey: "providerDBSCertificate")
-        case .qualifications:
-            return UserDefaults.standard.data(forKey: "providerQualifications")
+        .onAppear {
+            loadProviderDocuments()
         }
     }
 
-    private func deleteDocument(_ type: DocumentType) {
-        switch type {
-        case .dbs:
-            UserDefaults.standard.removeObject(forKey: "providerDBSCertificate")
-            UserDefaults.standard.set(false, forKey: "providerDBSUploaded")
-        case .qualifications:
-            UserDefaults.standard.removeObject(forKey: "providerQualifications")
-            UserDefaults.standard.set(false, forKey: "providerQualificationsUploaded")
-        }
-        documentUpdateTrigger.toggle() // Trigger UI update
+    private func document(for type: DocumentType) -> ProviderDocument? {
+        providerDocuments.first { $0.documentType == type.rawValue }
+    }
+
+    private func loadProviderDocuments() {
+        isLoadingDocuments = true
+        APIService.shared.fetchMyProviderDocuments()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    isLoadingDocuments = false
+                    if case .failure(let error) = completion {
+                        print("Failed to load provider documents: \(error)")
+                    }
+                },
+                receiveValue: { documents in
+                    providerDocuments = documents
+                }
+            )
+            .store(in: &cancellables)
+    }
+
+    private func replaceDocument(type: DocumentType, documentId: String) {
+        isDeletingDocument = true
+        APIService.shared.deleteProviderDocument(id: documentId)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    isDeletingDocument = false
+                    if case .failure(let error) = completion {
+                        print("Failed to delete document: \(error)")
+                    }
+                },
+                receiveValue: { _ in
+                    loadProviderDocuments()
+                    selectedDocumentType = type
+                    showingDocumentUploadSheet = true
+                }
+            )
+            .store(in: &cancellables)
     }
     
     private func loadProfileImage() {
@@ -350,21 +338,23 @@ struct BusinessOverviewTab: View {
     @Binding var businessInfo: BusinessInfo
     @Binding var contactInfo: ContactInfo
     let showingEditMode: Bool
-    @Binding var selectedDocumentType: ProviderBusinessProfileScreen.DocumentType
-    @Binding var showingDocumentUploadSheet: Bool
-    @Binding var showingDocumentViewer: Bool
-    @Binding var selectedDocumentData: Data?
-    let isDocumentUploaded: (ProviderBusinessProfileScreen.DocumentType) -> Bool
-    let getDocumentData: (ProviderBusinessProfileScreen.DocumentType) -> Data?
-    let deleteDocument: (ProviderBusinessProfileScreen.DocumentType) -> Void
+    let providerDocuments: [ProviderDocument]
+    let isLoadingDocuments: Bool
+    let onUpload: (DocumentType) -> Void
+    let onReplace: (DocumentType, String) -> Void
     @Binding var profileImage: UIImage?
     @Binding var tempProfileImage: UIImage?
     @Binding var showingImagePicker: Bool
     @Binding var selectedPhotoItem: PhotosPickerItem?
     @Binding var isUpdatingProfileImage: Bool
     let onSave: () -> Void
-    @ObservedObject private var businessService = ProviderBusinessService.shared
-    
+
+    private let profileDocumentTypes: [DocumentType] = [.insurance, .dbs, .qualifications]
+
+    private func document(for type: DocumentType) -> ProviderDocument? {
+        providerDocuments.first { $0.documentType == type.rawValue }
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 28) {
@@ -603,101 +593,25 @@ struct BusinessOverviewTab: View {
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundColor(Color.yugiGray)
                         Spacer()
-                        
-                        // Add document button (only shown in edit mode)
-                        if showingEditMode {
-                            Button {
-                                selectedDocumentType = .dbs
-                                showingDocumentUploadSheet = true
-                            } label: {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(Color.yugiMocha)
-                            }
-                        }
                     }
-                    
+
+                    if isLoadingDocuments && providerDocuments.isEmpty {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    }
+
                     VStack(spacing: 16) {
-                        // DBS Certificate
-                        VStack(spacing: 8) {
-                            DocumentManagementCard(
-                                title: "DBS Certificate",
-                                description: "Enhanced DBS check certificate",
-                                icon: "shield.checkered",
-                                image: businessService.dbsCertificateImage,
-                                isUploaded: isDocumentUploaded(.dbs),
-                                isEditMode: showingEditMode,
-                                onUpload: {
-                                    selectedDocumentType = .dbs
-                                    showingDocumentUploadSheet = true
-                                },
-                                onView: {
-                                    selectedDocumentType = .dbs
-                                    selectedDocumentData = getDocumentData(.dbs)
-                                    showingDocumentViewer = true
+                        ForEach(profileDocumentTypes, id: \.self) { type in
+                            ProviderDocumentManagementCard(
+                                documentType: type,
+                                document: document(for: type),
+                                onUpload: { onUpload(type) },
+                                onReplace: {
+                                    if let doc = document(for: type) {
+                                        onReplace(type, doc.id)
+                                    }
                                 }
                             )
-                            
-                            // Delete button (only shown in edit mode when document is uploaded)
-                            if showingEditMode && isDocumentUploaded(.dbs) {
-                                Button(action: {
-                                    deleteDocument(.dbs)
-                                }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "trash.fill")
-                                            .font(.system(size: 14))
-                                        Text("Delete DBS Certificate")
-                                            .font(.system(size: 14, weight: .medium))
-                                    }
-                                    .foregroundColor(.red)
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(Color.red.opacity(0.1))
-                                    .cornerRadius(8)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        
-                        // Qualifications
-                        VStack(spacing: 8) {
-                            DocumentManagementCard(
-                                title: "Qualifications",
-                                description: "Professional qualifications and training certificates",
-                                icon: "graduationcap.fill",
-                                image: businessService.qualificationsImage,
-                                isUploaded: isDocumentUploaded(.qualifications),
-                                isEditMode: showingEditMode,
-                                onUpload: {
-                                    selectedDocumentType = .qualifications
-                                    showingDocumentUploadSheet = true
-                                },
-                                onView: {
-                                    selectedDocumentType = .qualifications
-                                    selectedDocumentData = getDocumentData(.qualifications)
-                                    showingDocumentViewer = true
-                                }
-                            )
-                            
-                            // Delete button (only shown in edit mode when document is uploaded)
-                            if showingEditMode && isDocumentUploaded(.qualifications) {
-                                Button(action: {
-                                    deleteDocument(.qualifications)
-                                }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "trash.fill")
-                                            .font(.system(size: 14))
-                                        Text("Delete Qualifications")
-                                            .font(.system(size: 14, weight: .medium))
-                                    }
-                                    .foregroundColor(.red)
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(Color.red.opacity(0.1))
-                                    .cornerRadius(8)
-                                }
-                                .buttonStyle(.plain)
-                            }
                         }
                     }
                 }
@@ -1000,397 +914,76 @@ struct EditableProfileField: View {
     }
 }
 
-// MARK: - Document Upload Sheet
-
-struct DocumentUploadSheet: View {
-    let documentType: ProviderBusinessProfileScreen.DocumentType
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedImage: UIImage?
-    @State private var selectedDocument: URL?
-    @State private var selectedPhotoItem: PhotosPickerItem?
-    @State private var showingDocumentPicker = false
-    @State private var isUploading = false
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                // Header
-                VStack(spacing: 8) {
-                    Image(systemName: documentType.icon)
-                        .font(.system(size: 48))
-                        .foregroundColor(Color.yugiMocha)
-                    
-                    Text("Upload \(documentType.rawValue)")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(Color.yugiGray)
-                    
-                    Text("Please upload a clear image or PDF of your \(documentType.rawValue.lowercased())")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color.yugiGray.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                }
-                
-                // Upload Options
-                VStack(spacing: 16) {
-                    // Document Upload Button
-                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "photo.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(Color.yugiMocha)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Upload Picture from Photo Library")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(Color.yugiGray)
-                                
-                                Text("Select an image from your photo library")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(Color.yugiGray.opacity(0.7))
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color.yugiGray.opacity(0.5))
-                        }
-                        .padding(16)
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    // File Picker Button (for PDFs and other documents)
-                    Button {
-                        showingDocumentPicker = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "folder.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(Color.yugiMocha)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Browse Files")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(Color.yugiGray)
-                                
-                                Text("Select PDF or other document files")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(Color.yugiGray.opacity(0.7))
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color.yugiGray.opacity(0.5))
-                        }
-                        .padding(16)
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-                // Preview
-                if let image = selectedImage {
-                    VStack(spacing: 12) {
-                        Text("Preview")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Color.yugiGray)
-                        
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxHeight: 200)
-                            .cornerRadius(8)
-                    }
-                } else if let document = selectedDocument {
-                    VStack(spacing: 12) {
-                        Text("Selected File")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Color.yugiGray)
-                        
-                        HStack {
-                            Image(systemName: "doc.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(Color.yugiMocha)
-                            
-                            Text(document.lastPathComponent)
-                                .font(.system(size: 14))
-                                .foregroundColor(Color.yugiGray)
-                            
-                            Spacer()
-                        }
-                        .padding(12)
-                        .background(Color.white)
-                        .cornerRadius(8)
-                    }
-                }
-                
-                Spacer()
-                
-                // Upload Button
-                Button {
-                    uploadDocument()
-                } label: {
-                    HStack(spacing: 8) {
-                        if isUploading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
-                        } else {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.system(size: 18))
-                        }
-                        
-                        Text(isUploading ? "Uploading..." : "Upload Document")
-                            .font(.system(size: 16, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        (selectedImage != nil || selectedDocument != nil) && !isUploading ? Color.yugiMocha : Color.yugiGray.opacity(0.3)
-                    )
-                    .cornerRadius(12)
-                }
-                .disabled(selectedImage == nil && selectedDocument == nil || isUploading)
-            }
-            .padding(24)
-            .background(Color.yugiCream.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(Color.yugiMocha)
-                }
-            }
-        }
-        .fileImporter(
-            isPresented: $showingDocumentPicker,
-            allowedContentTypes: [.pdf, .image],
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
-                selectedDocument = urls.first
-            case .failure(let error):
-                print("Document picker error: \(error)")
-            }
-        }
-        .onChange(of: selectedPhotoItem) { oldItem, newItem in
-            if let item = newItem {
-                Task {
-                    if let data = try? await item.loadTransferable(type: Data.self) {
-                        selectedImage = UIImage(data: data)
-                    }
-                }
-            }
-        }
-    }
-    
-    private func uploadDocument() {
-        isUploading = true
-        
-        // Save the uploaded document to UserDefaults
-        if let image = selectedImage,
-           let imageData = image.jpegData(compressionQuality: 0.8) {
-            switch documentType {
-            case .dbs:
-                UserDefaults.standard.set(imageData, forKey: "providerDBSCertificate")
-                UserDefaults.standard.set(true, forKey: "providerDBSUploaded")
-            case .qualifications:
-                UserDefaults.standard.set(imageData, forKey: "providerQualifications")
-                UserDefaults.standard.set(true, forKey: "providerQualificationsUploaded")
-            }
-        } else if let document = selectedDocument {
-            // Handle PDF or other document types
-            do {
-                let documentData = try Data(contentsOf: document)
-                switch documentType {
-                case .dbs:
-                    UserDefaults.standard.set(documentData, forKey: "providerDBSCertificate")
-                    UserDefaults.standard.set(true, forKey: "providerDBSUploaded")
-                case .qualifications:
-                    UserDefaults.standard.set(documentData, forKey: "providerQualifications")
-                    UserDefaults.standard.set(true, forKey: "providerQualificationsUploaded")
-                }
-            } catch {
-                print("Error reading document: \(error)")
-            }
-        }
-        
-        // Simulate upload delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            isUploading = false
-            dismiss()
-        }
-    }
-}
-
-// MARK: - Document Viewer Sheet
-
-struct DocumentViewerSheet: View {
-    let documentType: ProviderBusinessProfileScreen.DocumentType
-    let documentData: Data?
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                // Header
-                VStack(spacing: 8) {
-                    Image(systemName: documentType.icon)
-                        .font(.system(size: 48))
-                        .foregroundColor(Color.yugiMocha)
-                    
-                    Text(documentType.rawValue)
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(Color.yugiGray)
-                    
-                    Text("Document Preview")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color.yugiGray.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                }
-                
-                // Document Preview
-                if let data = documentData,
-                   let image = UIImage(data: data) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxHeight: 400)
-                        .cornerRadius(12)
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-                } else {
-                    VStack(spacing: 16) {
-                        Image(systemName: "doc.fill")
-                            .font(.system(size: 48))
-                            .foregroundColor(Color.yugiGray.opacity(0.5))
-                        
-                        Text("Document not available")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(Color.yugiGray.opacity(0.7))
-                    }
-                    .frame(maxHeight: 400)
-                }
-                
-                Spacer()
-                
-                // Close Button
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Close")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.yugiMocha)
-                        .cornerRadius(12)
-                }
-            }
-            .padding(24)
-            .background(Color.yugiCream.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                    .foregroundColor(Color.yugiMocha)
-                }
-            }
-        }
-    }
-}
 
 // MARK: - Document Management Card
 
-struct DocumentManagementCard: View {
-    let title: String
-    let description: String
-    let icon: String
-    let image: UIImage?
-    let isUploaded: Bool
-    let isEditMode: Bool
+struct ProviderDocumentManagementCard: View {
+    let documentType: DocumentType
+    let document: ProviderDocument?
     let onUpload: () -> Void
-    let onView: () -> Void
-    
+    let onReplace: () -> Void
+
+    private var statusLabel: String {
+        guard let document else { return "Not uploaded" }
+        return document.typedStatus?.displayName ?? document.status.capitalized
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
+    }
+
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(Color.yugiMocha.opacity(0.1))
-                    .frame(width: 48, height: 48)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(Color.yugiMocha)
-            }
-            
-            // Content
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(title)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(documentType.displayName)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color.yugiGray)
-                        .lineLimit(1)
-                    
-                    Spacer()
-                    
-                    if isUploaded {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color.yugiMocha)
+
+                    if let document {
+                        Text(document.originalFileName)
+                            .font(.system(size: 13))
+                            .foregroundColor(Color.yugiGray.opacity(0.75))
+
+                        Text("Uploaded \(formattedDate(document.uploadedAt))")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.yugiGray.opacity(0.65))
+
+                        if documentType == .dbs, let expiry = document.expiryDate {
+                            Text("Expires \(formattedDate(expiry))")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color.yugiGray.opacity(0.65))
+                        }
                     }
                 }
-                
-                Text(description)
-                    .font(.system(size: 14))
-                    .foregroundColor(Color.yugiGray.opacity(0.8))
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
+
+                Spacer()
+
+                Text(statusLabel)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(document == nil ? Color.yugiGray.opacity(0.7) : Color.yugiSoftBlack)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        document == nil
+                            ? Color.yugiCloud
+                            : Color.yugiSage.opacity(0.3)
+                    )
+                    .cornerRadius(8)
             }
-            
-            Spacer()
-            
-            // Action Buttons
-            if isEditMode {
-                if isUploaded {
-                    // Show view button
-                    Button(action: onView) {
-                        Image(systemName: "eye.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color.yugiMocha)
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    // Show upload button
-                    Button(action: onUpload) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 18))
-                            .foregroundColor(Color.yugiMocha)
-                    }
-                    .buttonStyle(.plain)
-                }
-            } else if isUploaded {
-                // Show only view button in non-edit mode
-                Button(action: onView) {
-                    Image(systemName: "eye.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color.yugiMocha)
-                }
-                .buttonStyle(.plain)
+
+            Button(action: document == nil ? onUpload : onReplace) {
+                Text(document == nil ? "Upload" : "Replace")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(document == nil ? .white : Color.yugiMocha)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(document == nil ? Color.yugiMocha : Color.yugiDustyBlush.opacity(0.25))
+                    .cornerRadius(8)
             }
+            .buttonStyle(.plain)
         }
         .padding(16)
         .background(Color.white)
@@ -1399,10 +992,9 @@ struct DocumentManagementCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.yugiMocha.opacity(0.2), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 
 #Preview {
     ProviderBusinessProfileScreen(businessName: "Little Learners")
-} 
+}
