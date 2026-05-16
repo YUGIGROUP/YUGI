@@ -85,7 +85,7 @@ struct ProviderClass: Identifiable {
 
 struct ProviderDashboardScreen: View {
     let businessName: String
-    @State private var verificationStatus: ProviderVerificationStatus = .approved
+    @State private var verificationStatus: ProviderVerificationStatus = .pending
     @State private var shouldNavigateToClassDiscovery = false
     @State private var shouldNavigateToProfileCompletion = false
     @State private var shouldNavigateToClassCreation = false
@@ -421,6 +421,10 @@ struct ProviderDashboardScreen: View {
             }
         }
         .onAppear {
+            verificationStatus = Self.mapVerificationStatus(
+                from: APIService.shared.currentUser?.verificationStatus
+            )
+
             print("🏢 ProviderDashboardScreen: onAppear called")
             print("🏢 ProviderDashboardScreen: businessName = \(businessName)")
             print("🏢 ProviderDashboardScreen: verificationStatus = \(verificationStatus)")
@@ -487,6 +491,19 @@ struct ProviderDashboardScreen: View {
         providerChildrenService.clearChildren()
         children = providerChildrenService.children
         print("👶 ProviderDashboard: Cleared mock children for new user")
+    }
+
+    private static func mapVerificationStatus(from raw: String?) -> ProviderVerificationStatus {
+        guard let raw, !raw.isEmpty else { return .pending }
+        if let status = ProviderVerificationStatus(rawValue: raw) {
+            return status
+        }
+        switch raw {
+        case "underReview":
+            return .underReview
+        default:
+            return .pending
+        }
     }
 } 
 
