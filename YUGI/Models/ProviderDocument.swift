@@ -6,7 +6,6 @@ enum DocumentType: String, CaseIterable, Codable {
     case insurance = "insurance"
     case dbs = "dbs"
     case qualifications = "qualifications"
-    case businessRegistration = "business_registration"
 
     var displayName: String {
         switch self {
@@ -16,9 +15,31 @@ enum DocumentType: String, CaseIterable, Codable {
             return "DBS Certificate"
         case .qualifications:
             return "Qualifications"
-        case .businessRegistration:
-            return "Business Registration"
         }
+    }
+
+    func isRequired(forTier tier: String) -> Bool {
+        switch tier {
+        case "class":
+            return self == .insurance
+        case "drop_off":
+            return true
+        default:
+            return false
+        }
+    }
+
+    func isOptional(forTier tier: String) -> Bool {
+        switch tier {
+        case "class":
+            return self == .dbs || self == .qualifications
+        default:
+            return false
+        }
+    }
+
+    func isApplicable(forTier tier: String) -> Bool {
+        isRequired(forTier: tier) || isOptional(forTier: tier)
     }
 }
 
