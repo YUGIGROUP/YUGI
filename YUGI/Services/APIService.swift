@@ -1589,6 +1589,149 @@ class APIService: ObservableObject, @unchecked Sendable {
     func requestVerification() -> AnyPublisher<VerificationStatusResponse, APIError> {
         return request(endpoint: "/providers/request-verification", method: .POST)
     }
+
+    // MARK: - Provider verification documents
+
+    func uploadProviderDocument(
+        fileData: Data,
+        fileName: String,
+        mimeType: String,
+        documentType: DocumentType,
+        expiryDate: Date?
+    ) -> AnyPublisher<ProviderDocument, APIError> {
+        guard let token = authToken else {
+            return Fail(error: APIError.unauthorized).eraseToAnyPublisher()
+        }
+
+        let boundary = "Boundary-\(UUID().uuidString)"
+        let fullURL = "\(APIConfig.baseURL)/providers/documents"
+        guard let url = URL(string: fullURL) else {
+            return Fail(error: APIError.invalidURL).eraseToAnyPublisher()
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = APIConfig.timeout
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        var body = Data()
+        let lineBreak = "\r\n"
+
+        body.append("--\(boundary)\(lineBreak)".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\(lineBreak)".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\(lineBreak)\(lineBreak)".data(using: .utf8)!)
+        body.append(fileData)
+        body.append(lineBreak.data(using: .utf8)!)
+
+        body.append("--\(boundary)\(lineBreak)".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"documentType\"\(lineBreak)\(lineBreak)".data(using: .utf8)!)
+        body.append("\(documentType.rawValue)\(lineBreak)".data(using: .utf8)!)
+
+        if let expiryDate = expiryDate {
+            let dateFormatter = ISO8601DateFormatter()
+            let expiryString = dateFormatter.string(from: expiryDate)
+            body.append("--\(boundary)\(lineBreak)".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"expiryDate\"\(lineBreak)\(lineBreak)".data(using: .utf8)!)
+            body.append("\(expiryString)\(lineBreak)".data(using: .utf8)!)
+        }
+
+        body.append("--\(boundary)--\(lineBreak)".data(using: .utf8)!)
+        request.httpBody = body
+
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { data, response -> Data in
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw APIError.networkError(NSError(domain: "", code: -1))
+                }
+
+                switch httpResponse.statusCode {
+                case 200...299:
+                    return data
+                case 401:
+                    DispatchQueue.main.async { [weak self] in
+                        self?.authToken = nil
+                        self?.isAuthenticated = false
+                    }
+                    throw APIError.unauthorized
+                case 403:
+                    throw APIError.forbidden
+                case 404:
+                    throw APIError.notFound
+                default:
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let errorMessage = json["error"] as? String {
+                        throw APIError.serverError(errorMessage)
+                    }
+                    throw APIError.serverError("HTTP \(httpResponse.statusCode)")
+                }
+            }
+            .decode(type: ProviderDocumentUploadResponse.self, decoder: Self.apiJSONDecoder())
+            .map(\.document)
+            .mapError { error in
+                if let apiError = error as? APIError {
+                    return apiError
+                }
+                if error is DecodingError {
+                    return APIError.decodingError
+                }
+                return APIError.networkError(error)
+            }
+            .eraseToAnyPublisher()
+    }
+
+    func fetchMyProviderDocuments() -> AnyPublisher<[ProviderDocument], APIError> {
+        return request(endpoint: "/providers/me/documents")
+            .map { (response: ProviderDocumentsListResponse) in response.documents }
+            .eraseToAnyPublisher()
+    }
+
+    func deleteProviderDocument(id: String) -> AnyPublisher<Void, APIError> {
+        return request(endpoint: "/providers/documents/\(id)", method: .DELETE)
+            .map { (_: ProviderDocumentDeleteResponse) in () }
+            .eraseToAnyPublisher()
+    }
+
+    private static func apiJSONDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+
+            let iso8601Formatter = ISO8601DateFormatter()
+
+            let formatter1 = DateFormatter()
+            formatter1.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+            formatter1.timeZone = TimeZone(abbreviation: "UTC")
+
+            let formatter2 = DateFormatter()
+            formatter2.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+            formatter2.timeZone = TimeZone(abbreviation: "UTC")
+
+            let formatter3 = DateFormatter()
+            formatter3.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            formatter3.timeZone = TimeZone(abbreviation: "UTC")
+
+            if let date = iso8601Formatter.date(from: dateString) {
+                return date
+            }
+            if let date = formatter1.date(from: dateString) {
+                return date
+            }
+            if let date = formatter2.date(from: dateString) {
+                return date
+            }
+            if let date = formatter3.date(from: dateString) {
+                return date
+            }
+
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Date string '\(dateString)' does not match any expected format"
+            )
+        }
+        return decoder
+    }
     
     func fetchAnalytics(period: Int = 30) -> AnyPublisher<AnalyticsResponse, APIError> {
         return request(endpoint: "/providers/analytics?period=\(period)")
