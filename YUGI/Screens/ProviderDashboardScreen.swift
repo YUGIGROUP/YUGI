@@ -88,15 +88,12 @@ struct ProviderDashboardScreen: View {
     @State private var verificationStatus: ProviderVerificationStatus = .pending
     @State private var providerDocuments: [ProviderDocument] = []
     @State private var documentCancellables = Set<AnyCancellable>()
-    @State private var shouldNavigateToClassDiscovery = false
-    @State private var shouldNavigateToProfileCompletion = false
     @State private var shouldNavigateToClassCreation = false
     @State private var shouldNavigateToClassCreationForm = false
     @State private var pendingClassData: ClassCreationData? = nil
     @State private var shouldNavigateToBookings = false
     @State private var shouldNavigateToTermsPrivacy = false
     @State private var shouldNavigateToAcceptedTerms = false
-    @State private var shouldNavigateToGuidelines = false
     @State private var shouldNavigateToBusinessProfile = false
     @State private var hasAcceptedTerms = false
     @State private var shouldNavigateToPaymentSettings = false
@@ -161,83 +158,53 @@ struct ProviderDashboardScreen: View {
                         }
 
                         // Quick Actions
-                        if verificationStatus == .approved {
-                            // Quick Actions Section
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("Quick Actions")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.white)
-                                
-                                LazyVGrid(columns: [
-                                    GridItem(.flexible()),
-                                    GridItem(.flexible())
-                                ], spacing: 16) {
-                                    ProviderQuickActionButton(
-                                        title: "Create Class",
-                                        icon: "plus.circle",
-                                        color: .white
-                                    ) {
-                                        shouldNavigateToClassCreation = true
-                                    }
-                                    
-                                    ProviderQuickActionButton(
-                                        title: "My Classes",
-                                        icon: "list.bullet",
-                                        color: .white
-                                    ) {
-                                        shouldNavigateToMyClasses = true
-                                    }
-                                    
-                                    ProviderQuickActionButton(
-                                        title: "Bookings",
-                                        icon: "calendar",
-                                        color: .white
-                                    ) {
-                                        shouldNavigateToBookings = true
-                                    }
-                                    
-                                    ProviderQuickActionButton(
-                                        title: "Discover",
-                                        icon: "magnifyingglass",
-                                        color: .white
-                                    ) {
-                                        shouldNavigateToClassSearch = true
-                                    }
-                                    
-                                    ProviderQuickActionButton(
-                                        title: "Venue Check",
-                                        icon: "mappin.and.ellipse",
-                                        color: .white
-                                    ) {
-                                        shouldNavigateToVenueCheck = true
-                                    }
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Quick Actions")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                            
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 16) {
+                                ProviderQuickActionButton(
+                                    title: "Create Class",
+                                    icon: "plus.circle",
+                                    color: .white
+                                ) {
+                                    shouldNavigateToClassCreation = true
                                 }
-                            }
-                        } else {
-                            // Pending Actions for non-approved providers
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("Next Steps")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.white)
                                 
-                                VStack(spacing: 12) {
-                                    PendingActionButton(
-                                        title: "Complete Profile",
-                                        subtitle: "Add your business information",
-                                        icon: "person.crop.circle.plus",
-                                        color: .white
-                                    ) {
-                                        shouldNavigateToProfileCompletion = true
-                                    }
-                                    
-                                    PendingActionButton(
-                                        title: "Read Guidelines",
-                                        subtitle: "Learn about our policies",
-                                        icon: "book",
-                                        color: .white
-                                    ) {
-                                        shouldNavigateToGuidelines = true
-                                    }
+                                ProviderQuickActionButton(
+                                    title: "My Classes",
+                                    icon: "list.bullet",
+                                    color: .white
+                                ) {
+                                    shouldNavigateToMyClasses = true
+                                }
+                                
+                                ProviderQuickActionButton(
+                                    title: "Bookings",
+                                    icon: "calendar",
+                                    color: .white
+                                ) {
+                                    shouldNavigateToBookings = true
+                                }
+                                
+                                ProviderQuickActionButton(
+                                    title: "Discover",
+                                    icon: "magnifyingglass",
+                                    color: .white
+                                ) {
+                                    shouldNavigateToClassSearch = true
+                                }
+                                
+                                ProviderQuickActionButton(
+                                    title: "Venue Check",
+                                    icon: "mappin.and.ellipse",
+                                    color: .white
+                                ) {
+                                    shouldNavigateToVenueCheck = true
                                 }
                             }
                         }
@@ -349,9 +316,6 @@ struct ProviderDashboardScreen: View {
                 }
             }
 
-            .navigationDestination(isPresented: $shouldNavigateToProfileCompletion) {
-                ProviderProfileCompletionScreen()
-            }
             .sheet(isPresented: $shouldNavigateToClassCreation) {
                 AIClassGeneratorScreen(
                     businessName: displayBusinessName,
@@ -390,9 +354,6 @@ struct ProviderDashboardScreen: View {
                 TermsPrivacyScreen(isReadOnly: true, onTermsAccepted: {
                     hasAcceptedTerms = true
                 }, userType: .provider)
-            }
-            .sheet(isPresented: $shouldNavigateToGuidelines) {
-                ProviderGuidelinesScreen()
             }
             .sheet(isPresented: $shouldNavigateToBusinessProfile) {
                 ProviderBusinessProfileScreen(businessName: displayBusinessName)
@@ -699,49 +660,6 @@ struct QuickActionsSection: View {
     }
 }
 
-struct PendingActionsSection: View {
-    @Binding var shouldNavigateToClassDiscovery: Bool
-    @Binding var shouldNavigateToProfileCompletion: Bool
-    @Binding var shouldNavigateToGuidelines: Bool
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Get Started")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
-            
-            VStack(spacing: 12) {
-                PendingActionButton(
-                    title: "Complete Profile",
-                    subtitle: "Add your business information",
-                    icon: "person.circle",
-                    color: .white
-                ) {
-                    shouldNavigateToProfileCompletion = true
-                }
-                
-                PendingActionButton(
-                    title: "View Guidelines",
-                    subtitle: "Learn about our policies",
-                    icon: "book",
-                    color: .white
-                ) {
-                    shouldNavigateToGuidelines = true
-                }
-                
-                PendingActionButton(
-                    title: "Browse Classes",
-                    subtitle: "See what other providers offer",
-                    icon: "magnifyingglass",
-                    color: .white
-                ) {
-                    shouldNavigateToClassDiscovery = true
-                }
-            }
-        }
-    }
-}
-
 struct AccountManagementSection: View {
     let hasAcceptedTerms: Bool
     let onViewTerms: () -> Void
@@ -845,48 +763,6 @@ struct ProviderQuickActionButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct PendingActionButton: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(color)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                    
-                    Text(subtitle)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-            .padding(16)
             .background(Color.white.opacity(0.1))
             .cornerRadius(12)
             .overlay(
@@ -1190,28 +1066,6 @@ struct AcceptedTermsView: View {
                     .foregroundColor(Color.yugiMocha)
                 }
             }
-        }
-    }
-}
-
-struct ProviderGuidelinesScreen: View {
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                Text("Provider Guidelines")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(Color.yugiGray)
-                
-                Text("Guidelines and policies...")
-                    .font(.system(size: 16))
-                    .foregroundColor(Color.yugiGray.opacity(0.7))
-                
-                Spacer()
-            }
-            .padding()
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
