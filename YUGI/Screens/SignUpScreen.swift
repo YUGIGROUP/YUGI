@@ -10,7 +10,7 @@ struct SignUpScreen: View {
     @State private var email = ""
     @State private var selectedUserType: UserType = .parent
     @State private var shouldShowWelcome = false
-    @State private var shouldShowProviderVerification = false
+    @State private var shouldShowProviderDashboard = false
     @State private var shouldShowProviderTerms = false
     @State private var shouldNavigateToParentOnboarding = false
     
@@ -92,15 +92,14 @@ struct SignUpScreen: View {
                 TermsPrivacyScreen(
                     isReadOnly: false,
                     onTermsAccepted: {
-                        // After accepting terms, show verification screen
                         shouldShowProviderTerms = false
-                        shouldShowProviderVerification = true
+                        shouldShowProviderDashboard = true
                     },
                     userType: .provider
                 )
             }
-            .fullScreenCover(isPresented: $shouldShowProviderVerification) {
-                ProviderVerificationScreen(businessName: businessName)
+            .fullScreenCover(isPresented: $shouldShowProviderDashboard) {
+                ProviderDashboardScreen(businessName: businessName)
             }
             .navigationDestination(isPresented: $shouldNavigateToParentOnboarding) {
                 ParentOnboardingScreen(parentName: fullName)

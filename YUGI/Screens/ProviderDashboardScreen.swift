@@ -86,6 +86,8 @@ struct ProviderClass: Identifiable {
 struct ProviderDashboardScreen: View {
     let businessName: String
     @State private var verificationStatus: ProviderVerificationStatus = .pending
+    @State private var providerDocuments: [ProviderDocument] = []
+    @State private var documentCancellables = Set<AnyCancellable>()
     @State private var shouldNavigateToClassDiscovery = false
     @State private var shouldNavigateToProfileCompletion = false
     @State private var shouldNavigateToClassCreation = false
@@ -154,9 +156,10 @@ struct ProviderDashboardScreen: View {
                             shouldNavigateToTermsPrivacy = true
                         }
                     } else {
-                        // Verification Status Card
-                        VerificationStatusCard(status: verificationStatus)
-                        
+                        if !providerDocuments.isEmpty {
+                            VerificationStatusCard(status: verificationStatus)
+                        }
+
                         // Quick Actions
                         if verificationStatus == .approved {
                             // Quick Actions Section
@@ -424,6 +427,7 @@ struct ProviderDashboardScreen: View {
             verificationStatus = Self.mapVerificationStatus(
                 from: APIService.shared.currentUser?.verificationStatus
             )
+            loadProviderDocuments()
 
             print("🏢 ProviderDashboardScreen: onAppear called")
             print("🏢 ProviderDashboardScreen: businessName = \(businessName)")
@@ -491,6 +495,22 @@ struct ProviderDashboardScreen: View {
         providerChildrenService.clearChildren()
         children = providerChildrenService.children
         print("👶 ProviderDashboard: Cleared mock children for new user")
+    }
+
+    private func loadProviderDocuments() {
+        APIService.shared.fetchMyProviderDocuments()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("ProviderDashboard: failed to load documents: \(error)")
+                    }
+                },
+                receiveValue: { documents in
+                    providerDocuments = documents
+                }
+            )
+            .store(in: &documentCancellables)
     }
 
     private static func mapVerificationStatus(from raw: String?) -> ProviderVerificationStatus {
