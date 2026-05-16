@@ -39,6 +39,8 @@ struct ProviderClassCreationScreen: View {
     @State private var isSaving = false
     @State private var showingSuccessAlert = false
     @State private var showingTierHelpSheet = false
+    @State private var showVerificationRequiredAlert = false
+    @State private var shouldShowVerification = false
 
     private var steps: [String] {
         var s = ["What kind of event?", "Basic Info & Pricing", "Schedule", "Location & Details"]
@@ -135,6 +137,17 @@ struct ProviderClassCreationScreen: View {
             .animation(.easeInOut(duration: 0.2), value: isSaving)
             .sheet(isPresented: $showingTierHelpSheet) {
                 TierSelectionHelpSheet()
+            }
+            .alert("Verification required", isPresented: $showVerificationRequiredAlert) {
+                Button("Upload documents") {
+                    shouldShowVerification = true
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You need to upload your documents and be verified before publishing classes. This protects parents and keeps YUGI's verified-provider promise honest.")
+            }
+            .fullScreenCover(isPresented: $shouldShowVerification) {
+                ProviderVerificationScreen(businessName: businessName)
             }
         }
         .onAppear {
@@ -1516,6 +1529,11 @@ struct ProviderClassCreationScreen: View {
                 .opacity((currentStep == 0 && !canProceedFromTierStep) ? 0.45 : 1)
             } else {
                 Button(action: {
+                    guard let user = APIService.shared.currentUser,
+                          user.verificationStatus == "approved" else {
+                        showVerificationRequiredAlert = true
+                        return
+                    }
                     isSaving = true
                     Task {
                         do {
