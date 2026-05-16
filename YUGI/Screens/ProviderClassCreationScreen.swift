@@ -39,8 +39,15 @@ struct ProviderClassCreationScreen: View {
     @State private var isSaving = false
     @State private var showingSuccessAlert = false
     @State private var showingTierHelpSheet = false
-    @State private var showVerificationRequiredAlert = false
-    @State private var shouldShowVerification = false
+    @State private var providerDocuments: [ProviderDocument] = []
+    @State private var isLoadingDocuments = false
+    @State private var documentsLoadError: String?
+    @State private var showingUploadSheet = false
+    @State private var selectedDocumentType: DocumentType?
+    @State private var isDeletingDocument = false
+    @State private var replacingDocumentId: String?
+    @State private var showingSubmittedForReview = false
+    @State private var documentCancellables = Set<AnyCancellable>()
 
     private var steps: [String] {
         var s = ["What kind of event?", "Basic Info & Pricing", "Schedule", "Location & Details"]
@@ -113,7 +120,7 @@ struct ProviderClassCreationScreen: View {
 
             .overlay(
                 Group {
-                    if showingSuccessAlert {
+                    if showingSuccessAlert && classData.tier == .community {
                         SuccessPopup(
                             title: publishSuccessTitle,
                             message: publishSuccessMessage,
@@ -125,7 +132,7 @@ struct ProviderClassCreationScreen: View {
                         .transition(.opacity.combined(with: .scale))
                         .zIndex(1000)
                     }
-                    
+
                     if isSaving {
                         LoadingOverlay()
                             .transition(.opacity)
@@ -138,21 +145,33 @@ struct ProviderClassCreationScreen: View {
             .sheet(isPresented: $showingTierHelpSheet) {
                 TierSelectionHelpSheet()
             }
-            .alert("Verification required", isPresented: $showVerificationRequiredAlert) {
-                Button("Upload documents") {
-                    shouldShowVerification = true
+            .sheet(isPresented: $showingUploadSheet) {
+                if let selectedDocumentType {
+                    DocumentUploadFlowSheet(
+                        documentType: selectedDocumentType,
+                        onSuccess: {
+                            showingUploadSheet = false
+                            replacingDocumentId = nil
+                            loadProviderDocuments()
+                        }
+                    )
                 }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("You need to upload your documents and be verified before publishing classes. This protects parents and keeps YUGI's verified-provider promise honest.")
             }
-            .fullScreenCover(isPresented: $shouldShowVerification) {
-                ProviderVerificationScreen(businessName: businessName)
+            .fullScreenCover(isPresented: $showingSubmittedForReview) {
+                SubmittedForReviewView {
+                    onClassPublished?(classData)
+                    dismiss()
+                }
             }
         }
         .onAppear {
             if let data = initialData {
                 classData = data
+            }
+        }
+        .onChange(of: currentStep) { _, newStep in
+            if newStep == 4 && classData.tier != .community {
+                loadProviderDocuments()
             }
         }
         // Terms acceptance is handled during account creation, not here
@@ -243,123 +262,202 @@ struct ProviderClassCreationScreen: View {
 
     private var verificationRequiredSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Almost there — we just need to verify you")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundColor(Color.yugiGray)
+            Text("Verify your account")
+                .font(.custom("Raleway-SemiBold", size: 22))
+                .foregroundColor(Color.yugiMocha)
 
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Before your listing goes live, please email the following to eva@yugiapp.ai:")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(Color.yugiSoftBlack)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    if classData.tier == .class {
-                        verificationCheckRow("Insurance certificate", optional: false, showRequiredTag: true)
-                        verificationCheckRow("Qualification(s)", optional: true)
-                        verificationCheckRow("Enhanced DBS check", optional: true)
-                    } else if classData.tier == .dropOff {
-                        verificationCheckRow("Insurance certificate")
-                        verificationCheckRow("Qualification(s)")
-                        verificationCheckRow("Enhanced DBS (with Children's Barred List)")
-                        verificationCheckRow("Ofsted URN (if caring for under-8s for 2+ hours)")
-                    }
-                }
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.yugiCloud)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.yugiSage, lineWidth: 2)
-            )
-            .cornerRadius(14)
-
-            Text("We'll review within 48 hours and notify you when your listing is live.")
-                .font(.system(size: 14))
-                .foregroundColor(Color.yugiGray.opacity(0.85))
+            Text(verificationSubheading)
+                .font(.custom("Raleway-Regular", size: 15))
+                .foregroundColor(Color.yugiSoftBlack)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text(tierVerificationWhyFooter)
-                .font(.system(size: 13))
-                .italic()
-                .foregroundColor(Color.yugiGray.opacity(0.65))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func verificationCheckRow(_ text: String, optional: Bool = false, showRequiredTag: Bool = false) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Group {
-                if optional {
-                    Image(systemName: "circle")
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundColor(Color.yugiGray.opacity(0.42))
-                        .padding(3)
-                        .background(
-                            Circle()
-                                .fill(Color.white.opacity(0.55))
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.yugiCloud, lineWidth: 2)
-                                )
-                        )
-                } else {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(Color.yugiSage)
-                }
+            if isLoadingDocuments && providerDocuments.isEmpty {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
             }
-            .frame(width: 24, height: 24, alignment: .top)
-            .padding(.top, 1)
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(text)
-                        .font(.system(size: 15))
-                        .foregroundColor(Color.yugiGray)
-                        .fixedSize(horizontal: false, vertical: true)
+            if let documentsLoadError {
+                Text(documentsLoadError)
+                    .font(.custom("Raleway-Regular", size: 14))
+                    .foregroundColor(.red)
+            }
 
-                    if optional {
-                        Text("OPTIONAL")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.yugiMocha)
-                            .clipShape(Capsule())
-                    } else if showRequiredTag {
-                        Text("REQUIRED")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.yugiMocha)
-                            .clipShape(Capsule())
-                    }
-
-                    Spacer(minLength: 0)
-                }
-
-                if optional {
-                    Text("if you have one — boosts your verification badge")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.yugiGray.opacity(0.55))
-                        .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 12) {
+                ForEach(applicableDocumentTypes, id: \.self) { type in
+                    wizardDocumentTile(for: type)
                 }
             }
         }
     }
 
-    private var tierVerificationWhyFooter: String {
+    private var verificationSubheading: String {
         switch classData.tier {
         case .class:
-            return "Why? Every YUGI provider must be insured before parents can book. Uploading qualifications or DBS is optional — when you do, parents see a stronger verification badge on your listing."
+            return "To list this class, please upload your public liability insurance. Qualifications and DBS are optional but improve trust with parents."
         case .dropOff:
-            return "Why? Drop-off providers go through the strictest YUGI verification because parents leave their children with you."
+            return "Drop-off activities require full verification. Please upload all three documents below."
         case .community:
             return ""
         }
+    }
+
+    private var applicableDocumentTypes: [DocumentType] {
+        DocumentType.allCases.filter {
+            $0.isApplicable(forTier: classData.tier.rawValue)
+        }
+    }
+
+    private var hasAllRequiredDocuments: Bool {
+        let tier = classData.tier.rawValue
+        return DocumentType.allCases
+            .filter { $0.isRequired(forTier: tier) }
+            .allSatisfy { type in
+                providerDocuments.contains { $0.documentType == type.rawValue }
+            }
+    }
+
+    private func document(for type: DocumentType) -> ProviderDocument? {
+        providerDocuments.first { $0.documentType == type.rawValue }
+    }
+
+    private func loadProviderDocuments() {
+        isLoadingDocuments = true
+        documentsLoadError = nil
+
+        APIService.shared.fetchMyProviderDocuments()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    isLoadingDocuments = false
+                    if case .failure(let error) = completion {
+                        documentsLoadError = error.localizedDescription
+                    }
+                },
+                receiveValue: { fetched in
+                    providerDocuments = fetched
+                }
+            )
+            .store(in: &documentCancellables)
+    }
+
+    @ViewBuilder
+    private func wizardDocumentTile(for type: DocumentType) -> some View {
+        let doc = document(for: type)
+        let tier = classData.tier.rawValue
+
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(type.displayName)
+                    .font(.custom("Raleway-SemiBold", size: 16))
+                    .foregroundColor(Color.yugiSoftBlack)
+                Spacer()
+                if type.isRequired(forTier: tier) {
+                    Text("Required")
+                        .font(.custom("Raleway-SemiBold", size: 11))
+                        .foregroundColor(Color.yugiSoftBlack)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.yugiSage.opacity(0.35))
+                        .cornerRadius(8)
+                } else if type.isOptional(forTier: tier) {
+                    Text("Optional")
+                        .font(.custom("Raleway-SemiBold", size: 11))
+                        .foregroundColor(Color.yugiSoftBlack)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.yugiDustyBlush.opacity(0.35))
+                        .cornerRadius(8)
+                }
+            }
+
+            if let doc {
+                if doc.typedStatus == .pending {
+                    Text("Pending review")
+                        .font(.custom("Raleway-SemiBold", size: 12))
+                        .foregroundColor(Color.yugiMocha)
+                } else if let status = doc.typedStatus {
+                    Text(status.displayName)
+                        .font(.custom("Raleway-Regular", size: 12))
+                        .foregroundColor(Color.yugiSoftBlack.opacity(0.7))
+                }
+
+                Text(doc.originalFileName)
+                    .font(.custom("Raleway-Regular", size: 13))
+                    .foregroundColor(Color.yugiSoftBlack.opacity(0.75))
+
+                Text("Uploaded \(formattedDocumentDate(doc.uploadedAt))")
+                    .font(.custom("Raleway-Regular", size: 12))
+                    .foregroundColor(Color.yugiSoftBlack.opacity(0.6))
+
+                if type == .dbs, let expiry = doc.expiryDate {
+                    Text("Expires \(formattedDocumentDate(expiry))")
+                        .font(.custom("Raleway-Regular", size: 12))
+                        .foregroundColor(Color.yugiSoftBlack.opacity(0.6))
+                }
+
+                if doc.typedStatus == .pending {
+                    Button {
+                        deleteAndReupload(type: type, documentId: doc.id)
+                    } label: {
+                        Text(isDeletingDocument && replacingDocumentId == doc.id ? "Replacing…" : "Replace")
+                            .font(.custom("Raleway-SemiBold", size: 14))
+                            .foregroundColor(Color.yugiMocha)
+                    }
+                    .disabled(isDeletingDocument)
+                }
+            } else {
+                Button {
+                    selectedDocumentType = type
+                    showingUploadSheet = true
+                } label: {
+                    Text("Upload")
+                        .font(.custom("Raleway-SemiBold", size: 14))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.yugiMocha)
+                        .cornerRadius(8)
+                }
+                .disabled(isDeletingDocument)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.yugiCloud)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.yugiMocha.opacity(0.15), lineWidth: 1)
+        )
+    }
+
+    private func formattedDocumentDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
+    }
+
+    private func deleteAndReupload(type: DocumentType, documentId: String) {
+        isDeletingDocument = true
+        replacingDocumentId = documentId
+
+        APIService.shared.deleteProviderDocument(id: documentId)
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    isDeletingDocument = false
+                    replacingDocumentId = nil
+                    if case .failure(let error) = completion {
+                        documentsLoadError = error.localizedDescription
+                    }
+                },
+                receiveValue: { _ in
+                    loadProviderDocuments()
+                    selectedDocumentType = type
+                    showingUploadSheet = true
+                }
+            )
+            .store(in: &documentCancellables)
     }
 
     private var basicInfoSection: some View {
@@ -1528,34 +1626,41 @@ struct ProviderClassCreationScreen: View {
                 .disabled(currentStep == 0 && !canProceedFromTierStep)
                 .opacity((currentStep == 0 && !canProceedFromTierStep) ? 0.45 : 1)
             } else {
-                Button(action: {
-                    guard let user = APIService.shared.currentUser,
-                          user.verificationStatus == "approved" else {
-                        showVerificationRequiredAlert = true
-                        return
-                    }
-                    isSaving = true
-                    Task {
-                        do {
-                            try await classData.publish()
-                            showingSuccessAlert = true
-                        } catch {
-                            print("Error publishing class: \(error)")
-                            // Handle error appropriately
+                VStack(spacing: 8) {
+                    Button(action: {
+                        isSaving = true
+                        Task {
+                            do {
+                                try await classData.publish()
+                                if classData.tier == .community {
+                                    showingSuccessAlert = true
+                                } else {
+                                    showingSubmittedForReview = true
+                                }
+                            } catch {
+                                print("Error publishing class: \(error)")
+                            }
+                            isSaving = false
                         }
-                        isSaving = false
+                    }) {
+                        Text(publishButtonTitle)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(submitButtonEnabled ? Color.yugiMocha : Color.yugiGray.opacity(0.4))
+                            .cornerRadius(12)
                     }
-                }) {
-                    Text(publishButtonTitle)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.yugiMocha)
-                        .cornerRadius(12)
+                    .padding(.top)
+                    .disabled(isSaving || !submitButtonEnabled)
+
+                    if classData.tier != .community && !hasAllRequiredDocuments {
+                        Text("Upload required documents to continue.")
+                            .font(.custom("Raleway-Regular", size: 13))
+                            .foregroundColor(Color.yugiGray.opacity(0.8))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
                 }
-                .padding(.top)
-                .disabled(isSaving)
             }
         }
         .padding(.horizontal)
@@ -1564,7 +1669,63 @@ struct ProviderClassCreationScreen: View {
     /// Tier always has a non-optional default (`.class`). Hook remains if we ever require an explicit tap.
     private var canProceedFromTierStep: Bool { true }
 
+    private var submitButtonEnabled: Bool {
+        if classData.tier == .community {
+            return true
+        }
+        return hasAllRequiredDocuments
+    }
+
 }
+
+// MARK: - Submitted for review
+
+private struct SubmittedForReviewView: View {
+    let onBackToDashboard: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.yugiCloud.ignoresSafeArea()
+
+            VStack(spacing: 28) {
+                Spacer()
+
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 72))
+                    .foregroundColor(Color.yugiSage)
+
+                VStack(spacing: 12) {
+                    Text("Submitted for review")
+                        .font(.custom("Raleway-SemiBold", size: 28))
+                        .foregroundColor(Color.yugiSoftBlack)
+                        .multilineTextAlignment(.center)
+
+                    Text("We'll review your documents and class listing within 48 hours. You'll get a notification when your class is approved and live for parents to see.")
+                        .font(.custom("Raleway-Regular", size: 16))
+                        .foregroundColor(Color.yugiSoftBlack.opacity(0.85))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 8)
+                }
+
+                Spacer()
+
+                Button(action: onBackToDashboard) {
+                    Text("Back to Dashboard")
+                        .font(.custom("Raleway-SemiBold", size: 16))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.yugiMocha)
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+            }
+            .padding(24)
+        }
+    }
+}
+
 
 // MARK: - Tier help sheet
 
