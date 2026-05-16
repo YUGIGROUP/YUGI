@@ -9,7 +9,7 @@ const documentSchema = new mongoose.Schema({
   },
   documentType: {
     type: String,
-    enum: ['insurance', 'dbs', 'qualifications', 'business_registration'],
+    enum: ['insurance', 'dbs', 'qualifications'],
     required: true,
     index: true,
   },

@@ -7,7 +7,7 @@ const documentUpload = require('../middleware/documentUpload');
 const { uploadDocument, deleteDocument } = require('../services/s3Service');
 const { sendAdminNotification } = require('../services/pushNotificationService');
 
-const VALID_TYPES = ['insurance', 'dbs', 'qualifications', 'business_registration'];
+const VALID_TYPES = ['insurance', 'dbs', 'qualifications'];
 
 /**
  * POST /api/providers/documents
