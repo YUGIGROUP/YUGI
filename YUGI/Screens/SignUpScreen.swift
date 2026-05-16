@@ -25,10 +25,6 @@ struct SignUpScreen: View {
     @State private var selectedAgeGroups: Set<String> = []
     @State private var bio = ""
     @State private var providerSubStep = 1
-    @State private var qualificationsItem: PhotosPickerItem?
-    @State private var qualificationsImage: UIImage?
-    @State private var dbsCertificateItem: PhotosPickerItem?
-    @State private var dbsCertificateImage: UIImage?
     @State private var profileImageItem: PhotosPickerItem?
     @State private var profileImage: UIImage?
     @State private var providerPassword = ""
@@ -86,20 +82,6 @@ struct SignUpScreen: View {
                 if let item = newValue {
                     loadImage(from: item) { image in
                         profileImage = image
-                    }
-                }
-            }
-            .onChange(of: qualificationsItem) { oldValue, newValue in
-                if let item = newValue {
-                    loadImage(from: item) { image in
-                        qualificationsImage = image
-                    }
-                }
-            }
-            .onChange(of: dbsCertificateItem) { oldValue, newValue in
-                if let item = newValue {
-                    loadImage(from: item) { image in
-                        dbsCertificateImage = image
                     }
                 }
             }
@@ -358,59 +340,6 @@ struct SignUpScreen: View {
                     }
                 }
                 
-                // Qualifications
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Qualifications")
-                            .foregroundColor(.white)
-                        Text("(Optional)")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    
-                    PhotosPicker(selection: $qualificationsItem, matching: .images) {
-                        HStack {
-                            Image(systemName: "doc.fill")
-                            Text(qualificationsImage != nil ? "Change Qualifications" : "Upload Qualifications")
-                            if qualificationsImage != nil {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white.opacity(0.2))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                    }
-                }
-                
-                // DBS Certificate
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("DBS Certificate")
-                            .foregroundColor(.white)
-                        Text("(Required)")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    
-                    PhotosPicker(selection: $dbsCertificateItem, matching: .images) {
-                        HStack {
-                            Image(systemName: "doc.fill")
-                            Text(dbsCertificateImage != nil ? "Change DBS Certificate" : "Upload DBS Certificate")
-                            if dbsCertificateImage != nil {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white.opacity(0.2))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                    }
-                }
             }
             
             Spacer()
@@ -583,11 +512,6 @@ struct SignUpScreen: View {
             showError("Please upload your profile picture")
             return
         }
-        guard dbsCertificateImage != nil else {
-            showError("Please upload your DBS certificate")
-            return
-        }
-        // Qualifications are now optional - no validation needed
         
         withAnimation {
             providerSubStep = 3
@@ -602,19 +526,6 @@ struct SignUpScreen: View {
         guard providerPassword == providerConfirmPassword else {
             showError("Passwords do not match")
             return
-        }
-        
-        // Save uploaded documents to UserDefaults
-        if let dbsImage = dbsCertificateImage,
-           let dbsData = dbsImage.jpegData(compressionQuality: 0.8) {
-            UserDefaults.standard.set(dbsData, forKey: "providerDBSCertificate")
-            UserDefaults.standard.set(true, forKey: "providerDBSUploaded")
-        }
-        
-        if let qualificationsImage = qualificationsImage,
-           let qualificationsData = qualificationsImage.jpegData(compressionQuality: 0.8) {
-            UserDefaults.standard.set(qualificationsData, forKey: "providerQualifications")
-            UserDefaults.standard.set(true, forKey: "providerQualificationsUploaded")
         }
         
         // Save business information to ProviderBusinessService
