@@ -110,6 +110,16 @@ extension AppDelegate {
                     className: className
                 )
             }
+        } else if let type = userInfo["type"] as? String, type == "document_review",
+                  let documentId = userInfo["documentId"] as? String {
+            UserDefaults.standard.set(documentId, forKey: "pendingAdminDocumentId")
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .openAdminDocument,
+                    object: nil,
+                    userInfo: ["documentId": documentId]
+                )
+            }
         }
 
         completionHandler()

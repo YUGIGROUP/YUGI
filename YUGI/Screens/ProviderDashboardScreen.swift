@@ -432,6 +432,13 @@ struct ProviderDashboardScreen: View {
             // In production, always clear mock children for new users
             clearMockChildrenForNewUser()
             #endif
+
+            consumePendingAdminDocumentDeepLink()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openAdminDocument)) { notification in
+            guard let documentId = notification.userInfo?["documentId"] as? String else { return }
+            pendingDeepLinkDocumentId = documentId
+            shouldNavigateToAdminReview = true
         }
         .onDisappear {
             print("🏢 ProviderDashboardScreen: onDisappear called")
@@ -464,6 +471,14 @@ struct ProviderDashboardScreen: View {
         providerChildrenService.clearChildren()
         children = providerChildrenService.children
         print("👶 ProviderDashboard: Cleared mock children for new user")
+    }
+
+    private func consumePendingAdminDocumentDeepLink() {
+        guard let documentId = UserDefaults.standard.string(forKey: "pendingAdminDocumentId"),
+              !documentId.isEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: "pendingAdminDocumentId")
+        pendingDeepLinkDocumentId = documentId
+        shouldNavigateToAdminReview = true
     }
 
     private func loadProviderDocuments() {
