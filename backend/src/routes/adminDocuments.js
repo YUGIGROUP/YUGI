@@ -26,6 +26,12 @@ router.get('/documents/pending', protect, requireAdmin, async (req, res) => {
       .populate('userId', 'fullName email businessName')
       .sort({ uploadedAt: 1 }) // Oldest first — fairness
       .lean();
+
+    // Don't leak s3Key to client (same as detail endpoint)
+    docs.forEach((doc) => {
+      delete doc.s3Key;
+    });
+
     return res.json({ success: true, documents: docs });
   } catch (err) {
     console.error('Admin pending list error:', err);

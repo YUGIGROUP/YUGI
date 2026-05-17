@@ -1,3 +1,8 @@
+if (process.env.NODE_ENV === 'production') {
+  console.error('❌ createAdmin.js cannot run in production. Use set-admin.js instead.');
+  process.exit(1);
+}
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
