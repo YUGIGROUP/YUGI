@@ -102,6 +102,8 @@ struct ProviderDashboardScreen: View {
     @State private var shouldNavigateToClassSearch = false
     @State private var shouldNavigateToChildrenBookings = false
     @State private var shouldNavigateToVenueCheck = false
+    @State private var shouldNavigateToAdminReview = false
+    @State private var pendingDeepLinkDocumentId: String?
 
     @State private var showingHelpSupport = false
     @State private var showingAddChild = false
@@ -235,7 +237,10 @@ struct ProviderDashboardScreen: View {
                             childToEdit: $childToEdit,
                             shouldNavigateToClassCreation: $shouldNavigateToClassCreation,
                             shouldNavigateToAcceptedTerms: $shouldNavigateToAcceptedTerms,
-
+                            showAdminReview: APIService.shared.currentUser?.isAdmin == true,
+                            onAdminReview: {
+                                shouldNavigateToAdminReview = true
+                            }
                         )
                         
                         // Log Out Button
@@ -375,6 +380,9 @@ struct ProviderDashboardScreen: View {
             }
             .sheet(isPresented: $shouldNavigateToChildrenBookings) {
                 ProviderChildrenBookingsScreen(businessName: displayBusinessName)
+            }
+            .sheet(isPresented: $shouldNavigateToAdminReview) {
+                AdminReviewScreen(pendingDeepLinkDocumentId: $pendingDeepLinkDocumentId)
             }
 
             .fullScreenCover(isPresented: $shouldSignOut) {
@@ -675,8 +683,9 @@ struct AccountManagementSection: View {
     @Binding var childToEdit: Child?
     @Binding var shouldNavigateToClassCreation: Bool
     @Binding var shouldNavigateToAcceptedTerms: Bool
+    var showAdminReview: Bool = false
+    var onAdminReview: (() -> Void)? = nil
 
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Account Management")
@@ -738,6 +747,17 @@ struct AccountManagementSection: View {
                     color: .white
                 ) {
                     shouldNavigateToChildrenBookings = true
+                }
+
+                if showAdminReview {
+                    AccountActionButton(
+                        title: "Admin Review",
+                        subtitle: "Approve provider verification documents",
+                        icon: "checkmark.shield.fill",
+                        color: Color.yugiSage
+                    ) {
+                        onAdminReview?()
+                    }
                 }
             }
         }

@@ -1692,6 +1692,34 @@ class APIService: ObservableObject, @unchecked Sendable {
             .eraseToAnyPublisher()
     }
 
+    // MARK: - Admin document review
+
+    func fetchPendingAdminDocuments() -> AnyPublisher<[AdminPendingDocument], APIError> {
+        return request(endpoint: "/admin/documents/pending")
+            .map { (response: AdminDocumentsPendingResponse) in response.documents }
+            .eraseToAnyPublisher()
+    }
+
+    func fetchAdminDocumentDetail(id: String) -> AnyPublisher<AdminDocumentDetail, APIError> {
+        return request(endpoint: "/admin/documents/\(id)")
+            .map { (response: AdminDocumentDetailResponse) in
+                AdminDocumentDetail(document: response.document, viewUrl: response.viewUrl)
+            }
+            .eraseToAnyPublisher()
+    }
+
+    func approveAdminDocument(id: String) -> AnyPublisher<ProviderDocument, APIError> {
+        return request(endpoint: "/admin/documents/\(id)/approve", method: .POST)
+            .map { (response: AdminDocumentActionResponse) in response.document }
+            .eraseToAnyPublisher()
+    }
+
+    func rejectAdminDocument(id: String, reason: String) -> AnyPublisher<ProviderDocument, APIError> {
+        return request(endpoint: "/admin/documents/\(id)/reject", method: .POST, body: ["reason": reason])
+            .map { (response: AdminDocumentActionResponse) in response.document }
+            .eraseToAnyPublisher()
+    }
+
     private static func apiJSONDecoder() -> JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in

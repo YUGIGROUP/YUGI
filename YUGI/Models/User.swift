@@ -21,6 +21,7 @@ struct User: Identifiable, Codable {
     let createdAt: Date
     let updatedAt: Date
     let location: UserLocation?
+    let isAdmin: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -29,6 +30,7 @@ struct User: Identifiable, Codable {
         case bio, services
         case verificationStatus, children, isActive, isEmailVerified
         case createdAt, updatedAt, location
+        case isAdmin
     }
     
     // Custom decoder to handle missing fields with default values
@@ -51,6 +53,7 @@ struct User: Identifiable, Codable {
         self.bio = try container.decodeIfPresent(String.self, forKey: .bio)
         self.services = try container.decodeIfPresent(String.self, forKey: .services)
         self.location = try container.decodeIfPresent(UserLocation.self, forKey: .location)
+        self.isAdmin = try container.decodeIfPresent(Bool.self, forKey: .isAdmin)
         
         // Fields with default values if missing
         self.verificationStatus = try container.decodeIfPresent(String.self, forKey: .verificationStatus) ?? "pending"
