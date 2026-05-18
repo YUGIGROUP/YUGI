@@ -302,6 +302,7 @@ extension User {
         self.dbsCertificate = nil
         self.bio = nil
         self.services = nil
+        self.isAdmin = nil
         self.verificationStatus = "pending"
         self.children = children
         self.isActive = true
