@@ -165,6 +165,8 @@ struct ParentDashboardScreen: View {
     @State private var showingTermsPrivacy        = false
     @State private var showingPaymentMethods      = false
     @State private var showingContactForm         = false
+    @State private var shouldNavigateToAdminReview = false
+    @State private var pendingDeepLinkDocumentId: String?
     @State private var shouldSignOut              = false
     @State private var showingCancelConfirmation  = false
     @State private var bookingToCancel: EnhancedBooking?  = nil
@@ -193,6 +195,7 @@ struct ParentDashboardScreen: View {
             .onAppear {
                 configureTabBar()
                 fetchChildrenFromBackend()
+                consumePendingAdminDocumentDeepLink()
             }
             // MARK: Sheets
             .sheet(isPresented: $showingVenueCheckSheet)  { VenueCheckScreen() }
@@ -291,6 +294,9 @@ struct ParentDashboardScreen: View {
             .sheet(isPresented: $showingTermsPrivacy)        { TermsPrivacyScreen(isReadOnly: true) }
             .sheet(isPresented: $showingPaymentMethods)      { PaymentMethodsScreen() }
             .sheet(isPresented: $showingContactForm)         { ContactFormScreen() }
+            .sheet(isPresented: $shouldNavigateToAdminReview) {
+                AdminReviewScreen(pendingDeepLinkDocumentId: $pendingDeepLinkDocumentId)
+            }
             .sheet(item: $selectedBookingForAnalysis)        { eb in VenueAnalysisScreen(enhancedBooking: eb) }
             .alert("Cancel Booking", isPresented: $showingCancelConfirmation) {
                 Button("Cancel", role: .cancel) {}
@@ -319,11 +325,24 @@ struct ParentDashboardScreen: View {
                 isLoadingChildren = false
                 if let user = user { self.children = user.children ?? [] }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .openAdminDocument)) { notification in
+                guard let documentId = notification.userInfo?["documentId"] as? String else { return }
+                pendingDeepLinkDocumentId = documentId
+                shouldNavigateToAdminReview = true
+            }
             .overlay(successMessageOverlay)
         }
     }
 
     // MARK: - Helpers
+
+    private func consumePendingAdminDocumentDeepLink() {
+        guard let documentId = UserDefaults.standard.string(forKey: "pendingAdminDocumentId"),
+              !documentId.isEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: "pendingAdminDocumentId")
+        pendingDeepLinkDocumentId = documentId
+        shouldNavigateToAdminReview = true
+    }
 
     private func configureTabBar() {
         let appearance = UITabBarAppearance()
@@ -854,6 +873,24 @@ private extension ParentDashboardScreen {
                             ) { showingNotifications = true }
                         }
                     }
+                    if apiService.currentUser?.isAdmin == true {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Admin")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                            VStack(spacing: 12) {
+                                ProfileRow(
+                                    icon: "checkmark.shield.fill",
+                                    title: "Admin Review",
+                                    subtitle: "Review pending provider documents",
+                                    badge: nil,
+                                    iconColor: Color.yugiSage
+                                ) {
+                                    shouldNavigateToAdminReview = true
+                                }
+                            }
+                        }
+                    }
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Support")
                             .font(.system(size: 20, weight: .semibold))
@@ -1055,13 +1092,14 @@ struct ProfileRow: View {
     let title: String
     let subtitle: String
     let badge: String?
+    var iconColor: Color = Color.yugiMocha
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
                 Image(systemName: icon).font(.system(size: 20))
-                    .foregroundColor(Color.yugiMocha).frame(width: 24)
+                    .foregroundColor(iconColor).frame(width: 24)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.system(size: 16, weight: .medium)).foregroundColor(.white)
                     Text(subtitle).font(.system(size: 14)).foregroundColor(.white.opacity(0.7))
