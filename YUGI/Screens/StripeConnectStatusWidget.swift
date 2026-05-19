@@ -44,8 +44,10 @@ struct StripeConnectStatusWidget: View {
                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
         .onAppear(perform: loadStatus)
-        .onChange(of: isOnboardingSheetPresented) { _, isPresented in
-            if !isPresented { loadStatus() }
+        .onChange(of: isOnboardingSheetPresented) { wasPresented, isPresented in
+            if wasPresented && !isPresented {
+                loadStatus()
+            }
         }
     }
 

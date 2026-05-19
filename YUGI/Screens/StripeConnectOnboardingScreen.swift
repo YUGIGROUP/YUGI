@@ -35,9 +35,12 @@ struct StripeConnectOnboardingScreen: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") { dismiss() }
-                        .foregroundColor(.white)
+                if status != .active {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Close") { dismiss() }
+                            .font(.custom("Raleway-Medium", size: 15))
+                            .foregroundColor(Color.yugiSoftBlack)
+                    }
                 }
             }
             .onAppear(perform: loadStatus)
