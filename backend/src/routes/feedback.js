@@ -28,7 +28,7 @@ router.post('/', auth, async (req, res) => {
     }
 
     // Look up the booking for additional metadata
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId).populate('class', 'googlePlaceId');
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
     }
@@ -41,9 +41,9 @@ router.post('/', auth, async (req, res) => {
 
     const feedback = await PostVisitFeedback.create({
       bookingId:           booking._id,
-      classId:             booking.classId,
+      classId:             booking.class?._id || null,
       userId:              req.user.id,
-      venuePlaceId:        booking.venuePlaceId,
+      venuePlaceId:        booking.class?.googlePlaceId || null,
       attended:            Boolean(attended),
       rating:              rating              ?? null,
       babyChangingAccurate: babyChangingAccurate ?? null,
@@ -63,13 +63,13 @@ router.post('/', auth, async (req, res) => {
     await Event.create({
       userId:    req.user.id,
       eventType: 'feedback_submitted',
-      classId:   booking.classId || null,
+      classId:   booking.class?._id || null,
       metadata:  { bookingId, attended: Boolean(attended), rating: rating ?? null },
     });
 
     // If 3+ feedbacks confirm venue data, upgrade confidence to 'parent_verified'
-    if (booking.venuePlaceId) {
-      await maybeUpgradeVenueConfidence(booking.venuePlaceId);
+    if (booking.class?.googlePlaceId) {
+      await maybeUpgradeVenueConfidence(booking.class.googlePlaceId);
     }
 
     return res.status(201).json({ success: true, feedbackId: feedback._id });
