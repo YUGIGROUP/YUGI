@@ -166,5 +166,7 @@ bookingSchema.index({ parent: 1, createdAt: -1 });
 bookingSchema.index({ class: 1, sessionDate: 1 });
 bookingSchema.index({ bookingNumber: 1 });
 bookingSchema.index({ paymentStatus: 1, status: 1 });
+bookingSchema.index({ stripePaymentIntentId: 1 }, { sparse: true });
+bookingSchema.index({ stripeChargeId: 1 }, { sparse: true });
 
 module.exports = mongoose.model('Booking', bookingSchema); 
