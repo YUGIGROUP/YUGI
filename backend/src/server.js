@@ -22,6 +22,7 @@ const savedVenuesRoutes = require('./routes/savedVenues');
 const feedbackRoutes = require('./routes/feedback');
 const supportRoutes = require('./routes/support');
 const stripeConnectRoutes = require('./routes/stripeConnect');
+const stripePaymentsRoutes = require('./routes/stripePayments');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -368,6 +369,7 @@ app.use('/api/saved-venues', savedVenuesRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/stripe/connect', stripeConnectRoutes);
+app.use('/api/parent-payments', stripePaymentsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -99,6 +99,14 @@ const userSchema = new mongoose.Schema({
     default: false
   },
 
+  // Stripe Customer fields (parent-specific)
+  stripeCustomerId: {
+    // Stripe Customer ID - null until parent adds their first payment method
+    // Used to attach saved cards on Stripe so YUGI never handles raw card data
+    type: String,
+    default: null
+  },
+
   // Parent-specific fields
   children: [{
     name: String,
