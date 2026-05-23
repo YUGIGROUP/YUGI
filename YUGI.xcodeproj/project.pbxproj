@@ -10,6 +10,8 @@
 		110BE6B72E5DD03C00731469 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 110BE6B62E5DD03C00731469 /* GoogleService-Info.plist */; };
 		110BE6B92E5DF62A00731469 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 110BE6B82E5DF62A00731469 /* FirebaseAuth */; };
 		110BE6BB2E5DF62A00731469 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 110BE6BA2E5DF62A00731469 /* FirebaseFirestore */; };
+		119010B62FC0FAE50008F45A /* StripePaymentSheet in Frameworks */ = {isa = PBXBuildFile; productRef = 119010B52FC0FAE50008F45A /* StripePaymentSheet */; };
+		119010B82FC0FAE50008F45A /* StripePaymentsUI in Frameworks */ = {isa = PBXBuildFile; productRef = 119010B72FC0FAE50008F45A /* StripePaymentsUI */; };
 		11E253532F9D5812000E34C3 /* BetterSafariView in Frameworks */ = {isa = PBXBuildFile; productRef = 11E253522F9D5812000E34C3 /* BetterSafariView */; };
 /* End PBXBuildFile section */
 
@@ -73,8 +75,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				119010B62FC0FAE50008F45A /* StripePaymentSheet in Frameworks */,
 				110BE6B92E5DF62A00731469 /* FirebaseAuth in Frameworks */,
 				110BE6BB2E5DF62A00731469 /* FirebaseFirestore in Frameworks */,
+				119010B82FC0FAE50008F45A /* StripePaymentsUI in Frameworks */,
 				11E253532F9D5812000E34C3 /* BetterSafariView in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -140,6 +144,8 @@
 				110BE6B82E5DF62A00731469 /* FirebaseAuth */,
 				110BE6BA2E5DF62A00731469 /* FirebaseFirestore */,
 				11E253522F9D5812000E34C3 /* BetterSafariView */,
+				119010B52FC0FAE50008F45A /* StripePaymentSheet */,
+				119010B72FC0FAE50008F45A /* StripePaymentsUI */,
 			);
 			productName = YUGI;
 			productReference = 1141A8AC2DE8F96F009F1376 /* YUGI.app */;
@@ -226,6 +232,7 @@
 			packageReferences = (
 				110BE6B52E5DCF5E00731469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				11E253512F9D5812000E34C3 /* XCRemoteSwiftPackageReference "BetterSafariView" */,
+				119010B42FC0FAE50008F45A /* XCRemoteSwiftPackageReference "stripe-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1141A8AD2DE8F96F009F1376 /* Products */;
@@ -609,6 +616,14 @@
 				minimumVersion = 12.1.0;
 			};
 		};
+		119010B42FC0FAE50008F45A /* XCRemoteSwiftPackageReference "stripe-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stripe/stripe-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 25.15.0;
+			};
+		};
 		11E253512F9D5812000E34C3 /* XCRemoteSwiftPackageReference "BetterSafariView" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/stleamist/BetterSafariView";
@@ -629,6 +644,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 110BE6B52E5DCF5E00731469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		119010B52FC0FAE50008F45A /* StripePaymentSheet */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 119010B42FC0FAE50008F45A /* XCRemoteSwiftPackageReference "stripe-ios" */;
+			productName = StripePaymentSheet;
+		};
+		119010B72FC0FAE50008F45A /* StripePaymentsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 119010B42FC0FAE50008F45A /* XCRemoteSwiftPackageReference "stripe-ios" */;
+			productName = StripePaymentsUI;
 		};
 		11E253522F9D5812000E34C3 /* BetterSafariView */ = {
 			isa = XCSwiftPackageProductDependency;
