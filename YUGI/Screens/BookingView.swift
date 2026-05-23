@@ -86,15 +86,14 @@ struct BookingView: View {
     private func setupDefaultPaymentMethod() {
         // Check if user has saved payment methods
         if !sharedPaymentService.paymentMethods.isEmpty {
-            // Find the default payment method
-            if let defaultCard = sharedPaymentService.paymentMethods.first(where: { $0.isDefault }) {
+            if let defaultCard = sharedPaymentService.defaultPaymentMethod() {
                 selectedPaymentMethod = .card
                 selectedSavedCard = defaultCard
-                print("🎯 BookingView: Auto-selected default card: \(defaultCard.lastFourDigits)")
+                print("🎯 BookingView: Auto-selected default card: \(defaultCard.last4)")
             } else if let firstCard = sharedPaymentService.paymentMethods.first {
                 selectedPaymentMethod = .card
                 selectedSavedCard = firstCard
-                print("🎯 BookingView: Auto-selected first available card: \(firstCard.lastFourDigits)")
+                print("🎯 BookingView: Auto-selected first available card: \(firstCard.last4)")
             }
         } else {
             // No saved cards, keep Apple Pay as default
@@ -373,6 +372,7 @@ struct BookingView: View {
             .onAppear {
                 setupBookingView()
                 EventTracker.shared.trackBookingStarted(classId: classItem.id)
+                Task { await sharedPaymentService.fetchPaymentMethods() }
             }
             .onReceive(apiService.$currentUser) { user in
                 handleUserDataChange(user)
@@ -760,34 +760,22 @@ struct SavedCardRow: View {
         Button(action: action) {
             HStack(spacing: 16) {
                 // Card icon
-                Image(systemName: card.type.iconName)
+                Image(systemName: card.displayType.iconName)
                     .font(.system(size: 20))
-                    .foregroundColor(card.type.color)
+                    .foregroundColor(card.displayType.color)
                     .frame(width: 32, height: 32)
                     .background(
                         Circle()
-                            .fill(card.type.color.opacity(0.1))
+                            .fill(card.displayType.color.opacity(0.1))
                     )
                 
                 // Card details
                 VStack(alignment: .leading, spacing: 2) {
-                    HStack {
-                        Text("•••• \(card.lastFourDigits)")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(Color.yugiMocha)
-                        
-                        if card.isDefault {
-                            Text("DEFAULT")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.yugiMocha)
-                                .cornerRadius(4)
-                        }
-                    }
+                    Text("•••• \(card.last4)")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color.yugiMocha)
                     
-                    Text("Expires \(String(format: "%02d/%d", card.expiryMonth, card.expiryYear))")
+                    Text("Expires \(String(format: "%02d/%d", card.expMonth, card.expYear))")
                         .font(.system(size: 13, weight: .regular))
                         .foregroundColor(Color.yugiMocha.opacity(0.7))
                 }
@@ -1088,7 +1076,6 @@ struct PaymentSheet: View {
             .sheet(isPresented: $showingAddPaymentMethod) {
                 AddPaymentMethodScreen { newCard in
                     newPaymentMethod = newCard
-                    sharedPaymentService.addPaymentMethod(newCard)
                 }
             }
         }
@@ -1145,7 +1132,7 @@ struct PaymentSummaryView: View {
                 
                 // Payment Method
                 if let selectedCard = selectedSavedCard {
-                    SummaryRow(title: "Payment Method", value: "\(selectedCard.type.displayName) •••• \(selectedCard.lastFourDigits)")
+                    SummaryRow(title: "Payment Method", value: "\(selectedCard.displayType.displayName) •••• \(selectedCard.last4)")
                 } else {
                     SummaryRow(title: "Payment Method", value: paymentMethod.displayName)
                 }
@@ -1439,7 +1426,7 @@ struct StandardPaymentButton: View {
         
         // Log payment method details
         if let selectedCard = selectedSavedCard {
-            print("🎯 StandardPaymentButton: Using saved card: \(selectedCard.type.displayName) ending in \(selectedCard.lastFourDigits)")
+            print("🎯 StandardPaymentButton: Using saved card: \(selectedCard.displayType.displayName) ending in \(selectedCard.last4)")
         } else {
             print("🎯 StandardPaymentButton: Using \(paymentMethod.displayName)")
         }

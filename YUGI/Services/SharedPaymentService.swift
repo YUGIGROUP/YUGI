@@ -1,90 +1,108 @@
 import SwiftUI
 import Combine
 
-// Shared payment service to persist payment methods across app instances
+/// Fetches and manages the parent's saved payment methods from Stripe via
+/// YUGI's backend. No card data is stored locally — all payment methods
+/// live on Stripe under the parent's Stripe Customer. This service caches
+/// the list in memory only.
+@MainActor
 class SharedPaymentService: ObservableObject {
     static let shared = SharedPaymentService()
-    
-    @Published var paymentMethods: [UserPaymentMethod] = []
-    
-    private let paymentMethodsKey = "persisted_payment_methods"
-    
     private init() {
-        loadPaymentMethods()
-        
-        // Start with empty payment methods for new users
-        // No initial mock data - users should add their own payment methods
+        clearLegacyUserDefaultsStorage()
     }
-    
-    func addPaymentMethod(_ paymentMethod: UserPaymentMethod) {
-        // If this is set as default, remove default from other cards
-        if paymentMethod.isDefault {
-            paymentMethods = paymentMethods.map { method in
-                var updatedMethod = method
-                updatedMethod = UserPaymentMethod(
-                    id: method.id,
-                    type: method.type,
-                    lastFourDigits: method.lastFourDigits,
-                    expiryMonth: method.expiryMonth,
-                    expiryYear: method.expiryYear,
-                    cardholderName: method.cardholderName,
-                    isDefault: false
-                )
-                return updatedMethod
+
+    @Published private(set) var paymentMethods: [UserPaymentMethod] = []
+    @Published private(set) var isLoading = false
+    @Published private(set) var lastError: String?
+
+    /// Fetches the parent's saved payment methods from the backend.
+    /// Updates the published `paymentMethods` array on success.
+    func fetchPaymentMethods() async {
+        isLoading = true
+        lastError = nil
+        defer { isLoading = false }
+
+        guard let url = URL(string: "\(APIConfig.baseURL)/parent-payments/payment-methods") else {
+            lastError = "Invalid URL"
+            return
+        }
+        guard let token = APIService.shared.authToken else {
+            lastError = "Not authenticated"
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                lastError = "Failed to fetch payment methods"
+                return
             }
-        }
-        
-        paymentMethods.append(paymentMethod)
-        savePaymentMethods()
-        print("💳 SharedPaymentService: Added new payment method \(paymentMethod.id)")
-        print("💳 SharedPaymentService: Total payment methods now: \(paymentMethods.count)")
-    }
-    
-    func deletePaymentMethod(_ paymentMethod: UserPaymentMethod) {
-        paymentMethods.removeAll { $0.id == paymentMethod.id }
-        
-        // If we deleted the default card and there are other cards, make the first one default
-        if paymentMethod.isDefault && !paymentMethods.isEmpty {
-            paymentMethods[0] = UserPaymentMethod(
-                id: paymentMethods[0].id,
-                type: paymentMethods[0].type,
-                lastFourDigits: paymentMethods[0].lastFourDigits,
-                expiryMonth: paymentMethods[0].expiryMonth,
-                expiryYear: paymentMethods[0].expiryYear,
-                cardholderName: paymentMethods[0].cardholderName,
-                isDefault: true
-            )
-        }
-        
-        savePaymentMethods()
-        print("💳 SharedPaymentService: Deleted payment method \(paymentMethod.id)")
-        print("💳 SharedPaymentService: Total payment methods now: \(paymentMethods.count)")
-    }
-    
-    func getDefaultPaymentMethod() -> UserPaymentMethod? {
-        return paymentMethods.first { $0.isDefault }
-    }
-    
-    func getPaymentMethods() -> [UserPaymentMethod] {
-        return paymentMethods
-    }
-    
-    func clearAllPaymentMethods() {
-        paymentMethods.removeAll()
-        savePaymentMethods()
-        print("💳 SharedPaymentService: Cleared all payment methods")
-    }
-    
-    private func savePaymentMethods() {
-        if let encoded = try? JSONEncoder().encode(paymentMethods) {
-            UserDefaults.standard.set(encoded, forKey: paymentMethodsKey)
+            let decoded = try JSONDecoder().decode(PaymentMethodsResponse.self, from: data)
+            paymentMethods = decoded.paymentMethods
+        } catch {
+            lastError = "Failed to fetch payment methods: \(error.localizedDescription)"
         }
     }
-    
-    private func loadPaymentMethods() {
-        if let data = UserDefaults.standard.data(forKey: paymentMethodsKey),
-           let decoded = try? JSONDecoder().decode([UserPaymentMethod].self, from: data) {
-            paymentMethods = decoded
+
+    /// Deletes a saved payment method by detaching it from the parent's
+    /// Stripe Customer. Refreshes the list on success.
+    func deletePaymentMethod(_ paymentMethod: UserPaymentMethod) async {
+        guard let url = URL(string: "\(APIConfig.baseURL)/parent-payments/payment-methods/\(paymentMethod.id)") else {
+            lastError = "Invalid URL"
+            return
+        }
+        guard let token = APIService.shared.authToken else {
+            lastError = "Not authenticated"
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                lastError = "Failed to delete payment method"
+                return
+            }
+            await fetchPaymentMethods()
+        } catch {
+            lastError = "Failed to delete payment method: \(error.localizedDescription)"
         }
     }
-} 
+
+    /// Returns the first saved payment method (used as the implicit default).
+    /// Stripe handles "default payment method" at the Customer level but for
+    /// our UI's purposes the first card in the array is treated as default.
+    func defaultPaymentMethod() -> UserPaymentMethod? {
+        paymentMethods.first
+    }
+
+    /// Clears the in-memory cache (e.g. on sign-out).
+    func clearPaymentMethods() {
+        paymentMethods = []
+    }
+
+    // MARK: - Legacy cleanup
+
+    /// One-time cleanup of any placeholder cards stored in UserDefaults under
+    /// the old architecture. Real card data was never stored locally (only
+    /// display data and a UUID), so there's no sensitive data to remove —
+    /// this just clears the now-obsolete storage key.
+    private func clearLegacyUserDefaultsStorage() {
+        let legacyKey = "persisted_payment_methods"
+        if UserDefaults.standard.object(forKey: legacyKey) != nil {
+            UserDefaults.standard.removeObject(forKey: legacyKey)
+            print("💳 SharedPaymentService: Cleared legacy UserDefaults payment methods")
+        }
+    }
+}
+
+private struct PaymentMethodsResponse: Codable {
+    let paymentMethods: [UserPaymentMethod]
+}

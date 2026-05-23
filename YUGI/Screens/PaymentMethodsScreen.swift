@@ -63,10 +63,10 @@ struct PaymentMethodsScreen: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { showHeader  = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) { showContent = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.42) { showFooter  = true }
+            Task { await sharedPaymentService.fetchPaymentMethods() }
         }
         .sheet(isPresented: $showingAddPaymentMethod) {
             AddPaymentMethodScreen { newPaymentMethod in
-                addNewPaymentMethod(newPaymentMethod)
             }
         }
     }
@@ -121,7 +121,6 @@ struct PaymentMethodsScreen: View {
                 ForEach(sharedPaymentService.paymentMethods) { paymentMethod in
                     UserPaymentMethodRow(
                         paymentMethod: paymentMethod,
-                        onSetDefault: { setDefaultPaymentMethod(paymentMethod) },
                         onDelete: { deletePaymentMethod(paymentMethod) }
                     )
                 }
@@ -144,28 +143,12 @@ struct PaymentMethodsScreen: View {
         }
     }
 
-    // MARK: - Logic (preserved)
-
-    private func setDefaultPaymentMethod(_ paymentMethod: UserPaymentMethod) {
-        let updatedPaymentMethod = UserPaymentMethod(
-            id: paymentMethod.id,
-            type: paymentMethod.type,
-            lastFourDigits: paymentMethod.lastFourDigits,
-            expiryMonth: paymentMethod.expiryMonth,
-            expiryYear: paymentMethod.expiryYear,
-            cardholderName: paymentMethod.cardholderName,
-            isDefault: true
-        )
-        sharedPaymentService.deletePaymentMethod(paymentMethod)
-        sharedPaymentService.addPaymentMethod(updatedPaymentMethod)
-    }
+    // MARK: - Logic
 
     private func deletePaymentMethod(_ paymentMethod: UserPaymentMethod) {
-        sharedPaymentService.deletePaymentMethod(paymentMethod)
-    }
-
-    private func addNewPaymentMethod(_ newPaymentMethod: UserPaymentMethod) {
-        sharedPaymentService.addPaymentMethod(newPaymentMethod)
+        Task {
+            await sharedPaymentService.deletePaymentMethod(paymentMethod)
+        }
     }
 }
 
@@ -173,7 +156,6 @@ struct PaymentMethodsScreen: View {
 
 struct UserPaymentMethodRow: View {
     let paymentMethod: UserPaymentMethod
-    let onSetDefault: () -> Void
     let onDelete: () -> Void
     @State private var showingDeleteAlert = false
 
@@ -189,30 +171,17 @@ struct UserPaymentMethodRow: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("\(paymentMethod.type.displayName) ••\(paymentMethod.lastFourDigits)")
+                Text("\(paymentMethod.displayType.displayName) ••\(paymentMethod.last4)")
                     .font(.custom("Raleway-Medium", size: 15))
                     .foregroundColor(Color.yugiSoftBlack)
-                Text("Expires \(String(format: "%02d/%02d", paymentMethod.expiryMonth, paymentMethod.expiryYear % 100))")
+                Text("Expires \(String(format: "%02d/%02d", paymentMethod.expMonth, paymentMethod.expYear % 100))")
                     .font(.custom("Raleway-Regular", size: 12))
                     .foregroundColor(Color.yugiBodyText)
             }
 
             Spacer()
 
-            if paymentMethod.isDefault {
-                Text("DEFAULT")
-                    .font(.custom("Raleway-Medium", size: 11))
-                    .foregroundColor(Color.yugiDeepSage)
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 10)
-                    .background(Color.yugiSage)
-                    .clipShape(Capsule())
-            }
-
             Menu {
-                if !paymentMethod.isDefault {
-                    Button("Set as Default") { onSetDefault() }
-                }
                 Button("Delete", role: .destructive) { showingDeleteAlert = true }
             } label: {
                 Image(systemName: "ellipsis")

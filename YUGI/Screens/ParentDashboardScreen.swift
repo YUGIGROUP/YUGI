@@ -912,7 +912,7 @@ private extension ParentDashboardScreen {
                             sharedBookingService.bookings.removeAll()
                             sharedBookingService.enhancedBookings.removeAll()
                             notificationService.clearAllNotifications()
-                            SharedPaymentService.shared.paymentMethods.removeAll()
+                            SharedPaymentService.shared.clearPaymentMethods()
                             biometricService.clearSavedCredentials()
                             biometricService.setRememberMeEnabled(false)
                             biometricService.setBiometricEnabled(false)

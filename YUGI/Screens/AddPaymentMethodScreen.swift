@@ -294,13 +294,11 @@ struct AddPaymentMethodScreen: View {
             let cleanedCardNumber = cardNumber.filter { $0.isNumber }
             let lastFourDigits    = String(cleanedCardNumber.suffix(4))
             let newPaymentMethod  = UserPaymentMethod(
-                id:              UUID().uuidString,
-                type:            detectedCardType ?? .visa,
-                lastFourDigits:  lastFourDigits,
-                expiryMonth:     expiryMonth,
-                expiryYear:      expiryYear,
-                cardholderName:  cardholderName.trimmingCharacters(in: .whitespacesAndNewlines),
-                isDefault:       isDefault
+                id:       UUID().uuidString,
+                brand:    (detectedCardType ?? .visa).rawValue,
+                last4:    lastFourDigits,
+                expMonth: expiryMonth,
+                expYear:  expiryYear
             )
             onPaymentMethodAdded(newPaymentMethod)
             dismiss()
