@@ -217,8 +217,8 @@ struct BookingView: View {
             selectedChildren: selectedChildren,
             requirements: requirements,
             totalPrice: totalPrice,
-            paymentMethod: selectedPaymentMethod,
-            selectedSavedCard: selectedSavedCard,
+            paymentMethod: $selectedPaymentMethod,
+            selectedSavedCard: $selectedSavedCard,
             onSuccess: handlePaymentSuccess,
             onError: handlePaymentError
         )
@@ -996,8 +996,8 @@ struct PaymentSheet: View {
     let selectedChildren: [Child]
     let requirements: String
     let totalPrice: Decimal
-    let paymentMethod: PaymentMethod
-    let selectedSavedCard: UserPaymentMethod?
+    @Binding var paymentMethod: PaymentMethod
+    @Binding var selectedSavedCard: UserPaymentMethod?
     let onSuccess: (EnhancedBooking) -> Void
     let onError: (Error) -> Void
     
@@ -1074,8 +1074,15 @@ struct PaymentSheet: View {
                 }
             }
             .sheet(isPresented: $showingAddPaymentMethod) {
-                AddPaymentMethodScreen { newCard in
-                    newPaymentMethod = newCard
+                AddPaymentMethodScreen {
+                    Task {
+                        await sharedPaymentService.fetchPaymentMethods()
+                        if let newest = sharedPaymentService.paymentMethods.last {
+                            newPaymentMethod = newest
+                            selectedSavedCard = newest
+                            paymentMethod = .card
+                        }
+                    }
                 }
             }
         }

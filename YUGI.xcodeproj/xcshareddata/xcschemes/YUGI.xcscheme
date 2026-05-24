@@ -24,7 +24,7 @@
       </BuildActionEntries>
    </BuildAction>
    <TestAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
@@ -77,6 +77,11 @@
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "OPENAI_API_KEYsk-proj-0rl-Wybtya-GJ7O0wN7KfBUsmLKqQev6i6J1BRskpwfFNKwKimzTbt3SoW4CetxpoEE1rd3n99T3BlbkFJcH2qwECh_mOdMBV5KOXI4D1HrwfBm3T72FCAuT525vsS0uQ0uKhZ-SYWaLjYf84f7IEXugoH8A"
+            value = ""
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "STRIPE_PUBLISHABLE_KEY"
             value = ""
             isEnabled = "YES">
          </EnvironmentVariable>

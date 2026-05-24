@@ -1,5 +1,6 @@
 import SwiftUI
 import Firebase
+import StripePaymentSheet
 
 struct VenueFeedbackContext: Identifiable {
     let id: String
@@ -26,6 +27,11 @@ struct YUGIApp: App {
         FirebaseApp.configure()
         _ = LocationService.shared
         _ = EventTracker.shared
+
+        // Stripe iOS SDK setup
+        // TODO: Eva to paste the test publishable key here (pk_test_...)
+        StripeAPI.defaultPublishableKey = ProcessInfo.processInfo.environment["STRIPE_PUBLISHABLE_KEY"]
+            ?? ""
     }
 
     var body: some Scene {

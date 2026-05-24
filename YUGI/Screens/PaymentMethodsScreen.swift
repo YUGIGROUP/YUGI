@@ -66,7 +66,8 @@ struct PaymentMethodsScreen: View {
             Task { await sharedPaymentService.fetchPaymentMethods() }
         }
         .sheet(isPresented: $showingAddPaymentMethod) {
-            AddPaymentMethodScreen { newPaymentMethod in
+            AddPaymentMethodScreen {
+                Task { await sharedPaymentService.fetchPaymentMethods() }
             }
         }
     }
