@@ -116,4 +116,39 @@ router.delete('/payment-methods/:id', [protect], async (req, res) => {
   }
 });
 
+// POST /api/parent-payments/ephemeral-key
+// Returns a short-lived Stripe ephemeral key that authorises the iOS
+// PaymentSheet to act on behalf of the parent's Stripe Customer. Required
+// before PaymentSheet can attach a newly added card to the customer.
+//
+// Body: { stripeVersion: string } — the Stripe API version the iOS SDK
+// is built against. Must be passed verbatim to Stripe; mismatched
+// versions cause "invalid_request_error" from Stripe.
+router.post('/ephemeral-key', [protect], async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const customerId = await getOrCreateStripeCustomer(user);
+
+    const { stripeVersion } = req.body || {};
+    if (!stripeVersion) {
+      return res.status(400).json({ message: 'stripeVersion is required' });
+    }
+
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: customerId },
+      { apiVersion: stripeVersion }
+    );
+
+    res.json({
+      ephemeralKey: ephemeralKey.secret,
+      customerId,
+    });
+  } catch (error) {
+    console.error('[stripePayments/ephemeral-key] failed:', error.message);
+    res.status(500).json({ message: 'Failed to create ephemeral key', error: error.message });
+  }
+});
+
 module.exports = router;
