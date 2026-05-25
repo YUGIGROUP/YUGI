@@ -3,6 +3,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { body, validationResult } = require('express-validator');
 const Booking = require('../models/Booking');
 const Class = require('../models/Class');
+const User = require('../models/User');
 const { protect, requireUserType } = require('../middleware/auth');
 const emailService = require('../services/emailService');
 
@@ -29,98 +30,138 @@ router.use((req, res, next) => {
 });
 
 // @route   POST /api/payments/create-payment-intent
-// @desc    Create a payment intent for a booking
+// @desc    Create a payment intent and charge the parent's saved card immediately
 // @access  Private (parents and providers)
 router.post('/create-payment-intent', [
   protect,
   requireUserType(['parent', 'provider']),
-  body('bookingId').isMongoId()
+  body('bookingId').isMongoId(),
+  body('paymentMethodId').isString().matches(/^pm_/).withMessage('paymentMethodId must be a Stripe payment method ID')
 ], async (req, res) => {
-  console.log('🔵🔵🔵 CREATE PAYMENT INTENT ROUTE HANDLER EXECUTED 🔵🔵🔵');
-  console.log('🔵 CREATE PAYMENT INTENT ROUTE HIT');
-  console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
-  console.log('🔵 User:', req.user ? { id: req.user.id, type: req.user.userType } : 'NO USER');
-  
-  try {
-    console.log('💳 Create payment intent request received:', {
-      bookingId: req.body.bookingId,
-      userId: req.user.id
-    });
+  console.log('💳 Create payment intent (real charge) - user:', req.user.id, 'booking:', req.body.bookingId);
 
+  try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.error('❌ Validation errors:', errors.array());
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: errors.array() 
-      });
+      return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
     }
 
-    const { bookingId } = req.body;
+    const { bookingId, paymentMethodId } = req.body;
 
-    // Get booking
-    console.log('💳 Fetching booking:', bookingId);
-    const booking = await Booking.findById(bookingId)
-      .populate('class');
-
+    // Get booking and verify ownership
+    const booking = await Booking.findById(bookingId).populate('class');
     if (!booking) {
       console.error('❌ Booking not found:', bookingId);
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    // Check ownership
-    if (booking.parent._id.toString() !== req.user.id) {
+    if (booking.parent._id ? booking.parent._id.toString() !== req.user.id : booking.parent.toString() !== req.user.id) {
       console.error('❌ Unauthorized: User', req.user.id, 'does not own booking', bookingId);
       return res.status(403).json({ message: 'Not authorized to pay for this booking' });
     }
 
-    // Check if already paid
-    if (booking.paymentStatus === 'paid') {
-      console.warn('⚠️ Booking already paid:', booking.bookingNumber);
+    if (booking.paymentStatus === 'paid' || booking.paymentStatus === 'held') {
+      console.warn('⚠️ Booking already paid:', booking.bookingNumber, 'status:', booking.paymentStatus);
       return res.status(400).json({ message: 'Booking is already paid' });
     }
 
-    // Create payment intent
+    // Get the parent's User record so we have stripeCustomerId
+    const parentUser = await User.findById(req.user.id);
+    if (!parentUser || !parentUser.stripeCustomerId) {
+      console.error('❌ Parent has no Stripe customer ID:', req.user.id);
+      return res.status(400).json({ message: 'No saved payment customer on file. Please add a card first.' });
+    }
+
+    // Create + confirm PaymentIntent in one call. Stripe will either succeed
+    // immediately, require 3DS authentication, or fail.
     const amountInCents = Math.round(booking.totalAmount * 100);
-    console.log('💳 Creating Stripe payment intent:', {
-      amount: amountInCents,
-      currency: 'gbp',
-      bookingNumber: booking.bookingNumber
-    });
+    console.log('💳 Charging', amountInCents, 'pence to', paymentMethodId, 'customer', parentUser.stripeCustomerId);
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: 'gbp',
-      payment_method_types: ['card'], // Only allow card payments (no redirect-based methods like Klarna, Link, etc.)
-      metadata: {
-        bookingId: booking._id.toString(),
-        classId: booking.class._id.toString(),
-        parentId: req.user.id
-      },
-      description: `YUGI Booking: ${booking.class.name} - ${booking.bookingNumber}`
-    });
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: 'gbp',
+        customer: parentUser.stripeCustomerId,
+        payment_method: paymentMethodId,
+        confirm: true,
+        off_session: false,
+        payment_method_types: ['card'],
+        metadata: {
+          bookingId: booking._id.toString(),
+          classId: booking.class._id.toString(),
+          parentId: req.user.id,
+          bookingNumber: booking.bookingNumber
+        },
+        description: `YUGI Booking: ${booking.class.name} - ${booking.bookingNumber}`
+      });
+    } catch (stripeError) {
+      console.error('❌ Stripe charge failed:', stripeError.message);
+      if (stripeError.payment_intent && stripeError.payment_intent.id) {
+        booking.stripePaymentIntentId = stripeError.payment_intent.id;
+        booking.paymentStatus = 'failed';
+        await booking.save();
+      }
+      return res.status(400).json({
+        message: stripeError.message || 'Payment failed',
+        code: stripeError.code,
+        decline_code: stripeError.decline_code,
+        type: stripeError.type
+      });
+    }
 
-    console.log('✅ Payment intent created:', {
-      id: paymentIntent.id,
-      status: paymentIntent.status,
-      amount: paymentIntent.amount
-    });
-
-    // Update booking with payment intent ID
+    // Update booking with PI/charge info regardless of next step
     booking.stripePaymentIntentId = paymentIntent.id;
-    await booking.save();
+    if (paymentIntent.latest_charge) {
+      booking.stripeChargeId = paymentIntent.latest_charge;
+    }
 
-    res.json({
-      success: true,
-      clientSecret: paymentIntent.client_secret,
+    if (paymentIntent.status === 'succeeded') {
+      // Card charged immediately. Mark paid.
+      // TODO Session 5: when class-completion + funds-release flow is built,
+      // change this to 'held' instead of 'paid'. The /refund endpoint will
+      // need to accept both 'paid' and 'held' statuses. See T&Cs §2.2.
+      booking.paymentStatus = 'paid';
+      booking.paymentDate = new Date();
+      booking.status = 'confirmed';
+      await booking.save();
+      console.log('✅ Payment succeeded:', paymentIntent.id);
+      return res.json({
+        success: true,
+        status: 'succeeded',
+        paymentIntentId: paymentIntent.id
+      });
+    }
+
+    if (paymentIntent.status === 'requires_action' || paymentIntent.status === 'requires_source_action') {
+      // Card needs 3D Secure / SCA. Return clientSecret so iOS can present
+      // Stripe SDK's handleNextAction flow.
+      await booking.save();
+      console.log('🔐 3DS required for PI:', paymentIntent.id);
+      return res.json({
+        success: false,
+        status: 'requires_action',
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id
+      });
+    }
+
+    // Any other status is unexpected (requires_payment_method, processing, etc.)
+    booking.paymentStatus = 'failed';
+    await booking.save();
+    console.error('❌ Unexpected PI status:', paymentIntent.status);
+    return res.status(400).json({
+      message: 'Payment could not be completed',
+      status: paymentIntent.status,
       paymentIntentId: paymentIntent.id
     });
 
   } catch (error) {
-    console.error('❌ Create payment intent error:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      message: 'Server error creating payment intent',
+    console.error('❌ create-payment-intent error:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({
+      message: 'Server error creating payment',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -197,94 +238,13 @@ router.post('/confirm-payment', [
       });
     }
 
-    // If payment intent is not succeeded, confirm it with a test payment method
     if (paymentIntent.status !== 'succeeded') {
-      console.log('💳 Payment intent not succeeded, confirming with test card...');
-      console.log('💳 Current payment intent status:', paymentIntent.status);
-      
-      try {
-        // Check if we're in test mode (test keys start with sk_test_)
-        const stripeKey = process.env.STRIPE_SECRET_KEY;
-        const isTestMode = stripeKey && stripeKey.startsWith('sk_test_');
-        console.log('💳 Stripe mode:', isTestMode ? 'TEST' : 'LIVE');
-        console.log('💳 Stripe key prefix:', stripeKey ? stripeKey.substring(0, 12) + '...' : 'NOT SET');
-        console.log('💳 Stripe key length:', stripeKey ? stripeKey.length : 0);
-        
-        if (!isTestMode) {
-          console.warn('⚠️ Using LIVE Stripe keys - cannot use test card numbers');
-          return res.status(400).json({ 
-            message: 'Cannot confirm payment with test card in live mode. Please use Stripe test keys for testing.' 
-          });
-        }
-        
-        // Try using Stripe test payment method token first
-        // If that doesn't work, we'll need to use Stripe SDK on the frontend
-        console.log('💳 Attempting to confirm with Stripe test payment method token...');
-        
-        try {
-          // First, try to attach a test payment method token
-          // Note: These tokens are typically created by Stripe.js, but we can try using a known test token
-          paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
-            payment_method: 'pm_card_visa' // Stripe test token for Visa
-          });
-        } catch (tokenError) {
-          console.log('⚠️ Test token approach failed, trying payment_method_data...');
-          console.log('⚠️ Error:', tokenError.message);
-          
-          // Fallback: Try payment_method_data (requires "Test mode card data" enabled)
-          paymentIntent = await stripe.paymentIntents.confirm(paymentIntentId, {
-            payment_method_data: {
-              type: 'card',
-              card: {
-                number: '4242424242424242',
-                exp_month: 12,
-                exp_year: new Date().getFullYear() + 1,
-                cvc: '123'
-              }
-            }
-          });
-        }
-        
-        console.log('💳 Payment intent confirmed, new status:', paymentIntent.status);
-        if (paymentIntent.last_payment_error) {
-          console.error('❌ Payment error:', paymentIntent.last_payment_error);
-        }
-        
-        if (paymentIntent.status !== 'succeeded') {
-          console.error('❌ Payment intent confirmation failed. Status:', paymentIntent.status);
-          console.error('❌ Payment intent details:', {
-            status: paymentIntent.status,
-            last_payment_error: paymentIntent.last_payment_error,
-            next_action: paymentIntent.next_action,
-            charges: paymentIntent.charges?.data
-          });
-          const errorMessage = paymentIntent.last_payment_error 
-            ? paymentIntent.last_payment_error.message 
-            : `Payment not completed. Status: ${paymentIntent.status}`;
-          console.error('❌❌❌ RETURNING 400 ERROR ❌❌❌');
-          console.error('❌ Error message:', errorMessage);
-          console.error('❌ Payment intent status:', paymentIntent.status);
-          console.error('❌ Last payment error:', JSON.stringify(paymentIntent.last_payment_error, null, 2));
-          return res.status(400).json({ 
-            message: errorMessage,
-            status: paymentIntent.status,
-            error: paymentIntent.last_payment_error,
-            paymentIntentId: paymentIntentId
-          });
-        }
-      } catch (confirmError) {
-        console.error('❌ Error confirming payment intent:', confirmError);
-        console.error('❌ Error details:', {
-          message: confirmError.message,
-          type: confirmError.type,
-          code: confirmError.code,
-          decline_code: confirmError.decline_code,
-          stack: confirmError.stack
-        });
-        return res.status(400).json({ 
-          message: `Payment confirmation failed: ${confirmError.message}` 
-        });
-      }
+      console.error('❌ Cannot confirm: PI not succeeded. Status:', paymentIntent.status);
+      return res.status(400).json({
+        message: 'Payment has not completed yet. Please complete payment before confirming.',
+        status: paymentIntent.status,
+        paymentIntentId: paymentIntent.id
+      });
     }
 
     // Update booking payment status
