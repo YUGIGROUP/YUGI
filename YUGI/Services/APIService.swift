@@ -1517,14 +1517,16 @@ class APIService: ObservableObject, @unchecked Sendable {
     }
     
     // MARK: - Payments
-    func createPaymentIntent(bookingId: String) -> AnyPublisher<PaymentIntentResponse, APIError> {
-        print("💳 APIService: Creating payment intent for booking: \(bookingId)")
-        let body = ["bookingId": bookingId]
+    func createPaymentIntent(bookingId: String, paymentMethodId: String) -> AnyPublisher<PaymentIntentResponse, APIError> {
+        print("💳 APIService: Creating payment intent for booking: \(bookingId) with payment method: \(paymentMethodId)")
+        let body: [String: String] = [
+            "bookingId": bookingId,
+            "paymentMethodId": paymentMethodId
+        ]
         return request(endpoint: "/payments/create-payment-intent", method: .POST, body: body)
             .handleEvents(receiveOutput: { response in
-                print("✅ APIService: Payment intent created successfully")
+                print("✅ APIService: Payment intent charge complete — status: \(response.status)")
                 print("💳 APIService: Payment intent ID: \(response.paymentIntentId)")
-                print("💳 APIService: Client secret: \(response.clientSecret.prefix(20))...")
             }, receiveCompletion: { completion in
                 if case .failure(let error) = completion {
                     print("❌ APIService: Failed to create payment intent: \(error)")
@@ -2322,8 +2324,14 @@ struct BookingResponse: Codable {
 }
 
 struct PaymentIntentResponse: Codable {
-    let clientSecret: String
+    /// True when status == "succeeded". False when 3DS is required.
+    let success: Bool
+    /// "succeeded" or "requires_action"
+    let status: String
+    /// Stripe PaymentIntent ID (always present)
     let paymentIntentId: String
+    /// Only present when status == "requires_action" — needed for Stripe SDK 3DS handling
+    let clientSecret: String?
 }
 
 struct ProviderDashboardResponse: Codable {

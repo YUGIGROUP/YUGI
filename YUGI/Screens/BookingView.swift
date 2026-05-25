@@ -1,6 +1,8 @@
 import SwiftUI
 import PassKit
 import Combine
+import StripePayments
+import StripePaymentSheet
 
 struct BookingView: View {
     let classItem: Class
@@ -1303,7 +1305,14 @@ struct ApplePayButton: View {
             return
         }
         
-        print("🎯 ApplePayButton: Using Apple Pay")
+        guard let selectedCard = selectedSavedCard else {
+            print("❌ ApplePayButton: No saved card selected")
+            isProcessing = false
+            onError(NSError(domain: "BookingError", code: 400, userInfo: [NSLocalizedDescriptionKey: "Please select a saved card to pay with."]))
+            return
+        }
+        
+        print("🎯 ApplePayButton: Using saved card: \(selectedCard.displayType.displayName) ending in \(selectedCard.last4)")
         print("💳 ApplePayButton: Booking for \(selectedChildren.count) child(ren): \(selectedChildren.map { $0.name }.joined(separator: ", "))")
         
         let sessionDate = Date().addingTimeInterval(86400)
@@ -1330,19 +1339,29 @@ struct ApplePayButton: View {
             specialRequests: requirements.isEmpty ? nil : requirements
         )
         .flatMap { (bookingResponse, mongoObjectId) -> AnyPublisher<(PaymentIntentResponse, String), APIError> in
-            print("💳 ApplePayButton: Booking created with MongoDB ObjectId: \(mongoObjectId)")
-            return apiService.createPaymentIntent(bookingId: mongoObjectId)
+            print("💳 ApplePayButton: Booking created. Charging card \(selectedCard.last4)...")
+            return apiService.createPaymentIntent(bookingId: mongoObjectId, paymentMethodId: selectedCard.id)
                 .map { paymentIntentResponse -> (PaymentIntentResponse, String) in
-                    print("💳 ApplePayButton: Payment intent created: \(paymentIntentResponse.paymentIntentId)")
+                    print("💳 ApplePayButton: Charge attempt complete. Status: \(paymentIntentResponse.status)")
                     return (paymentIntentResponse, mongoObjectId)
                 }
                 .eraseToAnyPublisher()
         }
         .flatMap { (paymentIntentResponse, bookingId) -> AnyPublisher<BookingResponse, APIError> in
-            return apiService.confirmPayment(
-                paymentIntentId: paymentIntentResponse.paymentIntentId,
-                bookingId: bookingId
-            )
+            if paymentIntentResponse.status == "succeeded" {
+                print("✅ ApplePayButton: Payment succeeded without 3DS")
+                return apiService.confirmPayment(
+                    paymentIntentId: paymentIntentResponse.paymentIntentId,
+                    bookingId: bookingId
+                )
+            } else if paymentIntentResponse.status == "requires_action",
+                      let clientSecret = paymentIntentResponse.clientSecret {
+                print("🔐 ApplePayButton: 3DS required, presenting challenge")
+                return handle3DSChallenge(clientSecret: clientSecret, paymentIntentId: paymentIntentResponse.paymentIntentId, bookingId: bookingId)
+            } else {
+                let error = APIError.networkError(NSError(domain: "PaymentError", code: 500, userInfo: [NSLocalizedDescriptionKey: "Unexpected payment status: \(paymentIntentResponse.status)"]))
+                return Fail(error: error).eraseToAnyPublisher()
+            }
         }
         .receive(on: DispatchQueue.main)
         .sink(
@@ -1361,6 +1380,54 @@ struct ApplePayButton: View {
             }
         )
         .store(in: &cancellables)
+    }
+    
+    private func handle3DSChallenge(
+        clientSecret: String,
+        paymentIntentId: String,
+        bookingId: String
+    ) -> AnyPublisher<BookingResponse, APIError> {
+        Future<BookingResponse, APIError> { promise in
+            let paymentHandler = STPPaymentHandler.shared()
+            let authContext = WindowAuthenticationContext()
+            paymentHandler.handleNextAction(
+                forPayment: clientSecret,
+                with: authContext,
+                returnURL: "yugi://stripe-return"
+            ) { status, paymentIntent, error in
+                switch status {
+                case .succeeded:
+                    print("✅ 3DS challenge succeeded for \(paymentIntentId)")
+                    APIService.shared.confirmPayment(
+                        paymentIntentId: paymentIntentId,
+                        bookingId: bookingId
+                    )
+                    .sink(
+                        receiveCompletion: { completion in
+                            if case .failure(let err) = completion {
+                                promise(.failure(err))
+                            }
+                        },
+                        receiveValue: { bookingResponse in
+                            promise(.success(bookingResponse))
+                        }
+                    )
+                    .store(in: &CancellableStore.shared.cancellables)
+
+                case .failed:
+                    print("❌ 3DS challenge failed: \(error?.localizedDescription ?? "unknown")")
+                    promise(.failure(.networkError(error ?? NSError(domain: "Stripe3DS", code: 0))))
+
+                case .canceled:
+                    print("⚠️ 3DS challenge cancelled by user")
+                    promise(.failure(.networkError(NSError(domain: "Stripe3DS", code: -1, userInfo: [NSLocalizedDescriptionKey: "Payment authentication was cancelled."]))))
+
+                @unknown default:
+                    promise(.failure(.networkError(NSError(domain: "Stripe3DS", code: -2))))
+                }
+            }
+        }
+        .eraseToAnyPublisher()
     }
 }
 
@@ -1431,12 +1498,14 @@ struct StandardPaymentButton: View {
             return
         }
         
-        // Log payment method details
-        if let selectedCard = selectedSavedCard {
-            print("🎯 StandardPaymentButton: Using saved card: \(selectedCard.displayType.displayName) ending in \(selectedCard.last4)")
-        } else {
-            print("🎯 StandardPaymentButton: Using \(paymentMethod.displayName)")
+        guard let selectedCard = selectedSavedCard else {
+            print("❌ StandardPaymentButton: No saved card selected")
+            isProcessing = false
+            onError(NSError(domain: "BookingError", code: 400, userInfo: [NSLocalizedDescriptionKey: "Please select a saved card to pay with."]))
+            return
         }
+        
+        print("🎯 StandardPaymentButton: Using saved card: \(selectedCard.displayType.displayName) ending in \(selectedCard.last4)")
         
         print("💳 StandardPaymentButton: Booking for \(selectedChildren.count) child(ren): \(selectedChildren.map { $0.name }.joined(separator: ", "))")
         
@@ -1467,25 +1536,29 @@ struct StandardPaymentButton: View {
             specialRequests: requirements.isEmpty ? nil : requirements
         )
         .flatMap { (bookingResponse, mongoObjectId) -> AnyPublisher<(PaymentIntentResponse, String), APIError> in
-            // Use the MongoDB ObjectId extracted from raw JSON
-            print("💳 StandardPaymentButton: Booking created with MongoDB ObjectId: \(mongoObjectId)")
-            
-            // Step 2: Create payment intent
-            return apiService.createPaymentIntent(bookingId: mongoObjectId)
+            print("💳 StandardPaymentButton: Booking created. Charging card \(selectedCard.last4)...")
+            return apiService.createPaymentIntent(bookingId: mongoObjectId, paymentMethodId: selectedCard.id)
                 .map { paymentIntentResponse -> (PaymentIntentResponse, String) in
-                    print("💳 StandardPaymentButton: Payment intent created: \(paymentIntentResponse.paymentIntentId)")
+                    print("💳 StandardPaymentButton: Charge attempt complete. Status: \(paymentIntentResponse.status)")
                     return (paymentIntentResponse, mongoObjectId)
                 }
                 .eraseToAnyPublisher()
         }
         .flatMap { (paymentIntentResponse, bookingId) -> AnyPublisher<BookingResponse, APIError> in
-            // Step 3: Confirm payment (this will process the payment and trigger webhooks)
-            // For now, we're using the backend to confirm since Stripe SDK isn't integrated
-            // In production, you'd use Stripe SDK here to collect card details
-            return apiService.confirmPayment(
-                paymentIntentId: paymentIntentResponse.paymentIntentId,
-                bookingId: bookingId
-            )
+            if paymentIntentResponse.status == "succeeded" {
+                print("✅ StandardPaymentButton: Payment succeeded without 3DS")
+                return apiService.confirmPayment(
+                    paymentIntentId: paymentIntentResponse.paymentIntentId,
+                    bookingId: bookingId
+                )
+            } else if paymentIntentResponse.status == "requires_action",
+                      let clientSecret = paymentIntentResponse.clientSecret {
+                print("🔐 StandardPaymentButton: 3DS required, presenting challenge")
+                return handle3DSChallenge(clientSecret: clientSecret, paymentIntentId: paymentIntentResponse.paymentIntentId, bookingId: bookingId)
+            } else {
+                let error = APIError.networkError(NSError(domain: "PaymentError", code: 500, userInfo: [NSLocalizedDescriptionKey: "Unexpected payment status: \(paymentIntentResponse.status)"]))
+                return Fail(error: error).eraseToAnyPublisher()
+            }
         }
         .receive(on: DispatchQueue.main)
         .sink(
@@ -1505,6 +1578,78 @@ struct StandardPaymentButton: View {
         )
         .store(in: &cancellables)
     }
+    
+    /// Presents Stripe's 3D Secure challenge UI when the parent's card requires SCA.
+    /// After successful authentication, calls confirmPayment to sync the booking record.
+    private func handle3DSChallenge(
+        clientSecret: String,
+        paymentIntentId: String,
+        bookingId: String
+    ) -> AnyPublisher<BookingResponse, APIError> {
+        Future<BookingResponse, APIError> { promise in
+            let paymentHandler = STPPaymentHandler.shared()
+            let authContext = WindowAuthenticationContext()
+            paymentHandler.handleNextAction(
+                forPayment: clientSecret,
+                with: authContext,
+                returnURL: "yugi://stripe-return"
+            ) { status, paymentIntent, error in
+                switch status {
+                case .succeeded:
+                    print("✅ 3DS challenge succeeded for \(paymentIntentId)")
+                    APIService.shared.confirmPayment(
+                        paymentIntentId: paymentIntentId,
+                        bookingId: bookingId
+                    )
+                    .sink(
+                        receiveCompletion: { completion in
+                            if case .failure(let err) = completion {
+                                promise(.failure(err))
+                            }
+                        },
+                        receiveValue: { bookingResponse in
+                            promise(.success(bookingResponse))
+                        }
+                    )
+                    .store(in: &CancellableStore.shared.cancellables)
+
+                case .failed:
+                    print("❌ 3DS challenge failed: \(error?.localizedDescription ?? "unknown")")
+                    promise(.failure(.networkError(error ?? NSError(domain: "Stripe3DS", code: 0))))
+
+                case .canceled:
+                    print("⚠️ 3DS challenge cancelled by user")
+                    promise(.failure(.networkError(NSError(domain: "Stripe3DS", code: -1, userInfo: [NSLocalizedDescriptionKey: "Payment authentication was cancelled."]))))
+
+                @unknown default:
+                    promise(.failure(.networkError(NSError(domain: "Stripe3DS", code: -2))))
+                }
+            }
+        }
+        .eraseToAnyPublisher()
+    }
+}
+
+/// Stripe's STPPaymentHandler needs an authentication context (a UIViewController to present from).
+/// This provides the current key window's root view controller.
+private class WindowAuthenticationContext: NSObject, STPAuthenticationContext {
+    func authenticationPresentingViewController() -> UIViewController {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first,
+              let root = window.rootViewController else {
+            return UIViewController()
+        }
+        var top = root
+        while let presented = top.presentedViewController { top = presented }
+        return top
+    }
+}
+
+/// Holds Combine cancellables for the 3DS callback path. Simple shared box because the
+/// callback escapes into Stripe SDK and we need a stable owner for the Combine subscription.
+private class CancellableStore {
+    static let shared = CancellableStore()
+    var cancellables = Set<AnyCancellable>()
 }
 
 // MARK: - Child Selection Card
