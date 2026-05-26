@@ -1,8 +1,10 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Booking = require('../models/Booking');
 const Class = require('../models/Class');
 const { protect, requireUserType } = require('../middleware/auth');
+const emailService = require('../services/emailService');
 
 const ScheduledNotification = require('../models/ScheduledNotification');
 
@@ -232,7 +234,7 @@ router.get('/:id', protect, async (req, res) => {
 });
 
 // @route   PUT /api/bookings/:id/cancel
-// @desc    Cancel a booking
+// @desc    Cancel a booking with Stripe refund
 // @access  Private
 router.put('/:id/cancel', [
   protect,
@@ -242,67 +244,121 @@ router.put('/:id/cancel', [
     const { reason } = req.body;
 
     const booking = await Booking.findById(req.params.id)
-      .populate('class');
+      .populate('class')
+      .populate('parent', 'fullName email');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    // Check authorization
-    const isOwner = booking.parent.toString() === req.user.id;
-    const isProvider = req.user.userType === 'provider' && 
-                      booking.class.provider.toString() === req.user.id;
+    // Authorization: parent who owns the booking, or provider of the class
+    const isOwner = booking.parent._id.toString() === req.user.id;
+    const isProvider = req.user.userType === 'provider' &&
+                       booking.class.provider.toString() === req.user.id;
 
     if (!isOwner && !isProvider) {
       return res.status(403).json({ message: 'Not authorized to cancel this booking' });
     }
 
-    // Check if booking can be cancelled
+    // State guards
     if (booking.status === 'cancelled') {
       return res.status(400).json({ message: 'Booking is already cancelled' });
     }
-
     if (booking.status === 'completed') {
-      return res.status(400).json({ message: 'Cannot cancel completed booking' });
+      return res.status(400).json({ message: 'Cannot cancel a completed booking' });
     }
 
-    // Calculate refund (if applicable)
+    // Determine refund amount based on who is cancelling and timing
     const sessionDate = new Date(booking.sessionDate);
     const now = new Date();
     const hoursUntilSession = (sessionDate - now) / (1000 * 60 * 60);
+    const SERVICE_FEE = 1.99;
 
     let refundAmount = 0;
-    if (hoursUntilSession > 24) {
-      // Full refund if cancelled more than 24 hours before
+    let refundReason = '';
+
+    if (isProvider) {
+      // Provider cancellation: full refund including service fee
       refundAmount = booking.totalAmount;
-    } else if (hoursUntilSession > 2) {
-      // 50% refund if cancelled more than 2 hours before
-      refundAmount = booking.totalAmount * 0.5;
+      refundReason = 'provider_cancellation';
+    } else {
+      // Parent cancellation: full refund minus service fee if >24h, otherwise nothing
+      if (hoursUntilSession > 24) {
+        refundAmount = Math.max(0, booking.totalAmount - SERVICE_FEE);
+        refundReason = 'parent_cancellation_outside_window';
+      } else {
+        refundAmount = 0;
+        refundReason = 'parent_cancellation_inside_window';
+      }
+    }
+
+    console.log(`🚫 Cancelling booking ${booking.bookingNumber}: ${refundReason}, refund £${refundAmount.toFixed(2)}`);
+
+    // Process Stripe refund if applicable
+    let stripeRefund = null;
+    if (refundAmount > 0 && booking.paymentStatus === 'paid' && booking.stripeChargeId) {
+      try {
+        const refundAmountInCents = Math.round(refundAmount * 100);
+        stripeRefund = await stripe.refunds.create({
+          charge: booking.stripeChargeId,
+          amount: refundAmountInCents,
+          reason: 'requested_by_customer',
+          metadata: {
+            bookingId: booking._id.toString(),
+            bookingNumber: booking.bookingNumber,
+            cancellationReason: refundReason,
+            cancelledBy: isProvider ? 'provider' : 'parent'
+          }
+        });
+        console.log(`✅ Stripe refund created: ${stripeRefund.id}, status: ${stripeRefund.status}`);
+      } catch (stripeError) {
+        console.error(`❌ Stripe refund failed:`, stripeError.message);
+        return res.status(500).json({
+          message: 'Failed to process refund. Please contact support.',
+          error: stripeError.message
+        });
+      }
+    } else if (refundAmount > 0 && !booking.stripeChargeId) {
+      console.warn(`⚠️ Refund owed (£${refundAmount}) but no stripeChargeId on booking ${booking.bookingNumber}`);
     }
 
     // Update booking
     booking.status = 'cancelled';
     booking.cancelledAt = new Date();
-    booking.cancellationReason = reason;
+    booking.cancellationReason = reason || refundReason;
     booking.refundAmount = refundAmount;
-
-    if (booking.paymentStatus === 'paid' && refundAmount > 0) {
+    if (refundAmount > 0 && stripeRefund) {
       booking.paymentStatus = 'refunded';
     }
-
     await booking.save();
 
-    // Update class booking count
+    // Decrement class booking count
     await Class.findByIdAndUpdate(booking.class._id, {
       $inc: { currentBookings: -1 }
     });
 
+    // Send cancellation email
+    try {
+      await emailService.sendCancellationEmail({
+        booking,
+        cancelledBy: isProvider ? 'provider' : 'parent',
+        refundAmount,
+        reason: refundReason
+      });
+    } catch (emailErr) {
+      console.error('⚠️ Cancellation email failed (non-blocking):', emailErr.message);
+    }
+
     res.json({
       success: true,
-      message: 'Booking cancelled successfully',
+      message: refundAmount > 0
+        ? `Booking cancelled. Refund of £${refundAmount.toFixed(2)} will appear on the original card in 5-10 business days.`
+        : 'Booking cancelled. No refund applies as this cancellation is inside the 24-hour window.',
       data: {
         ...booking.toObject(),
-        refundAmount
+        refundAmount,
+        refundReason,
+        stripeRefundId: stripeRefund?.id || null
       }
     });
 

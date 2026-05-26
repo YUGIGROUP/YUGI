@@ -1,4 +1,4 @@
-const { generatePasswordResetEmail, generateWelcomeEmail, generateBookingConfirmationEmail } = require('../utils/emailTemplates');
+const { generatePasswordResetEmail, generateWelcomeEmail, generateBookingConfirmationEmail, generateCancellationEmail, generateProviderCancellationNotification } = require('../utils/emailTemplates');
 
 class EmailService {
   constructor() {
@@ -84,6 +84,75 @@ class EmailService {
       
       return { success: true, message: 'Email logged to console (development mode)' };
     }
+  }
+
+  async sendCancellationEmail({ booking, cancelledBy, refundAmount, reason }) {
+    const parentEmail = booking.parent.email;
+    const parentName = booking.parent.fullName;
+    const className = booking.class.name;
+    const bookingNumber = booking.bookingNumber;
+    const sessionDate = booking.sessionDate;
+    const sessionTime = booking.sessionTime;
+
+    // 1) Email to the parent
+    const parentEmailContent = generateCancellationEmail({
+      parentName,
+      bookingNumber,
+      className,
+      sessionDate,
+      sessionTime,
+      refundAmount,
+      cancelledBy,
+      reason
+    });
+
+    if (this.isProduction) {
+      await this.sendEmail(parentEmail, parentEmailContent.subject, parentEmailContent.html, parentEmailContent.text);
+    } else {
+      console.log('\n📧 CANCELLATION EMAIL TO PARENT:');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`To: ${parentEmail}`);
+      console.log(`Subject: ${parentEmailContent.subject}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('Text Content:');
+      console.log(parentEmailContent.text);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    }
+
+    // 2) Notification to the provider
+    try {
+      const User = require('../models/User');
+      const providerId = booking.class.provider._id || booking.class.provider;
+      const provider = await User.findById(providerId).select('fullName email');
+
+      if (provider && provider.email) {
+        const providerEmailContent = generateProviderCancellationNotification({
+          providerName: provider.fullName,
+          bookingNumber,
+          parentName,
+          className,
+          sessionDate,
+          cancelledBy
+        });
+
+        if (this.isProduction) {
+          await this.sendEmail(provider.email, providerEmailContent.subject, providerEmailContent.html, providerEmailContent.text);
+        } else {
+          console.log('\n📧 CANCELLATION NOTIFICATION TO PROVIDER:');
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.log(`To: ${provider.email}`);
+          console.log(`Subject: ${providerEmailContent.subject}`);
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.log('Text Content:');
+          console.log(providerEmailContent.text);
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        }
+      }
+    } catch (providerEmailErr) {
+      console.error('⚠️ Provider cancellation notification failed:', providerEmailErr.message);
+    }
+
+    return { success: true, message: 'Cancellation emails sent' };
   }
 
   async sendEmail(to, subject, html, text = null) {

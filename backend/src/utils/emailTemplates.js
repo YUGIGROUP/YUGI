@@ -497,8 +497,346 @@ Email: info@yugiapp.ai
   };
 };
 
+const generateCancellationEmail = ({ parentName, bookingNumber, className, sessionDate, sessionTime, refundAmount, cancelledBy, reason }) => {
+  const formattedDate = new Date(sessionDate).toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const isProviderCancellation = cancelledBy === 'provider';
+  const hasRefund = refundAmount > 0;
+
+  const subject = `Booking Cancelled — ${className}`;
+
+  let refundMessage = '';
+  if (hasRefund && isProviderCancellation) {
+    refundMessage = `
+      <p>We sincerely apologise for the inconvenience. Because the provider cancelled this class, you will receive a <strong>full refund of £${refundAmount.toFixed(2)}</strong> (including the service fee).</p>
+      <p>The refund will appear on your original payment method within <strong>5–10 business days</strong>.</p>
+    `;
+  } else if (hasRefund) {
+    refundMessage = `
+      <p>As you cancelled more than 24 hours before the session, you will receive a <strong>refund of £${refundAmount.toFixed(2)}</strong> (the £1.99 service fee is non-refundable).</p>
+      <p>The refund will appear on your original payment method within <strong>5–10 business days</strong>.</p>
+    `;
+  } else {
+    refundMessage = `
+      <p><strong>No refund applies</strong> — this cancellation was made within 24 hours of the class start time.</p>
+    `;
+  }
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Booking Cancelled</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f8f9fa;
+            }
+            .container {
+                background-color: #ffffff;
+                border-radius: 12px;
+                padding: 40px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .logo {
+                font-size: 32px;
+                font-weight: bold;
+                color: #BC6C5C;
+                margin-bottom: 10px;
+            }
+            .cancelled-badge {
+                display: inline-block;
+                background-color: #dc3545;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 20px;
+            }
+            .booking-details {
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 20px 0;
+            }
+            .detail-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 10px 0;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .detail-row:last-child {
+                border-bottom: none;
+            }
+            .detail-label {
+                font-weight: 600;
+                color: #666;
+            }
+            .detail-value {
+                color: #333;
+                text-align: right;
+            }
+            .refund-box {
+                margin: 20px 0;
+                padding: 20px;
+                border-radius: 8px;
+                border-left: 4px solid ${hasRefund ? '#28a745' : '#dc3545'};
+                background-color: ${hasRefund ? '#e8f5e9' : '#fce4ec'};
+            }
+            .footer {
+                text-align: center;
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 1px solid #eee;
+                color: #999;
+                font-size: 14px;
+            }
+            .contact-info {
+                margin-top: 15px;
+                color: #666;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo">YUGI</div>
+                <div class="cancelled-badge">✕ Booking Cancelled</div>
+                <h1 style="color: #333; margin: 10px 0;">Your booking has been cancelled</h1>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <p>Hi ${parentName || 'there'},</p>
+                <p>${isProviderCancellation
+                  ? 'Unfortunately, the provider has cancelled the following class.'
+                  : 'Your booking has been cancelled as requested.'}</p>
+            </div>
+
+            <div class="booking-details">
+                <h2 style="color: #333; margin-top: 0;">Booking Details</h2>
+
+                <div class="detail-row">
+                    <span class="detail-label">Booking Number:</span>
+                    <span class="detail-value">${bookingNumber}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Class:</span>
+                    <span class="detail-value">${className}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="detail-label">Original Date:</span>
+                    <span class="detail-value">${formattedDate}</span>
+                </div>
+
+                ${sessionTime ? `
+                <div class="detail-row">
+                    <span class="detail-label">Original Time:</span>
+                    <span class="detail-value">${sessionTime}</span>
+                </div>
+                ` : ''}
+            </div>
+
+            <div class="refund-box">
+                <h3 style="margin-top: 0;">Refund Information</h3>
+                ${refundMessage}
+            </div>
+
+            <div class="footer">
+                <p>If you have any questions, please contact us:</p>
+                <div class="contact-info">
+                    <p>Email: info@yugiapp.ai</p>
+                    <p>© ${new Date().getFullYear()} YUGI. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+Booking Cancelled — ${className}
+
+Hi ${parentName || 'there'},
+
+${isProviderCancellation
+  ? 'Unfortunately, the provider has cancelled the following class.'
+  : 'Your booking has been cancelled as requested.'}
+
+Booking Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Booking Number: ${bookingNumber}
+Class: ${className}
+Original Date: ${formattedDate}
+${sessionTime ? `Original Time: ${sessionTime}` : ''}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Refund Information:
+${hasRefund && isProviderCancellation
+  ? `We sincerely apologise for the inconvenience. Because the provider cancelled this class, you will receive a full refund of £${refundAmount.toFixed(2)} (including the service fee). The refund will appear on your original payment method within 5-10 business days.`
+  : hasRefund
+    ? `As you cancelled more than 24 hours before the session, you will receive a refund of £${refundAmount.toFixed(2)} (the £1.99 service fee is non-refundable). The refund will appear on your original payment method within 5-10 business days.`
+    : 'No refund applies — this cancellation was made within 24 hours of the class start time.'}
+
+If you have any questions, please contact us:
+Email: info@yugiapp.ai
+
+© ${new Date().getFullYear()} YUGI. All rights reserved.
+  `;
+
+  return {
+    subject,
+    html: htmlContent,
+    text: textContent
+  };
+};
+
+const generateProviderCancellationNotification = ({ providerName, bookingNumber, parentName, className, sessionDate, cancelledBy }) => {
+  const formattedDate = new Date(sessionDate).toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const isSelfCancellation = cancelledBy === 'provider';
+  const subject = `Booking cancelled — ${bookingNumber}`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Booking Cancelled</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f8f9fa;
+            }
+            .container {
+                background-color: #ffffff;
+                border-radius: 12px;
+                padding: 40px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .logo {
+                font-size: 32px;
+                font-weight: bold;
+                color: #BC6C5C;
+                margin-bottom: 10px;
+            }
+            .booking-details {
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 20px 0;
+            }
+            .detail-row {
+                padding: 8px 0;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .detail-row:last-child {
+                border-bottom: none;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 1px solid #eee;
+                color: #999;
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo">YUGI</div>
+                <h2 style="color: #333;">Booking Cancelled</h2>
+            </div>
+
+            <p>Hi ${providerName || 'there'},</p>
+            <p>${isSelfCancellation
+              ? 'You have cancelled the following booking. The parent has been notified and issued a full refund.'
+              : `${parentName || 'A parent'} has cancelled their booking for the following class.`}</p>
+
+            <div class="booking-details">
+                <div class="detail-row"><strong>Booking:</strong> ${bookingNumber}</div>
+                <div class="detail-row"><strong>Class:</strong> ${className}</div>
+                <div class="detail-row"><strong>Session Date:</strong> ${formattedDate}</div>
+                <div class="detail-row"><strong>Parent:</strong> ${parentName || 'N/A'}</div>
+            </div>
+
+            <p>The spot has been freed and is now available for new bookings.</p>
+
+            <div class="footer">
+                <p>Email: info@yugiapp.ai</p>
+                <p>© ${new Date().getFullYear()} YUGI. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+Booking Cancelled — ${bookingNumber}
+
+Hi ${providerName || 'there'},
+
+${isSelfCancellation
+  ? 'You have cancelled the following booking. The parent has been notified and issued a full refund.'
+  : `${parentName || 'A parent'} has cancelled their booking for the following class.`}
+
+Booking: ${bookingNumber}
+Class: ${className}
+Session Date: ${formattedDate}
+Parent: ${parentName || 'N/A'}
+
+The spot has been freed and is now available for new bookings.
+
+Email: info@yugiapp.ai
+© ${new Date().getFullYear()} YUGI. All rights reserved.
+  `;
+
+  return {
+    subject,
+    html: htmlContent,
+    text: textContent
+  };
+};
+
 module.exports = {
   generatePasswordResetEmail,
   generateWelcomeEmail,
-  generateBookingConfirmationEmail
+  generateBookingConfirmationEmail,
+  generateCancellationEmail,
+  generateProviderCancellationNotification
 };
