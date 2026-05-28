@@ -381,6 +381,9 @@ struct Booking: Identifiable, Codable {
     
     // Store original MongoDB ObjectId for API calls
     var mongoObjectId: String?
+    var refundAmount: Double?
+    var refundReason: String?
+    var stripeRefundId: String?
     
     struct Calendar: Codable {
         let eventId: String?
@@ -401,7 +404,10 @@ struct Booking: Identifiable, Codable {
         specialRequirements: String? = nil,
         attended: Bool = false,
         calendar: Calendar? = nil,
-        mongoObjectId: String? = nil
+        mongoObjectId: String? = nil,
+        refundAmount: Double? = nil,
+        refundReason: String? = nil,
+        stripeRefundId: String? = nil
     ) {
         self.id = id
         self.classId = classId
@@ -414,6 +420,9 @@ struct Booking: Identifiable, Codable {
         self.attended = attended
         self.calendar = calendar
         self.mongoObjectId = mongoObjectId
+        self.refundAmount = refundAmount
+        self.refundReason = refundReason
+        self.stripeRefundId = stripeRefundId
     }
     
     enum CodingKeys: String, CodingKey {
@@ -428,6 +437,9 @@ struct Booking: Identifiable, Codable {
         case attended
         case calendar
         case mongoObjectId
+        case refundAmount
+        case refundReason
+        case stripeRefundId
     }
     
     enum DecodingKeys: String, CodingKey {
@@ -442,6 +454,9 @@ struct Booking: Identifiable, Codable {
         case specialRequirements
         case attended
         case calendar
+        case refundAmount
+        case refundReason
+        case stripeRefundId
     }
     
     private enum ClassIdKey: String, CodingKey {
@@ -521,6 +536,9 @@ struct Booking: Identifiable, Codable {
         self.specialRequirements = try container.decodeIfPresent(String.self, forKey: .specialRequirements)
         self.attended = try container.decodeIfPresent(Bool.self, forKey: .attended) ?? false
         self.calendar = try container.decodeIfPresent(Calendar.self, forKey: .calendar)
+        self.refundAmount = try container.decodeIfPresent(Double.self, forKey: .refundAmount)
+        self.refundReason = try container.decodeIfPresent(String.self, forKey: .refundReason)
+        self.stripeRefundId = try container.decodeIfPresent(String.self, forKey: .stripeRefundId)
     }
     
     func encode(to encoder: Encoder) throws {

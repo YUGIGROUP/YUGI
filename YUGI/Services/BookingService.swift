@@ -101,20 +101,6 @@ class BookingService: ObservableObject {
         }
     }
     
-    func cancelBooking(_ booking: Booking) async throws {
-        guard let index = userBookings.firstIndex(where: { $0.id == booking.id }) else {
-            return
-        }
-        
-        // Remove from calendar if needed
-        if let eventId = booking.calendar?.eventId {
-            try calendarService.removeClassFromCalendar(eventId: eventId)
-        }
-        
-        // Remove from bookings
-        userBookings.remove(at: index)
-    }
-    
     func toggleFavorite(for classId: String) {
         if favoriteClasses.contains(classId) {
             favoriteClasses.remove(classId)

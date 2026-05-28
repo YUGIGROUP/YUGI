@@ -2321,6 +2321,7 @@ struct BookingsResponse: Codable {
 
 struct BookingResponse: Codable {
     let data: Booking
+    let message: String?
 }
 
 struct PaymentIntentResponse: Codable {

@@ -6,6 +6,9 @@ struct ClassBookingsScreen: View {
     @State private var selectedFilter: BookingFilter = .all
     @State private var showingCancelConfirmation = false
     @State private var bookingToCancel: EnhancedBooking? = nil
+    @State private var isCancellingBooking = false
+    @State private var cancellationResultMessage: String? = nil
+    @State private var showingCancellationResult = false
     @State private var showingRefundPolicy = false
     @State private var selectedBookingForAnalysis: EnhancedBooking? = nil
     
@@ -109,11 +112,17 @@ struct ClassBookingsScreen: View {
                         cancelBooking(booking)
                     }
                 }
+                .disabled(isCancellingBooking)
             } message: {
                 if let booking = bookingToCancel {
                     let refundInfo = getRefundInfo(for: booking)
                     Text("Are you sure you want to cancel '\(booking.className)'?\n\n\(refundInfo)")
                 }
+            }
+            .alert("Cancellation", isPresented: $showingCancellationResult) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(cancellationResultMessage ?? "")
             }
             .sheet(isPresented: $showingRefundPolicy) {
                 RefundPolicyScreen()
@@ -154,21 +163,30 @@ struct ClassBookingsScreen: View {
     }
     
     private func cancelBooking(_ booking: EnhancedBooking) {
-        // Update booking status to cancelled
-        var updatedBooking = booking.booking
-        updatedBooking.status = .cancelled
-        
-        // Update in shared service
-        sharedBookingService.enhancedBookings[booking.booking.id] = EnhancedBooking(
-            booking: updatedBooking,
-            classInfo: booking.classInfo
-        )
-        
-        // In a real app, you would also call the API to cancel the booking
-        print("Booking cancelled: \(booking.booking.id)")
-        
-        // Show success message or handle refund process
-        // For now, we'll just update the UI
+        isCancellingBooking = true
+        Task {
+            do {
+                let result = try await sharedBookingService.cancelBookingViaAPI(
+                    booking,
+                    reason: "Cancelled by parent via class bookings"
+                )
+                await MainActor.run {
+                    isCancellingBooking = false
+                    cancellationResultMessage = result.message
+                    showingCancellationResult = true
+                    bookingToCancel = nil
+                    showingCancelConfirmation = false
+                }
+            } catch {
+                await MainActor.run {
+                    isCancellingBooking = false
+                    cancellationResultMessage = "Cancellation failed: \(error.localizedDescription)"
+                    showingCancellationResult = true
+                    bookingToCancel = nil
+                    showingCancelConfirmation = false
+                }
+            }
+        }
     }
 }
 

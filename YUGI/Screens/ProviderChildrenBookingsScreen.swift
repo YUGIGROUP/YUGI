@@ -8,6 +8,9 @@ struct ProviderChildrenBookingsScreen: View {
     @State private var selectedFilter: BookingFilter = .all
     @State private var showingCancelConfirmation = false
     @State private var bookingToCancel: EnhancedBooking? = nil
+    @State private var isCancellingBooking = false
+    @State private var cancellationResultMessage: String? = nil
+    @State private var showingCancellationResult = false
     @State private var showingRefundPolicy = false
     @State private var showingAddChild = false
     @State private var showingEditChild = false
@@ -108,8 +111,14 @@ struct ProviderChildrenBookingsScreen: View {
                         cancelBooking(booking)
                     }
                 }
+                .disabled(isCancellingBooking)
             } message: {
                 Text("Are you sure you want to cancel this booking? This action cannot be undone.")
+            }
+            .alert("Cancellation", isPresented: $showingCancellationResult) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(cancellationResultMessage ?? "")
             }
             .alert("Refund Policy", isPresented: $showingRefundPolicy) {
                 Button("OK") { }
@@ -262,28 +271,30 @@ struct ProviderChildrenBookingsScreen: View {
     }
     
     private func cancelBooking(_ enhancedBooking: EnhancedBooking) {
-        print("🎫 ProviderChildrenBookings: Cancelling booking \(enhancedBooking.booking.id)")
-        
-        // Update the booking status to cancelled
-        var updatedBooking = enhancedBooking.booking
-        updatedBooking.status = .cancelled
-        
-        // Create new enhanced booking with updated status
-        let updatedEnhancedBooking = EnhancedBooking(booking: updatedBooking, classInfo: enhancedBooking.classInfo)
-        
-        // Update in shared service by removing old booking and adding updated one
-        sharedBookingService.enhancedBookings.removeValue(forKey: enhancedBooking.booking.id)
-        sharedBookingService.enhancedBookings[updatedBooking.id] = updatedEnhancedBooking
-        
-        // Also update the regular bookings array
-        if let index = sharedBookingService.bookings.firstIndex(where: { $0.id == enhancedBooking.booking.id }) {
-            sharedBookingService.bookings[index] = updatedBooking
+        isCancellingBooking = true
+        Task {
+            do {
+                let result = try await sharedBookingService.cancelBookingViaAPI(
+                    enhancedBooking,
+                    reason: "Cancelled by provider"
+                )
+                await MainActor.run {
+                    isCancellingBooking = false
+                    cancellationResultMessage = result.message
+                    showingCancellationResult = true
+                    bookingToCancel = nil
+                    showingCancelConfirmation = false
+                }
+            } catch {
+                await MainActor.run {
+                    isCancellingBooking = false
+                    cancellationResultMessage = "Cancellation failed: \(error.localizedDescription)"
+                    showingCancellationResult = true
+                    bookingToCancel = nil
+                    showingCancelConfirmation = false
+                }
+            }
         }
-        
-        // Show refund policy
-        showingRefundPolicy = true
-        
-        print("🎫 ProviderChildrenBookings: Booking cancelled successfully")
     }
 }
 

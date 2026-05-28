@@ -211,6 +211,78 @@ class SharedBookingService: ObservableObject {
             enhancedBookings = decoded
         }
     }
+
+    /// Cancels a booking via the backend `PUT /api/bookings/:id/cancel` endpoint.
+    /// On success, updates the local enhancedBookings cache and returns a structured
+    /// `CancellationResult` so the caller can display an accurate post-cancel alert
+    /// (refund amount + 5–10 business day timing).
+    @MainActor
+    func cancelBookingViaAPI(
+        _ enhancedBooking: EnhancedBooking,
+        reason: String
+    ) async throws -> CancellationResult {
+        let localId = enhancedBooking.booking.id
+        let className = enhancedBooking.className
+
+        guard let serverBookingId = enhancedBooking.booking.mongoObjectId,
+              !serverBookingId.isEmpty else {
+            print("❌ SharedBookingService: No mongoObjectId on booking \(localId) — cannot cancel server-side")
+            throw NSError(
+                domain: "YUGI.Cancellation",
+                code: 422,
+                userInfo: [NSLocalizedDescriptionKey: "This booking is missing a server ID and cannot be cancelled. Please contact support."]
+            )
+        }
+
+        print("🚫 SharedBookingService: Cancelling \(serverBookingId) — \(className)")
+
+        let response: BookingResponse = try await withCheckedThrowingContinuation { continuation in
+            APIService.shared.cancelBooking(id: serverBookingId, reason: reason)
+                .sink(
+                    receiveCompletion: { completion in
+                        if case .failure(let error) = completion {
+                            continuation.resume(throwing: error)
+                        }
+                    },
+                    receiveValue: { response in
+                        continuation.resume(returning: response)
+                    }
+                )
+                .store(in: &cancellables)
+        }
+
+        // Update local cache from server response
+        var updated = enhancedBooking.booking
+        updated.status = .cancelled
+        updated.refundAmount = response.data.refundAmount
+        updated.refundReason = response.data.refundReason
+        updated.stripeRefundId = response.data.stripeRefundId
+
+        enhancedBookings[localId] = EnhancedBooking(
+            booking: updated,
+            classInfo: enhancedBooking.classInfo
+        )
+        if let idx = bookings.firstIndex(where: { $0.id == localId }) {
+            bookings[idx] = updated
+        }
+        saveBookings()
+
+        print("✅ SharedBookingService: Cancelled — refund £\(response.data.refundAmount ?? 0), reason: \(response.data.refundReason ?? "n/a")")
+
+        return CancellationResult(
+            refundAmount: response.data.refundAmount ?? 0,
+            refundReason: response.data.refundReason ?? "",
+            stripeRefundId: response.data.stripeRefundId,
+            message: response.message ?? "Booking cancelled."
+        )
+    }
+}
+
+struct CancellationResult {
+    let refundAmount: Double
+    let refundReason: String
+    let stripeRefundId: String?
+    let message: String
 }
 
 // MARK: - ParentDashboardScreen
@@ -261,6 +333,9 @@ struct ParentDashboardScreen: View {
     @State private var shouldSignOut              = false
     @State private var showingCancelConfirmation  = false
     @State private var bookingToCancel: EnhancedBooking?  = nil
+    @State private var isCancellingBooking = false
+    @State private var cancellationResultMessage: String? = nil
+    @State private var showingCancellationResult = false
     @State private var selectedBookingForAnalysis: EnhancedBooking? = nil
 
     @StateObject private var sharedBookingService = SharedBookingService.shared
@@ -394,8 +469,14 @@ struct ParentDashboardScreen: View {
                 Button("Yes, Cancel Booking", role: .destructive) {
                     if let b = bookingToCancel { cancelBooking(b) }
                 }
+                .disabled(isCancellingBooking)
             } message: {
                 if let b = bookingToCancel { Text(getRefundInfo(for: b)) }
+            }
+            .alert("Cancellation", isPresented: $showingCancellationResult) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(cancellationResultMessage ?? "")
             }
             .navigationDestination(isPresented: $shouldSignOut) {
                 AuthScreen().navigationBarBackButtonHidden()
@@ -487,28 +568,46 @@ struct ParentDashboardScreen: View {
     }
 
     private func cancelBooking(_ booking: EnhancedBooking) {
-        var updated = booking.booking
-        updated.status = .cancelled
-        sharedBookingService.enhancedBookings[booking.booking.id] = EnhancedBooking(booking: updated, classInfo: booking.classInfo)
-        if let idx = sharedBookingService.bookings.firstIndex(where: { $0.id == booking.booking.id }) {
-            sharedBookingService.bookings[idx] = updated
+        isCancellingBooking = true
+        Task {
+            do {
+                let result = try await sharedBookingService.cancelBookingViaAPI(
+                    booking,
+                    reason: "Cancelled by parent via dashboard"
+                )
+                await MainActor.run {
+                    isCancellingBooking = false
+                    notificationService.addNotification(UserNotification(
+                        title: "Booking Cancelled",
+                        message: result.refundAmount > 0
+                            ? "Refund of £\(String(format: "%.2f", result.refundAmount)) will appear in 5–10 business days."
+                            : "Booking cancelled. No refund applies (cancelled within 24-hour window).",
+                        type: .booking,
+                        actionType: .viewBooking,
+                        actionData: ["bookingId": booking.booking.id.uuidString]
+                    ))
+                    ProviderNotificationService.shared.sendBookingCancellationNotification(
+                        providerId: booking.classInfo.provider,
+                        className: booking.className,
+                        bookingDate: booking.booking.bookingDate,
+                        parentName: apiService.currentUser?.fullName ?? "Unknown User",
+                        bookingId: booking.booking.id.uuidString
+                    )
+                    cancellationResultMessage = result.message
+                    showingCancellationResult = true
+                    bookingToCancel = nil
+                    showingCancelConfirmation = false
+                }
+            } catch {
+                await MainActor.run {
+                    isCancellingBooking = false
+                    cancellationResultMessage = "Cancellation failed: \(error.localizedDescription)"
+                    showingCancellationResult = true
+                    bookingToCancel = nil
+                    showingCancelConfirmation = false
+                }
+            }
         }
-        sharedBookingService.saveBookings()
-        notificationService.addNotification(UserNotification(
-            title: "Booking Cancelled",
-            message: "Your booking for '\(booking.className)' has been cancelled successfully.",
-            type: .booking, actionType: .viewBooking,
-            actionData: ["bookingId": booking.booking.id.uuidString]
-        ))
-        ProviderNotificationService.shared.sendBookingCancellationNotification(
-            providerId: booking.classInfo.provider,
-            className: booking.className,
-            bookingDate: booking.booking.bookingDate,
-            parentName: apiService.currentUser?.fullName ?? "Unknown User",
-            bookingId: booking.booking.id.uuidString
-        )
-        bookingToCancel = nil
-        showingCancelConfirmation = false
     }
 }
 

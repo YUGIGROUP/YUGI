@@ -14,6 +14,7 @@ struct ProviderMyClassesScreen: View {
     @State private var showingCancelSuccess = false
     @State private var showingCancelError = false
     @State private var cancelErrorMessage = ""
+    @State private var isCancellingClass = false
     
     enum ClassFilter: String, CaseIterable {
         case all = "All"
@@ -54,17 +55,22 @@ struct ProviderMyClassesScreen: View {
                 Button("Cancel", role: .cancel) { }
                 Button("Yes, Cancel Class", role: .destructive) {
                     if let selectedClass = selectedClass {
+                        isCancellingClass = true
                         Task {
                             let success = await viewModel.cancelClass(selectedClass)
-                            if success {
-                                showingCancelSuccess = true
-                            } else {
-                                cancelErrorMessage = viewModel.lastCancelError ?? "Failed to cancel class. Please try again."
-                                showingCancelError = true
+                            await MainActor.run {
+                                isCancellingClass = false
+                                if success {
+                                    showingCancelSuccess = true
+                                } else {
+                                    cancelErrorMessage = viewModel.lastCancelError ?? "Failed to cancel class. Please try again."
+                                    showingCancelError = true
+                                }
                             }
                         }
                     }
                 }
+                .disabled(isCancellingClass)
             } message: {
                 if let selectedClass = selectedClass {
                     Text("Are you sure you want to cancel '\(selectedClass.name)'? This will notify all booked participants and may result in refunds.")
@@ -613,69 +619,39 @@ class ProviderMyClassesViewModel: ObservableObject {
                     .store(in: &cancellables)
             }
             
-            // Find all bookings for this class and cancel them
-            let bookingsToCancel = SharedBookingService.shared.bookings.filter { $0.classId == classItem.id && $0.status == .upcoming }
-            print("Found \(bookingsToCancel.count) bookings to cancel for class \(classItem.name)")
+            let bookingsToCancel = SharedBookingService.shared.bookings
+                .filter { $0.classId == classItem.id && $0.status == .upcoming }
+            print("Found \(bookingsToCancel.count) booking(s) to cancel for class \(classItem.name)")
+
+            var refundedCount = 0
+            var failedCount = 0
 
             for booking in bookingsToCancel {
-                // Update booking status
-                if let idx = SharedBookingService.shared.bookings.firstIndex(where: { $0.id == booking.id }) {
-                    SharedBookingService.shared.bookings[idx].status = .cancelled
+                guard let enhanced = SharedBookingService.shared.enhancedBookings[booking.id] else {
+                    print("⚠️ No enhanced booking for \(booking.id), skipping")
+                    failedCount += 1
+                    continue
                 }
-                if let enhanced = SharedBookingService.shared.enhancedBookings[booking.id] {
-                    var updatedBooking = enhanced.booking
-                    updatedBooking.status = .cancelled
-                    SharedBookingService.shared.enhancedBookings[booking.id] = EnhancedBooking(booking: updatedBooking, classInfo: enhanced.classInfo)
+                do {
+                    let result = try await SharedBookingService.shared.cancelBookingViaAPI(
+                        enhanced,
+                        reason: "Provider cancelled the class"
+                    )
+                    refundedCount += 1
+                    print("✅ Refunded £\(result.refundAmount) for booking \(booking.id)")
+                } catch {
+                    failedCount += 1
+                    print("❌ Refund failed for booking \(booking.id): \(error.localizedDescription)")
                 }
-
-                // Process refund immediately
-                await processRefund(for: booking, classItem: classItem)
-
-                // Send in-app notification to parent
-                let notification = UserNotification(
-                    title: "Class Cancelled",
-                    message: "Your booking for '\(classItem.name)' has been cancelled by the provider. You will receive a full refund.",
-                    type: .booking,
-                    actionType: .viewBooking,
-                    actionData: ["bookingId": booking.id.uuidString]
-                )
-                NotificationService.shared.addNotification(notification)
-
-                // Simulate sending email to parent (since we don't have email lookup)
-                print("📧 Simulated sending cancellation email to userId: \(booking.userId)")
-                let subject = "Class Cancellation Notice - \(classItem.name)"
-                let body = """
-Dear Parent,
-
-We regret to inform you that your upcoming class '\(classItem.name)' has been cancelled.
-
-Class Details:
-- Class: \(classItem.name)
-- Date: \(booking.bookingDate)
-
-Your refund has been processed automatically.
-
-Refund Details:
-- Refund Amount: £\(String(format: "%.2f", classItem.price * Double(booking.numberOfParticipants) - 1.99))
-- Service Fee: £1.99 (non-refundable)
-
-Refund Timeline:
-• Processed: Immediately
-• Bank Transfer: 3-5 business days
-• Credit Card: 5-10 business days
-• Debit Card: 3-5 business days
-
-You will receive the funds in your original payment method.
-
-If you have any questions, please contact us.
-
-Best regards,
-YUGI Team
-"""
-                print("Subject: \(subject)\nBody:\n\(body)")
             }
-            SharedBookingService.shared.saveBookings()
-            
+
+            print("Bulk cancel complete: \(refundedCount) refunded, \(failedCount) failed")
+
+            if failedCount > 0 {
+                lastCancelError = "Class cancelled, but \(failedCount) of \(bookingsToCancel.count) refunds failed. Please review affected bookings and process refunds manually via Stripe Dashboard."
+                return false
+            }
+
             // Reload classes to get updated data from backend
             await loadClasses()
             return true
@@ -689,85 +665,6 @@ YUGI Team
                 classes[index] = updatedClass
             }
             return false
-        }
-    }
-    
-    private func processRefund(for booking: Booking, classItem: ProviderClass) async {
-        print("💰 Processing refund for booking: \(booking.id)")
-        
-        // Calculate refund amount (full amount minus service fee)
-        let totalAmount = classItem.price * Double(booking.numberOfParticipants)
-        let serviceFee = 1.99
-        let refundAmount = totalAmount - serviceFee
-        
-        print("💰 Refund Details:")
-        print("   - Total paid: £\(String(format: "%.2f", totalAmount))")
-        print("   - Service fee: £\(String(format: "%.2f", serviceFee))")
-        print("   - Refund amount: £\(String(format: "%.2f", refundAmount))")
-        
-        // Simulate Stripe refund processing
-        do {
-            // In a real app, this would call Stripe's refund API
-            print("💳 Initiating Stripe refund...")
-            
-            // Simulate API call delay
-            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-            
-            print("✅ Refund processed successfully!")
-            print("📧 Sending refund confirmation email...")
-            
-            // Send refund confirmation notification
-            let refundNotification = UserNotification(
-                title: "Refund Processed",
-                message: "Your refund of £\(String(format: "%.2f", refundAmount)) for '\(classItem.name)' has been processed.",
-                type: .payment,
-                actionType: .viewPayment,
-                actionData: ["refundAmount": String(format: "%.2f", refundAmount)]
-            )
-            NotificationService.shared.addNotification(refundNotification)
-            
-            // Simulate refund confirmation email
-            let refundEmailSubject = "Refund Processed - \(classItem.name)"
-            let refundEmailBody = """
-Dear Parent,
-
-Your refund has been processed successfully.
-
-Refund Details:
-- Class: \(classItem.name)
-- Refund Amount: £\(String(format: "%.2f", refundAmount))
-- Service Fee: £\(String(format: "%.2f", serviceFee)) (non-refundable)
-- Transaction Date: \(Date().formatted())
-
-Refund Timeline:
-• Processed: Immediately
-• Bank Transfer: 3-5 business days
-• Credit Card: 5-10 business days
-• Debit Card: 3-5 business days
-
-You will receive the funds in your original payment method.
-
-If you have any questions, please contact our support team.
-
-Best regards,
-YUGI Team
-"""
-            print("📧 Refund confirmation email:")
-            print("Subject: \(refundEmailSubject)")
-            print("Body:\n\(refundEmailBody)")
-            
-        } catch {
-            print("❌ Refund processing failed: \(error)")
-            
-            // Send failure notification
-            let failureNotification = UserNotification(
-                title: "Refund Processing Delayed",
-                message: "We're experiencing a delay processing your refund. Please contact support if you don't receive it within 48 hours.",
-                type: .payment,
-                actionType: .contactSupport,
-                actionData: [:]
-            )
-            NotificationService.shared.addNotification(failureNotification)
         }
     }
     
