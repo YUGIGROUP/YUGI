@@ -52,6 +52,17 @@ router.post('/', [
 
     // Check if session date is valid
     const sessionDateTime = new Date(sessionDate);
+
+    // Apply sessionTime ("HH:MM" in UTC) to sessionDateTime so the stored
+    // datetime carries the real hour/minute, not just midnight UTC. iOS only
+    // reads sessionDate back, so without this combination, parents would see
+    // every booking displayed as midnight UTC (= 1:00 am BST). Matches the
+    // existing combination pattern in this file's calendar route (~line 454).
+    if (sessionTime && /^\d{2}:\d{2}$/.test(sessionTime)) {
+      const [hours, minutes] = sessionTime.split(':').map(n => parseInt(n, 10));
+      sessionDateTime.setUTCHours(hours, minutes, 0, 0);
+    }
+
     const now = new Date();
     if (sessionDateTime < now) {
       return res.status(400).json({ message: 'Cannot book for past dates' });
