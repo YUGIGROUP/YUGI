@@ -1315,7 +1315,21 @@ struct ApplePayButton: View {
         print("🎯 ApplePayButton: Using saved card: \(selectedCard.displayType.displayName) ending in \(selectedCard.last4)")
         print("💳 ApplePayButton: Booking for \(selectedChildren.count) child(ren): \(selectedChildren.map { $0.name }.joined(separator: ", "))")
         
-        let sessionDate = Date().addingTimeInterval(86400)
+        let now = Date()
+        let scheduledDate = classItem.schedule.startDate
+        let sessionDate: Date
+        if scheduledDate > now {
+            // Use the real scheduled class date. Time-of-day is sent separately as
+            // sessionTime; the backend combines them when constructing the
+            // start datetime (see backend bookings.js line ~454).
+            sessionDate = scheduledDate
+        } else {
+            // Defensive fallback: class's stored startDate is in the past, which
+            // shouldn't happen for active classes but might for stale test data.
+            // Send +24h so the backend doesn't reject the booking as a past date.
+            print("⚠️ BookingView: schedule.startDate (\(scheduledDate)) is in the past, falling back to +24h")
+            sessionDate = now.addingTimeInterval(86400)
+        }
         let apiService = APIService.shared
         
         let timeFormatter = DateFormatter()
@@ -1510,7 +1524,21 @@ struct StandardPaymentButton: View {
         print("💳 StandardPaymentButton: Booking for \(selectedChildren.count) child(ren): \(selectedChildren.map { $0.name }.joined(separator: ", "))")
         
         // Step 1: Create booking via backend
-        let sessionDate = Date().addingTimeInterval(86400) // Tomorrow
+        let now = Date()
+        let scheduledDate = classItem.schedule.startDate
+        let sessionDate: Date
+        if scheduledDate > now {
+            // Use the real scheduled class date. Time-of-day is sent separately as
+            // sessionTime; the backend combines them when constructing the
+            // start datetime (see backend bookings.js line ~454).
+            sessionDate = scheduledDate
+        } else {
+            // Defensive fallback: class's stored startDate is in the past, which
+            // shouldn't happen for active classes but might for stale test data.
+            // Send +24h so the backend doesn't reject the booking as a past date.
+            print("⚠️ BookingView: schedule.startDate (\(scheduledDate)) is in the past, falling back to +24h")
+            sessionDate = now.addingTimeInterval(86400)
+        }
         let apiService = APIService.shared
         
         // Get session time from first time slot (format as HH:mm)
