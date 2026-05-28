@@ -12,10 +12,9 @@ class SharedBookingService: ObservableObject {
     private let bookingsKey         = "persisted_bookings"
     private let enhancedBookingsKey = "persisted_enhanced_bookings"
     private var autoCompletionTimer: Timer?
+    private var cancellables = Set<AnyCancellable>()
 
     private init() {
-        UserDefaults.standard.removeObject(forKey: bookingsKey)
-        UserDefaults.standard.removeObject(forKey: enhancedBookingsKey)
         loadBookings()
         updateBookingStatuses()
         startAutoCompletionTimer()
@@ -99,6 +98,98 @@ class SharedBookingService: ObservableObject {
         bookings.append(enhancedBooking.booking)
         enhancedBookings[enhancedBooking.booking.id] = enhancedBooking
         saveBookings()
+    }
+
+    /// Fetches the current user's bookings from the backend and rebuilds the local
+    /// cache. Server is authoritative: the local bookings/enhancedBookings are replaced
+    /// with what the server returns. For each booking we fetch its full Class separately
+    /// (the bookings endpoint only returns a partial class that can't decode into our
+    /// Class model), then build the EnhancedBooking the UI needs.
+    @MainActor
+    func syncBookingsFromServer() async {
+        print("🔄 SharedBookingService: Syncing bookings from server…")
+
+        // 1. Fetch the user's bookings
+        let bookingsResponse: BookingsResponse
+        do {
+            bookingsResponse = try await withCheckedThrowingContinuation { continuation in
+                APIService.shared.fetchBookings()
+                    .sink(
+                        receiveCompletion: { completion in
+                            if case .failure(let error) = completion {
+                                continuation.resume(throwing: error)
+                            }
+                        },
+                        receiveValue: { response in
+                            continuation.resume(returning: response)
+                        }
+                    )
+                    .store(in: &cancellables)
+            }
+        } catch {
+            print("❌ SharedBookingService: Failed to fetch bookings: \(error.localizedDescription)")
+            return  // Keep existing local cache on failure — don't wipe what we have
+        }
+
+        let serverBookings = bookingsResponse.data
+        print("🔄 SharedBookingService: Server returned \(serverBookings.count) booking(s)")
+
+        // 2. Resolve each booking's full Class, building EnhancedBookings.
+        //    Cache classes by classId within this sync so we don't refetch duplicates.
+        //    Keep only one booking per stable server mongoObjectId.
+        var classCache: [String: Class] = [:]
+        var rebuiltEnhanced: [UUID: EnhancedBooking] = [:]
+        var rebuiltBookings: [Booking] = []
+        var seenMongoObjectIds = Set<String>()
+
+        for booking in serverBookings {
+            if let mongoObjectId = booking.mongoObjectId {
+                if seenMongoObjectIds.contains(mongoObjectId) { continue }
+                seenMongoObjectIds.insert(mongoObjectId)
+            }
+
+            let classId = booking.classId
+
+            // Resolve the Class (cache hit or fetch)
+            var resolvedClass: Class? = classCache[classId]
+            if resolvedClass == nil {
+                do {
+                    let classResponse: ClassResponse = try await withCheckedThrowingContinuation { continuation in
+                        APIService.shared.fetchClass(id: classId)
+                            .sink(
+                                receiveCompletion: { completion in
+                                    if case .failure(let error) = completion {
+                                        continuation.resume(throwing: error)
+                                    }
+                                },
+                                receiveValue: { response in
+                                    continuation.resume(returning: response)
+                                }
+                            )
+                            .store(in: &cancellables)
+                    }
+                    resolvedClass = classResponse.data
+                    classCache[classId] = classResponse.data
+                } catch {
+                    print("⚠️ SharedBookingService: Could not fetch class \(classId) for booking \(booking.mongoObjectId ?? "?"): \(error.localizedDescription). Skipping.")
+                    continue
+                }
+            }
+
+            guard let classInfo = resolvedClass else { continue }
+
+            let enhanced = EnhancedBooking(booking: booking, classInfo: classInfo)
+            rebuiltEnhanced[booking.id] = enhanced
+            rebuiltBookings.append(booking)
+        }
+
+        // 3. Replace local cache (server authoritative)
+        self.bookings = rebuiltBookings
+        self.enhancedBookings = rebuiltEnhanced
+        saveBookings()
+        updateBookingStatuses()
+
+        print("✅ SharedBookingService: Sync complete — \(rebuiltBookings.count) booking(s) cached")
     }
 
     func saveBookings() {
@@ -329,6 +420,9 @@ struct ParentDashboardScreen: View {
                 guard let documentId = notification.userInfo?["documentId"] as? String else { return }
                 pendingDeepLinkDocumentId = documentId
                 shouldNavigateToAdminReview = true
+            }
+            .task {
+                await sharedBookingService.syncBookingsFromServer()
             }
             .overlay(successMessageOverlay)
         }
