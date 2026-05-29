@@ -7,6 +7,7 @@ const { protect, requireUserType } = require('../middleware/auth');
 const emailService = require('../services/emailService');
 
 const ScheduledNotification = require('../models/ScheduledNotification');
+const { applyClassCompletion } = require('../utils/holdingPeriod');
 
 const router = express.Router();
 
@@ -305,9 +306,11 @@ router.put('/:id/cancel', [
 
     console.log(`🚫 Cancelling booking ${booking.bookingNumber}: ${refundReason}, refund £${refundAmount.toFixed(2)}`);
 
-    // Process Stripe refund if applicable
+    // Process Stripe refund if applicable. Both 'held' (charged, awaiting
+    // release) and 'paid' (legacy) bookings refund the same way — funds are
+    // still on the platform until the release cron transfers them.
     let stripeRefund = null;
-    if (refundAmount > 0 && booking.paymentStatus === 'paid' && booking.stripeChargeId) {
+    if (refundAmount > 0 && (booking.paymentStatus === 'paid' || booking.paymentStatus === 'held') && booking.stripeChargeId) {
       try {
         const refundAmountInCents = Math.round(refundAmount * 100);
         stripeRefund = await stripe.refunds.create({
@@ -437,6 +440,10 @@ router.put('/:id/complete', protect, requireUserType(['provider']), async (req, 
     }
 
     booking.status = 'completed';
+    // classCompletedAt is the canonical clock the release cron uses; stamp it
+    // here so provider-driven completion and payments/mark-class-completed
+    // share one timestamp source. No-op if already set.
+    applyClassCompletion(booking);
     await booking.save();
 
     res.json({

@@ -53,13 +53,30 @@ const bookingSchema = new mongoose.Schema({
   // Payment Info
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed', 'refunded', 'held'],
+    // 'held'     = charged, sitting on platform, awaiting release
+    // 'released' = transferred to provider's Stripe Connect account
+    // 'paid'     = legacy (pre-Session-5 bookings; not written by new code)
+    enum: ['pending', 'paid', 'failed', 'refunded', 'held', 'released'],
     default: 'pending'
   },
   stripePaymentIntentId: {
     type: String
   },
   stripeChargeId: {
+    type: String
+  },
+  stripeTransferId: {
+    type: String
+  },
+  releaseInProgress: {
+    type: Boolean,
+    default: false
+  },
+  releaseAttempts: {
+    type: Number,
+    default: 0
+  },
+  lastReleaseError: {
     type: String
   },
   
@@ -168,5 +185,6 @@ bookingSchema.index({ bookingNumber: 1 });
 bookingSchema.index({ paymentStatus: 1, status: 1 });
 bookingSchema.index({ stripePaymentIntentId: 1 }, { sparse: true });
 bookingSchema.index({ stripeChargeId: 1 }, { sparse: true });
+bookingSchema.index({ stripeTransferId: 1 }, { sparse: true });
 
 module.exports = mongoose.model('Booking', bookingSchema); 

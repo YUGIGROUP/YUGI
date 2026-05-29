@@ -6,6 +6,7 @@ const Class = require('../models/Class');
 const User = require('../models/User');
 const { protect, requireUserType } = require('../middleware/auth');
 const emailService = require('../services/emailService');
+const { applyClassCompletion } = require('../utils/holdingPeriod');
 
 const router = express.Router();
 
@@ -118,12 +119,12 @@ router.post('/create-payment-intent', [
     }
 
     if (paymentIntent.status === 'succeeded') {
-      // Card charged immediately. Mark paid.
-      // TODO Session 5: when class-completion + funds-release flow is built,
-      // change this to 'held' instead of 'paid'. The /refund endpoint will
-      // need to accept both 'paid' and 'held' statuses. See T&Cs §2.2.
-      booking.paymentStatus = 'paid';
+      // Card charged immediately. Funds sit on the platform in 'held' state
+      // until the holding-period release cron transfers them to the provider's
+      // Stripe Connect account. See T&Cs §2.2.
+      booking.paymentStatus = 'held';
       booking.paymentDate = new Date();
+      booking.fundsReleased = false;
       booking.status = 'confirmed';
       await booking.save();
       console.log('✅ Payment succeeded:', paymentIntent.id);
@@ -247,9 +248,12 @@ router.post('/confirm-payment', [
       });
     }
 
-    // Update booking payment status
-    booking.paymentStatus = 'paid';
+    // Update booking payment status — held until the release cron transfers
+    // funds to the provider's Connect account after the holding period.
+    booking.paymentStatus = 'held';
     booking.stripeChargeId = paymentIntent.latest_charge;
+    booking.paymentDate = new Date();
+    booking.fundsReleased = false;
     booking.status = 'confirmed';
     await booking.save();
 
@@ -416,18 +420,12 @@ async function handleRefund(charge) {
   }
 }
 
-// Schedule funds release after 3 days
+// Release is cron-driven (see Session 5 Phase 2b). This function is now a no-op
+// kept for call-site compatibility; the actual release is owned by a polling
+// job that selects bookings with paymentStatus='held' and fundsReleaseDate<=now.
+// The previous in-memory setTimeout was unsafe across restarts/deploys/dyno sleep.
 function scheduleFundsRelease(bookingId, releaseDate) {
-  const delay = releaseDate.getTime() - Date.now();
-  
-  if (delay > 0) {
-    setTimeout(async () => {
-      await releaseFundsToProvider(bookingId);
-    }, delay);
-  } else {
-    // If release date has already passed, release immediately
-    releaseFundsToProvider(bookingId);
-  }
+  console.log(`📅 Booking ${bookingId} scheduled for release at ${releaseDate.toISOString()} (cron will pick this up)`);
 }
 
 // Release funds to provider after 3-day holding period
@@ -485,44 +483,24 @@ async function markClassAsCompleted(bookingId) {
       console.log(`Booking ${booking.bookingNumber} is not in held status`);
       return;
     }
-    
-    // Mark class as completed
-    const classCompletedAt = new Date();
-    booking.classCompletedAt = classCompletedAt;
-    
-    // Calculate funds release date (3 working days after class completion)
-    const fundsReleaseDate = calculateWorkingDaysAfter(classCompletedAt, 3);
-    booking.fundsReleaseDate = fundsReleaseDate;
-    
+
+    // Stamp classCompletedAt + fundsReleaseDate via the shared helper so this
+    // path matches PUT /api/bookings/:id/complete exactly. Also flip booking
+    // status to 'completed' so the two completion concepts stay in sync.
+    applyClassCompletion(booking);
+    booking.status = 'completed';
+
     await booking.save();
-    
+
     console.log(`Class completed for booking: ${booking.bookingNumber}`);
-    console.log(`Funds will be released on: ${fundsReleaseDate.toISOString()}`);
-    
-    // Schedule the funds release
-    scheduleFundsRelease(booking._id, fundsReleaseDate);
+    console.log(`Funds will be released on: ${booking.fundsReleaseDate.toISOString()}`);
+
+    // Cron will pick this up at fundsReleaseDate; no in-process timer.
+    scheduleFundsRelease(booking._id, booking.fundsReleaseDate);
     
   } catch (error) {
     console.error('Error marking class as completed:', error);
   }
-}
-
-// Calculate working days after a given date
-function calculateWorkingDaysAfter(startDate, workingDays) {
-  let currentDate = new Date(startDate);
-  let daysAdded = 0;
-  
-  while (daysAdded < workingDays) {
-    currentDate.setDate(currentDate.getDate() + 1);
-    const dayOfWeek = currentDate.getDay();
-    
-    // Skip weekends (0 = Sunday, 6 = Saturday)
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      daysAdded++;
-    }
-  }
-  
-  return currentDate;
 }
 
 // @route   POST /api/payments/refund
@@ -561,8 +539,10 @@ router.post('/refund', [
       return res.status(403).json({ message: 'Not authorized to process refund' });
     }
 
-    // Check if payment was made
-    if (booking.paymentStatus !== 'paid') {
+    // Check if payment was made. 'held' bookings have been charged but not
+    // yet transferred to the provider — funds are still on the platform, so
+    // a normal charge refund works the same as for 'paid' (legacy) bookings.
+    if (booking.paymentStatus !== 'paid' && booking.paymentStatus !== 'held') {
       return res.status(400).json({ message: 'No payment to refund' });
     }
 
