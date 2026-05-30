@@ -72,6 +72,11 @@ const bookingSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  releaseStartedAt: {
+    // Timestamp of the in-flight claim; used by the release cron to recover
+    // bookings whose claim was abandoned mid-transfer (e.g. process crashed).
+    type: Date
+  },
   releaseAttempts: {
     type: Number,
     default: 0

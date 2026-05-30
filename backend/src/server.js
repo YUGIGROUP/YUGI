@@ -469,12 +469,42 @@ function startParentVerificationJob() {
   console.log('📊 Parent verification aggregator started (every 6 hours)');
 }
 
+// ─── Funds-release background job ───────────────────────────────────────────
+// Every FUNDS_RELEASE_INTERVAL_MS: auto-completes sessions whose grace window
+// has passed, then transfers basePrice to the provider's Stripe Connect
+// account for every booking past its holding window. Idempotent: see
+// services/fundsReleaseService.js for the money invariants.
+function startFundsReleaseJob() {
+  const { runAutoCompletionSweep, runReleaseSweep } = require('./services/fundsReleaseService');
+  const INTERVAL_MS = 10 * 60 * 1000;
+
+  async function tick() {
+    try {
+      const completion = await runAutoCompletionSweep();
+      const release = await runReleaseSweep();
+      if (completion.completed || release.released || release.failed || release.skipped) {
+        console.log(
+          `💰 Funds-release tick — auto-completed: ${completion.completed}/${completion.scanned}, ` +
+          `released: ${release.released}, skipped: ${release.skipped}, failed: ${release.failed} (scanned ${release.scanned})`
+        );
+      }
+    } catch (err) {
+      console.error('Funds-release job error:', err.message);
+    }
+  }
+
+  tick();
+  setInterval(tick, INTERVAL_MS);
+  console.log('💰 Funds-release job started (every 10 minutes)');
+}
+
 if (process.env.MONGODB_URI) {
   // Start background jobs only when DB is connected
   const mongoose = require('mongoose');
   mongoose.connection.once('open', () => {
     startNotificationJob();
     startParentVerificationJob();
+    startFundsReleaseJob();
   });
 }
 

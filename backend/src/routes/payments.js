@@ -428,45 +428,9 @@ function scheduleFundsRelease(bookingId, releaseDate) {
   console.log(`📅 Booking ${bookingId} scheduled for release at ${releaseDate.toISOString()} (cron will pick this up)`);
 }
 
-// Release funds to provider after 3-day holding period
-async function releaseFundsToProvider(bookingId) {
-  try {
-    const booking = await Booking.findById(bookingId)
-      .populate('class')
-      .populate('class.provider');
-    
-    if (!booking) {
-      console.error(`Booking not found for funds release: ${bookingId}`);
-      return;
-    }
-    
-    if (booking.fundsReleased) {
-      console.log(`Funds already released for booking: ${booking.bookingNumber}`);
-      return;
-    }
-    
-    // Update booking to mark funds as released
-    booking.fundsReleased = true;
-    booking.fundsReleasedAt = new Date();
-    booking.paymentStatus = 'paid'; // Change from 'held' to 'paid'
-    await booking.save();
-    
-    console.log(`Funds released to provider for booking: ${booking.bookingNumber}`);
-    console.log(`Provider: ${booking.class.provider.businessName || booking.class.provider.fullName}`);
-    console.log(`Amount: £${booking.totalAmount}`);
-    
-    // Here you would typically:
-    // 1. Transfer funds to provider's Stripe account
-    // 2. Send notification to provider
-    // 3. Update provider's earnings dashboard
-    
-    // For now, we'll just log the transfer
-    console.log(`Transferring £${booking.totalAmount} to provider's account...`);
-    
-  } catch (error) {
-    console.error('Error releasing funds to provider:', error);
-  }
-}
+// The real release implementation lives in services/fundsReleaseService.js and
+// is driven by the funds-release cron in src/server.js. Routes here no longer
+// own release; they only stamp completion + log the scheduled release date.
 
 // Mark class as completed and schedule funds release
 async function markClassAsCompleted(bookingId) {
