@@ -503,6 +503,17 @@ router.post('/refund', [
       return res.status(403).json({ message: 'Not authorized to process refund' });
     }
 
+    // Once funds have left the platform to the provider, a self-serve refund
+    // is no longer possible — support handles the reversal manually.
+    if (booking.fundsLeftPlatform()) {
+      return res.status(409).json({
+        message:
+          "This booking's payment has already been released to the provider, " +
+          "so it can't be cancelled with an automatic refund. Please contact " +
+          "support@yugiapp.ai and we'll arrange this for you.",
+      });
+    }
+
     // Check if payment was made. 'held' bookings have been charged but not
     // yet transferred to the provider — funds are still on the platform, so
     // a normal charge refund works the same as for 'paid' (legacy) bookings.

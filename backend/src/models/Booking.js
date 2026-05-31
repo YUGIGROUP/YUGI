@@ -192,4 +192,16 @@ bookingSchema.index({ stripePaymentIntentId: 1 }, { sparse: true });
 bookingSchema.index({ stripeChargeId: 1 }, { sparse: true });
 bookingSchema.index({ stripeTransferId: 1 }, { sparse: true });
 
-module.exports = mongoose.model('Booking', bookingSchema); 
+// Funds have been, or are currently being, transferred to the provider's
+// Stripe Connect account. Once true, the charge can no longer be self-serve
+// refunded — reversals are handled manually by support.
+bookingSchema.methods.fundsLeftPlatform = function () {
+  return (
+    this.paymentStatus === 'released' ||
+    this.fundsReleased === true ||
+    Boolean(this.stripeTransferId) ||
+    this.releaseInProgress === true
+  );
+};
+
+module.exports = mongoose.model('Booking', bookingSchema);

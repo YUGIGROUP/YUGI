@@ -272,6 +272,17 @@ router.put('/:id/cancel', [
       return res.status(403).json({ message: 'Not authorized to cancel this booking' });
     }
 
+    // Once funds have left the platform to the provider, this booking can be
+    // neither refunded nor cancelled here — return 409 and leave it untouched.
+    if (booking.fundsLeftPlatform()) {
+      return res.status(409).json({
+        message:
+          "This booking's payment has already been released to the provider, " +
+          "so it can't be cancelled with an automatic refund. Please contact " +
+          "support@yugiapp.ai and we'll arrange this for you.",
+      });
+    }
+
     // State guards
     if (booking.status === 'cancelled') {
       return res.status(400).json({ message: 'Booking is already cancelled' });
