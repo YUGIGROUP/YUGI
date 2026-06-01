@@ -37,7 +37,7 @@ struct RefundPolicyScreen: View {
                             icon: "poundsign.circle"
                         ) {
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Each booking includes a £1.99 non-refundable service fee.")
+                                Text("Each booking includes a £1.99 service fee.")
                                     .font(.system(size: 14))
                                     .foregroundColor(Color.yugiGray)
                                 
@@ -75,7 +75,7 @@ struct RefundPolicyScreen: View {
                             icon: "exclamationmark.triangle"
                         ) {
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("If a provider cancels for any reason, you will receive a full refund of the class price, minus the £1.99 service fee.")
+                                Text("If a provider cancels for any reason, you will receive a full refund of the class price, including the £1.99 service fee.")
                                     .font(.system(size: 14))
                                     .foregroundColor(Color.yugiGray)
                             }
@@ -131,7 +131,7 @@ struct RefundPolicyScreen: View {
                             icon: "xmark.shield"
                         ) {
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("The £1.99 service fee is always non-refundable.")
+                                Text("The £1.99 service fee is non-refundable if you cancel, but is refunded in full if the provider cancels.")
                                     .font(.system(size: 14))
                                     .foregroundColor(Color.yugiGray)
                                 

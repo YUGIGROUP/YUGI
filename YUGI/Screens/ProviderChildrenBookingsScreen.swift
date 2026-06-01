@@ -123,7 +123,7 @@ struct ProviderChildrenBookingsScreen: View {
             .alert("Refund Policy", isPresented: $showingRefundPolicy) {
                 Button("OK") { }
             } message: {
-                Text("Cancellations made more than 24 hours before the class start time are eligible for a full refund. Cancellations made within 24 hours are non-refundable.")
+                Text("Cancellations made more than 24 hours before the class start time are eligible for a full refund, minus the £1.99 service fee. Cancellations made within 24 hours are non-refundable.")
             }
             .sheet(isPresented: $showingAddChild) {
                 AddChildScreen { newChild in

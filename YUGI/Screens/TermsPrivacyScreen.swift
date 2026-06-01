@@ -274,11 +274,11 @@ struct TermsOfServiceView: View {
         )
         TermsProseSection(
             title: "2. Booking and Payments",
-            content: "A non-refundable £1.99 service fee applies to every booking. Payment is taken at the time of booking."
+            content: "A £1.99 service fee applies to every booking. Payment is taken at the time of booking."
         )
         TermsProseSection(
             title: "3. Cancellations and Refunds",
-            content: "3.1 Cancel 24+ hours before a class → full refund minus the £1.99 service fee.\n\n3.2 Cancel within 24 hours → no refund.\n\n3.3 If a provider cancels → full refund minus the £1.99 service fee.\n\n3.4 The £1.99 service fee is non-refundable in all cases.\n\n3.5 Refunds are processed only through the YUGI platform. YUGI's decision on disputes is final."
+            content: "3.1 Cancel 24+ hours before a class → full refund minus the £1.99 service fee.\n\n3.2 Cancel within 24 hours → no refund.\n\n3.3 If a provider cancels → full refund including the £1.99 service fee.\n\n3.4 The £1.99 service fee is non-refundable if you cancel, but is refunded in full if the provider cancels.\n\n3.5 Refunds are processed only through the YUGI platform. YUGI's decision on disputes is final."
         )
         TermsProseSection(
             title: "4. Disputes",
@@ -595,12 +595,12 @@ struct TermsAgreementScreen: View {
 
                                 TermsLegalSection(
                                     title: "2. Booking and Payments",
-                                    content: "2.1 All bookings must be completed through the YUGI platform.\n\n2.2 A non-refundable service fee of £1.99 is charged for each booking. This fee covers administration, app operation, and transaction costs.\n\n2.3 Payment is taken at the time of booking.\n\n2.4 YUGI does not guarantee uninterrupted access to the platform and shall not be liable for any downtime, service interruptions, or technical issues."
+                                    content: "2.1 All bookings must be completed through the YUGI platform.\n\n2.2 A service fee of £1.99 is charged for each booking. This fee covers administration, app operation, and transaction costs.\n\n2.3 Payment is taken at the time of booking.\n\n2.4 YUGI does not guarantee uninterrupted access to the platform and shall not be liable for any downtime, service interruptions, or technical issues."
                                 )
 
                                 TermsLegalSection(
                                     title: "3. Cancellations, Refunds and Fees",
-                                    content: "3.1 The £1.99 service fee is non-refundable in all circumstances.\n\n3.2 If you cancel a booking less than 24 hours before the scheduled start time, you will not receive any refund.\n\n3.3 If you cancel a booking 24 hours or more before the scheduled start time, you will receive a refund of the booking price minus the £1.99 service fee.\n\n3.4 If a provider cancels the class, you will receive a refund of the booking price minus the £1.99 service fee.\n\n3.5 If you wish to raise a dispute, you must do so within 48 hours after the scheduled class. YUGI's decision on refunds or disputes is final."
+                                    content: "3.1 The £1.99 service fee is non-refundable if you cancel, but is refunded in full if the provider cancels.\n\n3.2 If you cancel a booking less than 24 hours before the scheduled start time, you will not receive any refund.\n\n3.3 If you cancel a booking 24 hours or more before the scheduled start time, you will receive a refund of the booking price minus the £1.99 service fee.\n\n3.4 If a provider cancels the class, you will receive a full refund of the booking price plus the £1.99 service fee.\n\n3.5 If you wish to raise a dispute, you must do so within 48 hours after the scheduled class. YUGI's decision on refunds or disputes is final."
                                 )
 
                                 TermsLegalSection(

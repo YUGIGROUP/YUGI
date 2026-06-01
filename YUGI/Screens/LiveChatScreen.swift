@@ -228,7 +228,7 @@ struct LiveChatScreen: View {
         } else if lowercased.contains("payment") || lowercased.contains("pay") || lowercased.contains("card") {
             return "I understand you're having payment issues. What specific problem are you encountering? Is it with adding a payment method, processing a payment, or something else?"
         } else if lowercased.contains("cancel") || lowercased.contains("refund") {
-            return "For cancellations and refunds, you can cancel bookings up to 24 hours before the class starts through your bookings tab. Refunds are processed within 5-7 business days. Is there a specific booking you'd like to cancel?"
+            return "For cancellations and refunds, you can cancel bookings up to 24 hours before the class starts through your bookings tab. Refunds are processed within 5-10 business days. Is there a specific booking you'd like to cancel?"
         } else if lowercased.contains("child") || lowercased.contains("children") {
             return "I can help you manage your children's profiles! You can add, edit, or remove children from your account in the Children tab. What would you like to do?"
         } else if lowercased.contains("class") || lowercased.contains("course") {
