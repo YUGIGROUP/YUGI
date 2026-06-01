@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 const Booking = require('../models/Booking');
 const Class = require('../models/Class');
 const User = require('../models/User');
-const { protect, requireUserType } = require('../middleware/auth');
+const { protect, requireUserType, adminOnly } = require('../middleware/auth');
 const emailService = require('../services/emailService');
 const { applyClassCompletion } = require('../utils/holdingPeriod');
 
@@ -472,6 +472,7 @@ async function markClassAsCompleted(bookingId) {
 // @access  Private
 router.post('/refund', [
   protect,
+  adminOnly,
   body('bookingId').isMongoId(),
   body('amount').optional().isFloat({ min: 0 }),
   body('reason').optional().trim()
@@ -494,14 +495,8 @@ router.post('/refund', [
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    // Check authorization
-    const isOwner = booking.parent.toString() === req.user.id;
-    const isProvider = req.user.userType === 'provider' && 
-                      booking.class.provider.toString() === req.user.id;
-
-    if (!isOwner && !isProvider) {
-      return res.status(403).json({ message: 'Not authorized to process refund' });
-    }
+    // Admin-gated via adminOnly middleware — discretionary support tool for
+    // dispute/goodwill refunds, so no per-user ownership check applies here.
 
     // Once funds have left the platform to the provider, a self-serve refund
     // is no longer possible — support handles the reversal manually.
