@@ -5,6 +5,7 @@ const Booking = require('../models/Booking');
 const Class = require('../models/Class');
 const { protect, requireUserType } = require('../middleware/auth');
 const emailService = require('../services/emailService');
+const { cancelBookingWithRefund } = require('../services/cancellationService');
 
 const ScheduledNotification = require('../models/ScheduledNotification');
 const { applyClassCompletion } = require('../utils/holdingPeriod');
@@ -272,9 +273,14 @@ router.put('/:id/cancel', [
       return res.status(403).json({ message: 'Not authorized to cancel this booking' });
     }
 
-    // Once funds have left the platform to the provider, this booking can be
-    // neither refunded nor cancelled here — return 409 and leave it untouched.
-    if (booking.fundsLeftPlatform()) {
+    // Refund + cancel via the shared service (single source of truth for the
+    // refund policy). Map its result back to the right HTTP response.
+    const result = await cancelBookingWithRefund(booking, {
+      cancelledBy: isProvider ? 'provider' : 'parent',
+      reason
+    });
+
+    if (result.skipped === 'funds_released') {
       return res.status(409).json({
         message:
           "This booking's payment has already been released to the provider, " +
@@ -282,108 +288,29 @@ router.put('/:id/cancel', [
           "support@yugiapp.ai and we'll arrange this for you.",
       });
     }
-
-    // State guards
-    if (booking.status === 'cancelled') {
+    if (result.skipped === 'already_cancelled') {
       return res.status(400).json({ message: 'Booking is already cancelled' });
     }
-    if (booking.status === 'completed') {
+    if (result.skipped === 'completed') {
       return res.status(400).json({ message: 'Cannot cancel a completed booking' });
     }
-
-    // Determine refund amount based on who is cancelling and timing
-    const sessionDate = new Date(booking.sessionDate);
-    const now = new Date();
-    const hoursUntilSession = (sessionDate - now) / (1000 * 60 * 60);
-    const SERVICE_FEE = 1.99;
-
-    let refundAmount = 0;
-    let refundReason = '';
-
-    if (isProvider) {
-      // Provider cancellation: full refund including service fee
-      refundAmount = booking.totalAmount;
-      refundReason = 'provider_cancellation';
-    } else {
-      // Parent cancellation: full refund minus service fee if >24h, otherwise nothing
-      if (hoursUntilSession > 24) {
-        refundAmount = Math.max(0, booking.totalAmount - SERVICE_FEE);
-        refundReason = 'parent_cancellation_outside_window';
-      } else {
-        refundAmount = 0;
-        refundReason = 'parent_cancellation_inside_window';
-      }
-    }
-
-    console.log(`🚫 Cancelling booking ${booking.bookingNumber}: ${refundReason}, refund £${refundAmount.toFixed(2)}`);
-
-    // Process Stripe refund if applicable. Both 'held' (charged, awaiting
-    // release) and 'paid' (legacy) bookings refund the same way — funds are
-    // still on the platform until the release cron transfers them.
-    let stripeRefund = null;
-    if (refundAmount > 0 && (booking.paymentStatus === 'paid' || booking.paymentStatus === 'held') && booking.stripeChargeId) {
-      try {
-        const refundAmountInCents = Math.round(refundAmount * 100);
-        stripeRefund = await stripe.refunds.create({
-          charge: booking.stripeChargeId,
-          amount: refundAmountInCents,
-          reason: 'requested_by_customer',
-          metadata: {
-            bookingId: booking._id.toString(),
-            bookingNumber: booking.bookingNumber,
-            cancellationReason: refundReason,
-            cancelledBy: isProvider ? 'provider' : 'parent'
-          }
-        });
-        console.log(`✅ Stripe refund created: ${stripeRefund.id}, status: ${stripeRefund.status}`);
-      } catch (stripeError) {
-        console.error(`❌ Stripe refund failed:`, stripeError.message);
-        return res.status(500).json({
-          message: 'Failed to process refund. Please contact support.',
-          error: stripeError.message
-        });
-      }
-    } else if (refundAmount > 0 && !booking.stripeChargeId) {
-      console.warn(`⚠️ Refund owed (£${refundAmount}) but no stripeChargeId on booking ${booking.bookingNumber}`);
-    }
-
-    // Update booking
-    booking.status = 'cancelled';
-    booking.cancelledAt = new Date();
-    booking.cancellationReason = reason || refundReason;
-    booking.refundAmount = refundAmount;
-    if (refundAmount > 0 && stripeRefund) {
-      booking.paymentStatus = 'refunded';
-    }
-    await booking.save();
-
-    // Decrement class booking count
-    await Class.findByIdAndUpdate(booking.class._id, {
-      $inc: { currentBookings: -1 }
-    });
-
-    // Send cancellation email
-    try {
-      await emailService.sendCancellationEmail({
-        booking,
-        cancelledBy: isProvider ? 'provider' : 'parent',
-        refundAmount,
-        reason: refundReason
+    if (result.success === false) {
+      return res.status(500).json({
+        message: 'Failed to process refund. Please contact support.',
+        error: result.error
       });
-    } catch (emailErr) {
-      console.error('⚠️ Cancellation email failed (non-blocking):', emailErr.message);
     }
 
     res.json({
       success: true,
-      message: refundAmount > 0
-        ? `Booking cancelled. Refund of £${refundAmount.toFixed(2)} will appear on the original card in 5-10 business days.`
+      message: result.refundAmount > 0
+        ? `Booking cancelled. Refund of £${result.refundAmount.toFixed(2)} will appear on the original card in 5-10 business days.`
         : 'Booking cancelled. No refund applies as this cancellation is inside the 24-hour window.',
       data: {
         ...booking.toObject(),
-        refundAmount,
-        refundReason,
-        stripeRefundId: stripeRefund?.id || null
+        refundAmount: result.refundAmount,
+        refundReason: result.refundReason,
+        stripeRefundId: result.stripeRefundId
       }
     });
 

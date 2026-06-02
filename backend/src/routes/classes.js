@@ -1,6 +1,8 @@
 const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Class = require('../models/Class');
+const Booking = require('../models/Booking');
+const { cancelBookingWithRefund } = require('../services/cancellationService');
 const User = require('../models/User');
 const { sendAdminNotification } = require('../services/pushNotificationService');
 const { protect, optionalAuth, requireProviderVerification } = require('../middleware/auth');
@@ -1212,13 +1214,49 @@ router.put('/:id/cancel', [
 
     console.log('✅ Class cancelled successfully:', updatedClass.name);
 
+    // Refund every active booking on this class. Provider cancellation → each
+    // parent gets a full refund including the service fee, via the shared
+    // cancellation service (single source of truth for the refund policy).
+    const classBookings = await Booking.find({
+      class: req.params.id,
+      status: { $nin: ['cancelled', 'completed'] }
+    })
+      .populate('class')
+      .populate('parent', 'fullName email');
+
+    const refundResults = [];
+    for (const booking of classBookings) {
+      try {
+        const r = await cancelBookingWithRefund(booking, {
+          cancelledBy: 'provider',
+          reason: 'Provider cancelled the class'
+        });
+        refundResults.push(r);
+      } catch (err) {
+        console.error(`❌ Refund threw for booking ${booking.bookingNumber}:`, err.message);
+        refundResults.push({ bookingNumber: booking.bookingNumber, success: false, error: err.message });
+      }
+    }
+
+    const refundedCount = refundResults.filter(r => r.success === true).length;
+    const failedCount = refundResults.filter(r => r.success === false).length;
+    const skippedCount = refundResults.filter(r => r.skipped).length;
+    console.log(`🚫 Class cancellation refunds: ${refundedCount} refunded, ${failedCount} failed, ${skippedCount} skipped (of ${classBookings.length})`);
+
     // Transform the response for iOS compatibility
     const transformedClass = await transformClassForIOS(updatedClass);
 
     res.json({
       success: true,
       message: 'Class cancelled successfully',
-      data: transformedClass
+      data: transformedClass,
+      refunds: {
+        total: classBookings.length,
+        refunded: refundedCount,
+        failed: failedCount,
+        skipped: skippedCount,
+        details: refundResults
+      }
     });
 
   } catch (error) {
