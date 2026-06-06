@@ -91,6 +91,7 @@ struct ProviderDashboardScreen: View {
     @State private var shouldNavigateToClassCreation = false
     @State private var shouldNavigateToClassCreationForm = false
     @State private var pendingClassData: ClassCreationData? = nil
+    @State private var pendingPresentForm = false
     @State private var shouldNavigateToBookings = false
     @State private var shouldNavigateToTermsPrivacy = false
     @State private var shouldNavigateToAcceptedTerms = false
@@ -321,27 +322,31 @@ struct ProviderDashboardScreen: View {
                 }
             }
 
-            .sheet(isPresented: $shouldNavigateToClassCreation) {
+            .sheet(isPresented: $shouldNavigateToClassCreation, onDismiss: {
+                // Present the form only AFTER the generator has fully dismissed
+                if pendingPresentForm {
+                    pendingPresentForm = false
+                    shouldNavigateToClassCreationForm = true
+                }
+            }) {
                 AIClassGeneratorScreen(
                     businessName: displayBusinessName,
                     onGenerated: { generatedData in
+                        print("🤖 onGenerated received className=\(generatedData.className)")
+                        // Set the data BEFORE dismissing so it's ready when the form presents
+                        pendingClassData = generatedData
+                        pendingPresentForm = true
                         shouldNavigateToClassCreation = false
-                        // Brief delay so the sheet dismisses before the next one presents
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            pendingClassData = generatedData
-                            shouldNavigateToClassCreationForm = true
-                        }
                     },
                     onSkip: {
+                        pendingClassData = nil
+                        pendingPresentForm = true
                         shouldNavigateToClassCreation = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            pendingClassData = nil
-                            shouldNavigateToClassCreationForm = true
-                        }
                     }
                 )
             }
             .sheet(isPresented: $shouldNavigateToClassCreationForm) {
+                let _ = print("🤖 building form, pendingClassData className=\(pendingClassData?.className ?? "nil")")
                 ProviderClassCreationScreen(
                     businessName: displayBusinessName,
                     onClassPublished: { classData in

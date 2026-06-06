@@ -82,7 +82,7 @@
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "STRIPE_PUBLISHABLE_KEY"
-            value = ""
+            value = "pk_test_51SRBcCFpXDKyb9xjlLTOKG4MgluA90wNfVy5o26k6DbpQW7gXI2kcLBPSWWpkcEaPACg668mrfMkn5A7un19hPnB0033JCzznd"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

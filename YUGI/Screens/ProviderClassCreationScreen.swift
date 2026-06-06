@@ -165,6 +165,7 @@ struct ProviderClassCreationScreen: View {
             }
         }
         .onAppear {
+            print("🤖 form initialData className=\(initialData?.className ?? "nil")")
             if let data = initialData {
                 classData = data
             }
