@@ -83,15 +83,20 @@ struct ProviderClass: Identifiable {
     var hasIntakeQuestions: Bool = false
 }
 
+private struct ClassFormPresentation: Identifiable {
+    let id = UUID()
+    let data: ClassCreationData?
+}
+
 struct ProviderDashboardScreen: View {
     let businessName: String
     @State private var verificationStatus: ProviderVerificationStatus = .pending
     @State private var providerDocuments: [ProviderDocument] = []
     @State private var documentCancellables = Set<AnyCancellable>()
     @State private var shouldNavigateToClassCreation = false
-    @State private var shouldNavigateToClassCreationForm = false
     @State private var pendingClassData: ClassCreationData? = nil
     @State private var pendingPresentForm = false
+    @State private var formPresentation: ClassFormPresentation? = nil
     @State private var shouldNavigateToBookings = false
     @State private var shouldNavigateToTermsPrivacy = false
     @State private var shouldNavigateToAcceptedTerms = false
@@ -326,13 +331,12 @@ struct ProviderDashboardScreen: View {
                 // Present the form only AFTER the generator has fully dismissed
                 if pendingPresentForm {
                     pendingPresentForm = false
-                    shouldNavigateToClassCreationForm = true
+                    formPresentation = ClassFormPresentation(data: pendingClassData)
                 }
             }) {
                 AIClassGeneratorScreen(
                     businessName: displayBusinessName,
                     onGenerated: { generatedData in
-                        print("🤖 onGenerated received className=\(generatedData.className)")
                         // Set the data BEFORE dismissing so it's ready when the form presents
                         pendingClassData = generatedData
                         pendingPresentForm = true
@@ -345,16 +349,15 @@ struct ProviderDashboardScreen: View {
                     }
                 )
             }
-            .sheet(isPresented: $shouldNavigateToClassCreationForm) {
-                let _ = print("🤖 building form, pendingClassData className=\(pendingClassData?.className ?? "nil")")
+            .sheet(item: $formPresentation) { presentation in
                 ProviderClassCreationScreen(
                     businessName: displayBusinessName,
                     onClassPublished: { classData in
                         NewClassStorage.shared.addNewClass(classData)
-                        shouldNavigateToClassCreationForm = false
+                        formPresentation = nil
                         shouldNavigateToMyClasses = true
                     },
-                    initialData: pendingClassData
+                    initialData: presentation.data
                 )
             }
             .sheet(isPresented: $shouldNavigateToBookings) {

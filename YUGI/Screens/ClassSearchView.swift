@@ -470,7 +470,6 @@ struct ClassSearchView: View {
     
     // MARK: - Helper Functions
     private func updateClassWithAIData(_ classItem: Class, facilities: VenueFacilities) {
-        print("🤖 Updating class \(classItem.name) with AI data:")
         print("   - Accessibility Notes: \(facilities.accessibilityNotes ?? "None")")
         print("   - Parking Info: \(facilities.parkingInfo ?? "None")")
         print("   - Baby Changing Facilities: \(facilities.babyChangingFacilities ?? "None")")

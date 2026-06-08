@@ -49,6 +49,17 @@ struct ProviderClassCreationScreen: View {
     @State private var showingSubmittedForReview = false
     @State private var documentCancellables = Set<AnyCancellable>()
 
+    init(
+        businessName: String,
+        onClassPublished: ((ClassCreationData) -> Void)?,
+        initialData: ClassCreationData? = nil
+    ) {
+        self.businessName = businessName
+        self.onClassPublished = onClassPublished
+        self.initialData = initialData
+        _classData = State(initialValue: initialData ?? ClassCreationData())
+    }
+
     private var steps: [String] {
         var s = ["What kind of event?", "Basic Info & Pricing", "Schedule", "Location & Details"]
         if classData.tier != .community {
@@ -162,12 +173,6 @@ struct ProviderClassCreationScreen: View {
                     onClassPublished?(classData)
                     dismiss()
                 }
-            }
-        }
-        .onAppear {
-            print("🤖 form initialData className=\(initialData?.className ?? "nil")")
-            if let data = initialData {
-                classData = data
             }
         }
         .onChange(of: currentStep) { _, newStep in

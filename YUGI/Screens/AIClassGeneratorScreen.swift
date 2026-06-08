@@ -138,7 +138,6 @@ struct AIClassGeneratorScreen: View {
         do {
             // Step 1: AI generates class details from the prompt
             let result = try await APIService.shared.generateClassListing(prompt: trimmed)
-            print("🤖 API returned className=\(result.className) descLen=\(result.description.count)")
             var data = ClassCreationData()
             data.className = result.className
             data.description = result.description
@@ -177,10 +176,8 @@ struct AIClassGeneratorScreen: View {
                 }
             }
 
-            print("🤖 calling onGenerated className=\(data.className)")
             onGenerated(data)
         } catch {
-            print("🤖 generate() ERROR: \(error)")
             errorMessage = "Could not generate listing. Please check your connection and try again."
         }
     }
