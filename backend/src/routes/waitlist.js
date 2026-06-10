@@ -52,30 +52,27 @@ router.post('/', waitlistLimiter, async (req, res) => {
     }
 
     // Add them to Resend (contacts are global now — no audience ID needed).
-    let already = false;
-    try {
-      await resend.contacts.create({ email: clean });
-    } catch (e) {
-      const m = String((e && (e.message || e.name)) || '').toLowerCase();
-      if (m.includes('exist') || m.includes('already')) already = true; // already signed up
-      else throw e;
+    // Resend upserts silently, so there's no reliable "already signed up" signal.
+    // The SDK returns { data, error } rather than throwing, so check error explicitly.
+    const { error: contactError } = await resend.contacts.create({ email: clean });
+    if (contactError) {
+      console.error('Waitlist contact create failed:', contactError);
+      return res.status(502).json({ ok: false, error: 'Something went wrong. Please try again.' });
     }
 
-    // Send the "you're on the list" email — only to brand-new signups.
-    if (!already) {
-      try {
-        await resend.emails.send({
-          from: 'YUGI <support@yugiapp.ai>',
-          to: clean,
-          subject: "You're on the list 💛",
-          html: welcomeEmail(),
-        });
-      } catch (e) {
-        console.error('Waitlist confirmation email failed:', e);
-      }
+    // Send the "you're on the list" email. Best-effort: a send failure shouldn't
+    // fail the signup, since the contact is already saved.
+    const { error: emailError } = await resend.emails.send({
+      from: 'YUGI <support@yugiapp.ai>',
+      to: clean,
+      subject: "You're on the list 💛",
+      html: welcomeEmail(),
+    });
+    if (emailError) {
+      console.error('Waitlist confirmation email failed:', emailError);
     }
 
-    return res.status(201).json({ ok: true, already });
+    return res.status(201).json({ ok: true });
   } catch (err) {
     console.error('Waitlist signup error:', err);
     return res.status(500).json({ ok: false, error: 'Something went wrong. Please try again.' });
