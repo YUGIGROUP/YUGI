@@ -36,9 +36,11 @@ if (process.env.MONGODB_URI) {
 
 // Security middleware
 app.use(helmet());
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:3000', 'http://192.168.1.72:3000', 'http://127.0.0.1:3000'];
+  : ['http://localhost:3000', 'http://192.168.1.72:3000', 'http://127.0.0.1:3000'])
+  // Marketing site (Netlify) — always allowed regardless of ALLOWED_ORIGINS env.
+  .concat(['https://yugiapp.ai', 'https://www.yugiapp.ai']);
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -370,6 +372,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/stripe/connect', stripeConnectRoutes);
 app.use('/api/parent-payments', stripePaymentsRoutes);
+app.use('/api/waitlist', require('./routes/waitlist'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
