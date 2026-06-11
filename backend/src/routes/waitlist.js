@@ -32,7 +32,7 @@ function welcomeEmail() {
       <p style="font-size:16px;line-height:1.6;color:#6B6461;margin:24px 0 4px;">Talk soon,</p>
       <p style="font-size:16px;line-height:1.6;color:#3A3836;margin:0;font-weight:600;">Eva<br><span style="color:#6B6461;font-weight:400;">Founder, YUGI</span></p>
       <div style="margin-top:32px;padding-top:18px;border-top:1px solid #D4D0CC;font-size:12px;color:#6B6461;">
-        YUGI Group Limited · Poole, UK · <a href="https://yugiapp.ai" style="color:#A3867A;text-decoration:none;">yugiapp.ai</a>
+        YUGI Group Limited · <a href="https://yugiapp.ai" style="color:#A3867A;text-decoration:none;">yugiapp.ai</a>
       </div>
     </div>
   </div>`;
@@ -65,6 +65,7 @@ router.post('/', waitlistLimiter, async (req, res) => {
     const { error: emailError } = await resend.emails.send({
       from: 'YUGI <support@yugiapp.ai>',
       to: clean,
+      replyTo: 'eva@yugiapp.ai',
       subject: "You're on the list 💛",
       html: welcomeEmail(),
     });
