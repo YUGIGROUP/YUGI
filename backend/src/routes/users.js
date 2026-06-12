@@ -6,23 +6,17 @@ const { protect, adminOnly } = require('../middleware/auth');
 const router = express.Router();
 
 // @route   GET /api/users/provider/:id
-// @desc    Get provider information by ID
-// @access  Public
-router.get('/provider/:id', async (req, res) => {
+// @desc    Get provider profile (public-safe display fields only)
+// @access  Private (auth required)
+router.get('/provider/:id', protect, async (req, res) => {
   try {
     const provider = await User.findById(req.params.id)
-      .select('fullName businessName businessAddress phoneNumber email profileImage qualifications dbsCertificate verificationStatus bio services createdAt');
+      .select('fullName businessName email profileImage qualifications verificationStatus bio services createdAt');
 
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
 
-    // Log the user type for debugging
-    console.log('🔍 Provider endpoint - User type:', provider.userType);
-    console.log('🔍 Provider endpoint - Bio:', provider.bio);
-    console.log('🔍 Provider endpoint - Services:', provider.services);
-    console.log('🔍 Provider endpoint - Email:', provider.email);
-    
     // For now, allow any user type to be viewed as a provider
     // TODO: Remove this temporary fix once user types are properly set
     if (provider.userType !== 'provider') {
