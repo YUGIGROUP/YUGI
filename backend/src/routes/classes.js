@@ -5,7 +5,7 @@ const Booking = require('../models/Booking');
 const { cancelBookingWithRefund } = require('../services/cancellationService');
 const User = require('../models/User');
 const { sendAdminNotification } = require('../services/pushNotificationService');
-const { protect, optionalAuth, requireProviderVerification } = require('../middleware/auth');
+const { protect, optionalAuth, requireProviderVerification, requireUserType } = require('../middleware/auth');
 const venueDataService = require('../services/venueDataService');
 const { scoreClasses } = require('../services/doabilityService');
 const { ensureCoordinates } = require('../services/autoGeocode');
@@ -832,6 +832,7 @@ router.get('/:id', async (req, res) => {
 // @access  Private
 router.post('/', [
   protect,
+  requireUserType(['provider']),
   // requireProviderVerification, // Temporarily disabled for testing
   normalizeCategoryInResponse,
   body('name').trim().isLength({ min: 3, max: 100 }),
@@ -1022,6 +1023,7 @@ router.post('/', [
 // @access  Private
 router.put('/:id', [
   protect,
+  requireUserType(['provider']),
   // requireProviderVerification, // Temporarily disabled for testing
   normalizeCategoryInResponse
 ], async (req, res) => {
@@ -1096,6 +1098,7 @@ router.put('/:id', [
 // @access  Private
 router.post('/:id/publish', [
   protect,
+  requireUserType(['provider']),
   // requireProviderVerification, // Temporarily disabled for testing
   normalizeCategoryInResponse
 ], async (req, res) => {
@@ -1142,6 +1145,7 @@ router.post('/:id/publish', [
 // @access  Private
 router.post('/:id/unpublish', [
   protect,
+  requireUserType(['provider']),
   // requireProviderVerification, // Temporarily disabled for testing
   normalizeCategoryInResponse
 ], async (req, res) => {
@@ -1188,6 +1192,7 @@ router.post('/:id/unpublish', [
 // @access  Private
 router.put('/:id/cancel', [
   protect,
+  requireUserType(['provider']),
   // requireProviderVerification, // Temporarily disabled for testing
   normalizeCategoryInResponse
 ], async (req, res) => {
@@ -1270,6 +1275,7 @@ router.put('/:id/cancel', [
 // @access  Private
 router.delete('/:id', [
   protect,
+  requireUserType(['provider']),
   // requireProviderVerification, // Temporarily disabled for testing
   normalizeCategoryInResponse
 ], async (req, res) => {

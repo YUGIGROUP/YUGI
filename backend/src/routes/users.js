@@ -11,23 +11,23 @@ const router = express.Router();
 router.get('/provider/:id', protect, async (req, res) => {
   try {
     const provider = await User.findById(req.params.id)
-      .select('fullName businessName email profileImage qualifications verificationStatus bio services createdAt');
+      .select('fullName businessName email profileImage qualifications verificationStatus bio services createdAt userType');
 
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found' });
     }
 
-    // For now, allow any user type to be viewed as a provider
-    // TODO: Remove this temporary fix once user types are properly set
     if (provider.userType !== 'provider') {
-      console.log('⚠️ User is not a provider, userType:', provider.userType, '- but allowing anyway for now');
-      // return res.status(400).json({ message: 'User is not a provider' });
+      return res.status(400).json({ message: 'User is not a provider' });
     }
 
     // Convert _id to id for iOS compatibility
     const providerResponse = provider.toObject();
     providerResponse.id = providerResponse._id;
     delete providerResponse._id;
+    // userType was selected only to gate access above — don't expose it in the
+    // response (keeps the payload as tightened in c1fb88a).
+    delete providerResponse.userType;
 
     res.json({
       success: true,
