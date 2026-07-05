@@ -206,9 +206,15 @@ struct ProviderProfilePopup: View {
                                             Image(systemName: "envelope")
                                                 .font(.system(size: 12))
                                                 .foregroundColor(.white.opacity(0.8))
-                                            Text(email)
-                                                .font(.system(size: 14))
-                                                .foregroundColor(.white.opacity(0.9))
+                                            if let mailtoURL = URL(string: "mailto:\(email)") {
+                                                Link(email, destination: mailtoURL)
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(.white.opacity(0.9))
+                                            } else {
+                                                Text(email)
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(.white.opacity(0.9))
+                                            }
                                         }
                                     }
                                     
