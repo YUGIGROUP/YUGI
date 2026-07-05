@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Document = require('../models/Document');
 const User = require('../models/User');
-const { protect } = require('../middleware/auth');
+const { protect, requireUserType } = require('../middleware/auth');
 const documentUpload = require('../middleware/documentUpload');
 const { uploadDocument, deleteDocument } = require('../services/s3Service');
 const { sendAdminNotification } = require('../services/pushNotificationService');
@@ -14,7 +14,7 @@ const VALID_TYPES = ['insurance', 'dbs', 'qualifications'];
  * Upload a new verification document.
  * multipart/form-data: file=<file>, documentType=<string>, expiryDate=<ISO date string, optional>
  */
-router.post('/documents', protect, documentUpload.single('file'), async (req, res) => {
+router.post('/documents', protect, requireUserType(['provider']), documentUpload.single('file'), async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
     const { documentType, expiryDate } = req.body;
@@ -133,7 +133,7 @@ router.get('/me/documents', protect, async (req, res) => {
  * DELETE /api/providers/documents/:id
  * Provider deletes one of their own documents — only if status is still pending.
  */
-router.delete('/documents/:id', protect, async (req, res) => {
+router.delete('/documents/:id', protect, requireUserType(['provider']), async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
     const doc = await Document.findOne({ _id: req.params.id, userId });
