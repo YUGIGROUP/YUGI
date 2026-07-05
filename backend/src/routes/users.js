@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -219,7 +219,7 @@ router.delete('/children/:childId', protect, async (req, res) => {
 // @route   PUT /api/users/:id/userType
 // @desc    Update user type
 // @access  Admin only (authenticated user with isAdmin)
-router.put('/:id/userType', protect, adminOnly, async (req, res) => {
+router.put('/:id/userType', protect, requireAdmin, async (req, res) => {
   try {
     const { userType } = req.body;
     

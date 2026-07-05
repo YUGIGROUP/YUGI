@@ -2,19 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Document = require('../models/Document');
 const User = require('../models/User');
-const { protect } = require('../middleware/auth');
+const { protect, requireAdmin } = require('../middleware/auth');
 const { getSignedViewUrl } = require('../services/s3Service');
-
-// Inline admin gate — same pattern as routes/admin.js, supports both isAdmin and userType
-const requireAdmin = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Authentication required' });
-  }
-  if (req.user.userType !== 'admin' && !req.user.isAdmin) {
-    return res.status(403).json({ message: 'Admin access required' });
-  }
-  next();
-};
 
 /**
  * GET /api/admin/documents/pending

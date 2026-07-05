@@ -51,7 +51,8 @@ async function createAdminUser() {
       email: 'info@yugiapp.ai',
       password: 'admin123456',
       fullName: 'YUGI Administrator',
-      userType: 'admin'
+      userType: 'admin',
+      isAdmin: true
     };
 
     // Hash password

@@ -5,23 +5,10 @@ const Class = require('../models/Class');
 const Booking           = require('../models/Booking');
 const PostVisitFeedback = require('../models/PostVisitFeedback');
 const Event             = require('../models/Event');
-const { protect, requireUserType } = require('../middleware/auth');
+const { protect, requireUserType, requireAdmin } = require('../middleware/auth');
 const { sendEmail } = require('../services/emailService');
 
 const router = express.Router();
-
-// Admin middleware - only allow admin users
-const requireAdmin = async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Authentication required' });
-  }
-
-  if (req.user.userType !== 'admin' && !req.user.isAdmin) {
-    return res.status(403).json({ message: 'Admin access required' });
-  }
-
-  next();
-};
 
 // @route   GET /api/admin/providers/pending
 // @desc    Get all pending provider applications
