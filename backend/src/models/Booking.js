@@ -84,7 +84,13 @@ const bookingSchema = new mongoose.Schema({
   lastReleaseError: {
     type: String
   },
-  
+  releaseFailedPermanently: {
+    // Set true once a booking exhausts MAX_RELEASE_ATTEMPTS. Excluded from the
+    // release sweep + claim so it stops retrying. Clear manually to re-enable.
+    type: Boolean,
+    default: false
+  },
+
   // 3-Day Holding Period
   paymentDate: {
     type: Date

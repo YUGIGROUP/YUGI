@@ -13,8 +13,11 @@
 //      each (per-booking try/catch so one bad booking can't abort the batch).
 //
 // Money invariants (must never be violated):
-//   - Never transfer twice for one booking (atomic claim + stable
-//     idempotencyKey = `transfer_${bookingId}`).
+//   - Never transfer twice for one booking. Guarded by (1) the atomic claim
+//     for concurrency, and (2) a transfer_group lookup on retries that adopts
+//     an already-booked transfer instead of creating another. The idempotency
+//     key is attempt-scoped (`transfer_${bookingId}_a${releaseAttempts}`) so a
+//     genuine retry isn't a replay of Stripe's cached error response.
 //   - Never mark released unless the Stripe transfer call returned a valid
 //     transfer.id.
 //   - Never transfer if the provider isn't payouts-enabled in Stripe Connect.
@@ -40,6 +43,11 @@ const COMPLETION_GRACE_MS = 3 * 60 * 60 * 1000;
 // A claim is considered stale (and re-claimable) if releaseStartedAt is older
 // than this. Covers process crashes mid-transfer.
 const STALE_CLAIM_MS = 30 * 60 * 1000;
+
+// Give up after this many claimed attempts so an unreleaseable booking isn't
+// retried forever on every tick. On reaching it we flag the booking for an
+// admin and stop; the money stays on the platform ('held', never released).
+const MAX_RELEASE_ATTEMPTS = 10;
 
 // ─── Auto-completion sweep ──────────────────────────────────────────────────
 // Selects held bookings whose session ended >= COMPLETION_GRACE_MS ago and
@@ -89,6 +97,7 @@ async function releaseFundsToProvider(bookingId) {
       _id: bookingId,
       paymentStatus: 'held',
       fundsReleased: false,
+      releaseFailedPermanently: { $ne: true },
       $or: [
         { releaseInProgress: { $ne: true } },
         { releaseStartedAt: { $lt: staleCutoff } },
@@ -109,6 +118,18 @@ async function releaseFundsToProvider(bookingId) {
 
   // From here on, any throw MUST free the claim so the next tick can retake it.
   try {
+    // (a2) Give-up ceiling. releaseAttempts was just incremented by the claim.
+    // Once it crosses MAX_RELEASE_ATTEMPTS, stop retrying: flag the booking,
+    // free the claim, and leave the funds held for manual review.
+    if (booking.releaseAttempts >= MAX_RELEASE_ATTEMPTS) {
+      booking.releaseInProgress = false;
+      booking.releaseFailedPermanently = true;
+      booking.lastReleaseError = `blocked after ${booking.releaseAttempts} attempts (last: ${booking.lastReleaseError || 'unknown'})`;
+      await booking.save();
+      console.error(`🛑 RELEASE BLOCKED: booking ${booking.bookingNumber} failed ${booking.releaseAttempts} release attempts — needs manual review. To retry, clear the flag and reset the counter, e.g.: db.bookings.updateOne({ _id: ObjectId('${booking._id}') }, { $set: { releaseFailedPermanently: false, releaseAttempts: 0, releaseInProgress: false, lastReleaseError: null } })`);
+      return { skipped: true, reason: 'max_attempts', bookingNumber: booking.bookingNumber };
+    }
+
     // (b) Populate provider for the readiness check + Connect destination.
     await booking.populate({
       path: 'class',
@@ -130,23 +151,48 @@ async function releaseFundsToProvider(bookingId) {
 
     // (d) Provider gets basePrice in pence; YUGI keeps the £1.99 serviceFee.
     const amountInPence = Math.round(booking.basePrice * 100);
+    const transferGroup = booking._id.toString();
 
-    // (e) Transfer with a stable idempotency key tied to the booking ID. If the
-    // process crashes after Stripe accepted the transfer but before we saved,
-    // a later retry will receive the same Transfer object back from Stripe
-    // rather than creating a second one.
-    const transfer = await stripe.transfers.create(
-      {
-        amount: amountInPence,
-        currency: 'gbp',
-        destination: provider.stripeConnectedAccountId,
-        metadata: {
-          bookingId: booking._id.toString(),
-          bookingNumber: booking.bookingNumber,
+    // (e) Attempt-scoped idempotency key (booking id + the just-incremented
+    // releaseAttempts) so a genuine retry is a fresh request rather than a
+    // replay of Stripe's cached error (e.g. a stale "insufficient funds").
+    //
+    // Crash-safety: an attempt-scoped key can't dedupe a crash that happened
+    // between a *successful* transfer and the save below. So on any retry we
+    // first look up transfers already booked under this booking's
+    // transfer_group and adopt one if present — restoring "never transfer
+    // twice" without reintroducing the cached-error replay.
+    let transfer;
+    if (booking.releaseAttempts > 1) {
+      const priorTransfers = await stripe.transfers.list({ transfer_group: transferGroup, limit: 1 });
+      if (priorTransfers.data.length > 0) {
+        transfer = priorTransfers.data[0];
+        if (transfer.amount !== amountInPence) {
+          // A prior transfer exists but for a different amount — never expected
+          // (basePrice is fixed per booking). Refuse to guess: throw so the
+          // claim frees and it surfaces for manual review (and eventually the
+          // give-up ceiling) rather than risking a mismatched payout.
+          throw new Error(`transfer_group ${transferGroup} already has transfer ${transfer.id} for ${transfer.amount}p, expected ${amountInPence}p`);
+        }
+        console.warn(`♻️  Adopting existing transfer ${transfer.id} for booking ${booking.bookingNumber} (a prior attempt succeeded before the DB save)`);
+      }
+    }
+
+    if (!transfer) {
+      transfer = await stripe.transfers.create(
+        {
+          amount: amountInPence,
+          currency: 'gbp',
+          destination: provider.stripeConnectedAccountId,
+          transfer_group: transferGroup,
+          metadata: {
+            bookingId: booking._id.toString(),
+            bookingNumber: booking.bookingNumber,
+          },
         },
-      },
-      { idempotencyKey: `transfer_${booking._id.toString()}` }
-    );
+        { idempotencyKey: `transfer_${booking._id.toString()}_a${booking.releaseAttempts}` }
+      );
+    }
 
     // (f) Success.
     booking.paymentStatus = 'released';
@@ -182,6 +228,7 @@ async function runReleaseSweep() {
   const due = await Booking.find({
     paymentStatus: 'held',
     fundsReleased: false,
+    releaseFailedPermanently: { $ne: true },
     fundsReleaseDate: { $lte: new Date() },
     status: { $ne: 'cancelled' },
   }).select('_id bookingNumber');
