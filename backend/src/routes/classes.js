@@ -580,8 +580,6 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
     const shouldRecommend = recommend === 'true' && req.user && req.user.userType === 'parent';
     
     if (shouldRecommend) {
-      console.log('🎯 Recommendation scoring enabled for user:', req.user.id);
-      
       // Build parentContext from user data and query parameter overrides
       const parentContext = {
         userId: req.user._id.toString(),
@@ -638,8 +636,6 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
           .map(time => time.trim().toLowerCase())
           .filter(time => ['morning', 'afternoon', 'evening'].includes(time));
       }
-
-      console.log('📊 Parent context:', JSON.stringify(parentContext, null, 2));
 
       // Score and rank classes using doabilityService
       const scoredClasses = await scoreClasses(classes, parentContext);
