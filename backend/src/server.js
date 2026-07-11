@@ -328,28 +328,6 @@ app.get('/stripe/refresh', (req, res) => {
 </html>`);
 });
 
-// ─── Logging middleware for payment routes - runs BEFORE routes are mounted ───
-app.use('/api/payments', (req, res, next) => {
-  console.log('🔴🔴🔴 PAYMENT ROUTE HIT (SERVER LEVEL) 🔴🔴🔴');
-  console.log('🔴 Method:', req.method);
-  console.log('🔴 Path:', req.path);
-  console.log('🔴 Original URL:', req.originalUrl);
-  console.log('🔴 Timestamp:', new Date().toISOString());
-  console.log('🔴 Headers present:', !!req.headers);
-  console.log('🔴 Body present:', !!req.body);
-  next();
-});
-
-// Log ALL requests to see what's happening
-app.use((req, res, next) => {
-  if (req.originalUrl && req.originalUrl.includes('payment')) {
-    console.log('🟡🟡🟡 ANY MIDDLEWARE - PAYMENT REQUEST DETECTED 🟡🟡🟡');
-    console.log('🟡 URL:', req.originalUrl);
-    console.log('🟡 Method:', req.method);
-  }
-  next();
-});
-
 // Per-route rate limiters
 app.use('/api/feedback', feedbackLimiter);
 app.use('/api/classes/generate', classGenerationLimiter);
@@ -516,6 +494,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
   console.log(`📱 Network access: http://192.168.1.72:${PORT}/api/health`);
-  console.log(`🔴🔴🔴 SERVER STARTED WITH PAYMENT LOGGING ENABLED - VERSION 2 🔴🔴🔴`);
-  console.log(`🔴 Payment route logging middleware is ACTIVE`);
 }); 

@@ -10,26 +10,6 @@ const { applyClassCompletion } = require('../utils/holdingPeriod');
 
 const router = express.Router();
 
-// Logging middleware that runs before all other middleware
-router.use((req, res, next) => {
-  // Log ALL requests to payment routes (check both path and originalUrl)
-  const isPaymentRoute = req.path.includes('payment') || 
-                         req.path.includes('create-payment') || 
-                         req.path.includes('confirm-payment') ||
-                         req.originalUrl.includes('/api/payments');
-  
-  if (isPaymentRoute) {
-    console.log('🔵🔵🔵 PAYMENT ROUTE REQUEST 🔵🔵🔵');
-    console.log('🔵 Method:', req.method);
-    console.log('🔵 Path:', req.path);
-    console.log('🔵 Full URL:', req.originalUrl);
-    console.log('🔵 Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('🔵 Body:', JSON.stringify(req.body, null, 2));
-    console.log('🔵 Query:', JSON.stringify(req.query, null, 2));
-  }
-  next();
-});
-
 // @route   POST /api/payments/create-payment-intent
 // @desc    Create a payment intent and charge the parent's saved card immediately
 // @access  Private (parents and providers)
@@ -39,7 +19,7 @@ router.post('/create-payment-intent', [
   body('bookingId').isMongoId(),
   body('paymentMethodId').isString().matches(/^pm_/).withMessage('paymentMethodId must be a Stripe payment method ID')
 ], async (req, res) => {
-  console.log('💳 Create payment intent (real charge) - user:', req.user.id, 'booking:', req.body.bookingId);
+  console.log('💳 create-payment-intent', req.method, '- booking:', req.body.bookingId);
 
   try {
     const errors = validationResult(req);
@@ -77,7 +57,7 @@ router.post('/create-payment-intent', [
     // Create + confirm PaymentIntent in one call. Stripe will either succeed
     // immediately, require 3DS authentication, or fail.
     const amountInCents = Math.round(booking.totalAmount * 100);
-    console.log('💳 Charging', amountInCents, 'pence to', paymentMethodId, 'customer', parentUser.stripeCustomerId);
+    console.log('💳 create-payment-intent charging', amountInCents, 'pence - booking:', booking.bookingNumber);
 
     let paymentIntent;
     try {
@@ -127,7 +107,7 @@ router.post('/create-payment-intent', [
       booking.fundsReleased = false;
       booking.status = 'confirmed';
       await booking.save();
-      console.log('✅ Payment succeeded:', paymentIntent.id);
+      console.log('✅ create-payment-intent succeeded - PI:', paymentIntent.id, 'booking:', booking.bookingNumber);
       return res.json({
         success: true,
         status: 'succeeded',
@@ -139,7 +119,7 @@ router.post('/create-payment-intent', [
       // Card needs 3D Secure / SCA. Return clientSecret so iOS can present
       // Stripe SDK's handleNextAction flow.
       await booking.save();
-      console.log('🔐 3DS required for PI:', paymentIntent.id);
+      console.log('🔐 create-payment-intent 3DS required - PI:', paymentIntent.id, 'booking:', booking.bookingNumber);
       return res.json({
         success: false,
         status: 'requires_action',
@@ -177,24 +157,12 @@ router.post('/confirm-payment', [
   body('paymentIntentId').trim().isLength({ min: 1 }),
   body('bookingId').isMongoId()
 ], async (req, res) => {
-  console.log('🔵🔵🔵 CONFIRM PAYMENT ROUTE HANDLER EXECUTED 🔵🔵🔵');
-  console.log('🔵🔵🔵 CONFIRM PAYMENT ROUTE HIT 🔵🔵🔵');
-  console.log('🔵 Request body:', JSON.stringify(req.body, null, 2));
-  console.log('🔵 User:', req.user ? { id: req.user.id, type: req.user.userType } : 'NO USER');
-  console.log('🔵 Headers:', JSON.stringify(req.headers, null, 2));
-  
   try {
-    console.log('💳 Confirm payment request received:', {
-      paymentIntentId: req.body.paymentIntentId,
-      bookingId: req.body.bookingId,
-      userId: req.user.id
-    });
+    console.log('💳 confirm-payment', req.method, '- booking:', req.body.bookingId, 'PI:', req.body.paymentIntentId);
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.error('❌❌❌ VALIDATION ERRORS ❌❌❌');
-      console.error('❌ Validation errors:', JSON.stringify(errors.array(), null, 2));
-      console.error('❌ Request body was:', JSON.stringify(req.body, null, 2));
+      console.error('❌ confirm-payment validation failed:', errors.array());
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array() 
@@ -220,18 +188,12 @@ router.post('/confirm-payment', [
     }
 
     // Retrieve payment intent from Stripe
-    console.log('💳💳💳 RETRIEVING PAYMENT INTENT FROM STRIPE 💳💳💳');
-    console.log('💳 Payment intent ID:', paymentIntentId);
     let paymentIntent;
     try {
       paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-      console.log('💳 Payment intent retrieved successfully');
-      console.log('💳 Payment intent status:', paymentIntent.status);
-      console.log('💳 Payment intent amount:', paymentIntent.amount);
-      console.log('💳 Payment intent currency:', paymentIntent.currency);
+      console.log('💳 confirm-payment retrieved PI:', paymentIntent.id, 'status:', paymentIntent.status);
     } catch (stripeError) {
       console.error('❌❌❌ STRIPE ERROR RETRIEVING PAYMENT INTENT ❌❌❌');
-      console.error('❌ Error:', JSON.stringify(stripeError, null, 2));
       console.error('❌ Error message:', stripeError.message);
       console.error('❌ Error type:', stripeError.type);
       return res.status(400).json({ 
