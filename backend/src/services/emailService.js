@@ -16,19 +16,7 @@ class EmailService {
       return await this.sendEmail(userEmail, emailContent.subject, emailContent.html, emailContent.text);
     } else {
       // In development, log the email content
-      console.log('\n📧 PASSWORD RESET EMAIL SENT:');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`To: ${userEmail}`);
-      console.log(`Subject: ${emailContent.subject}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('HTML Content:');
-      console.log(emailContent.html);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('Text Content:');
-      console.log(emailContent.text);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`Reset Link: ${resetLink}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      console.log(`📧 password reset → ${userEmail}`);
       
       return { success: true, message: 'Email logged to console (development mode)' };
     }
@@ -42,14 +30,7 @@ class EmailService {
       return await this.sendEmail(userEmail, emailContent.subject, emailContent.html);
     } else {
       // In development, log the email content
-      console.log('\n📧 WELCOME EMAIL SENT:');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`To: ${userEmail}`);
-      console.log(`Subject: ${emailContent.subject}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('HTML Content:');
-      console.log(emailContent.html);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      console.log(`📧 welcome → ${userEmail}`);
       
       return { success: true, message: 'Email logged to console (development mode)' };
     }
@@ -63,24 +44,7 @@ class EmailService {
       return await this.sendEmail(userEmail, emailContent.subject, emailContent.html, emailContent.text);
     } else {
       // In development, log the email content
-      console.log('\n📧 BOOKING CONFIRMATION EMAIL SENT:');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`To: ${userEmail}`);
-      console.log(`Subject: ${emailContent.subject}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('Booking Details:');
-      console.log(`  Booking Number: ${bookingDetails.bookingNumber}`);
-      console.log(`  Class: ${bookingDetails.className}`);
-      console.log(`  Date: ${bookingDetails.sessionDate}`);
-      console.log(`  Time: ${bookingDetails.sessionTime}`);
-      console.log(`  Total: £${bookingDetails.totalAmount.toFixed(2)}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('HTML Content:');
-      console.log(emailContent.html);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('Text Content:');
-      console.log(emailContent.text);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      console.log(`📧 booking confirmation → ${userEmail} (booking ${bookingDetails.bookingNumber})`);
       
       return { success: true, message: 'Email logged to console (development mode)' };
     }
@@ -109,14 +73,7 @@ class EmailService {
     if (this.isProduction) {
       await this.sendEmail(parentEmail, parentEmailContent.subject, parentEmailContent.html, parentEmailContent.text);
     } else {
-      console.log('\n📧 CANCELLATION EMAIL TO PARENT:');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`To: ${parentEmail}`);
-      console.log(`Subject: ${parentEmailContent.subject}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('Text Content:');
-      console.log(parentEmailContent.text);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      console.log(`📧 cancellation → ${parentEmail} (booking ${bookingNumber})`);
     }
 
     // 2) Notification to the provider
@@ -138,14 +95,7 @@ class EmailService {
         if (this.isProduction) {
           await this.sendEmail(provider.email, providerEmailContent.subject, providerEmailContent.html, providerEmailContent.text);
         } else {
-          console.log('\n📧 CANCELLATION NOTIFICATION TO PROVIDER:');
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          console.log(`To: ${provider.email}`);
-          console.log(`Subject: ${providerEmailContent.subject}`);
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          console.log('Text Content:');
-          console.log(providerEmailContent.text);
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+          console.log(`📧 provider cancellation → ${provider.email} (booking ${bookingNumber})`);
         }
       }
     } catch (providerEmailErr) {
