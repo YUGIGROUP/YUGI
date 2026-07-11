@@ -459,6 +459,10 @@ router.post('/refund', [
 
     // Admin-gated via requireAdmin middleware — discretionary support tool for
     // dispute/goodwill refunds, so no per-user ownership check applies here.
+    // Authorization depends ENTIRELY on the requireAdmin middleware in this
+    // route's definition (there is no in-handler admin re-check), so that
+    // middleware must never be removed; a regression test should assert
+    // non-admins receive 403.
 
     // Once funds have left the platform to the provider, a self-serve refund
     // is no longer possible — support handles the reversal manually.
