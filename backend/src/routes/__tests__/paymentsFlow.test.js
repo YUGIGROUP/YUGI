@@ -231,6 +231,21 @@ describe('POST /api/payments/create-payment-intent', () => {
     expect(mockPICreate).not.toHaveBeenCalled();
   });
 
+  // Pre-charge guard: parent has no saved Stripe customer.
+  test('no customer — parent without stripeCustomerId → 400, Stripe never called', async () => {
+    loginAs({ stripeCustomerId: undefined });
+    whenBookingIs(makeBooking());
+
+    const res = await request(app)
+      .post('/api/payments/create-payment-intent')
+      .set('Authorization', `Bearer ${tokenFor('user-1')}`)
+      .send({ bookingId: VALID_BOOKING_ID, paymentMethodId: VALID_PM });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('No saved payment customer on file. Please add a card first.');
+    expect(mockPICreate).not.toHaveBeenCalled();
+  });
+
   // Added (money-touching): any PI status other than succeeded/requires_action
   // writes a failed state to the booking.
   test('unexpected PI status — e.g. processing → 400 with status echoed, booking marked failed', async () => {
