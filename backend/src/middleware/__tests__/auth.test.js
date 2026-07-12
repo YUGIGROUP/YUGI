@@ -2,12 +2,11 @@
 // req/res/next. Pure in-memory: no Express app, no HTTP, no Mongo — importing
 // the middleware must not open any connection.
 //
-// STILL OWED: a route-level supertest test asserting that POST
-// /api/payments/refund itself rejects non-admins with 403 (defence against the
-// requireAdmin middleware being removed/reordered on the route definition).
-// That belongs to the dedicated test session and requires exporting the Express
-// app without app.listen(...) so supertest can drive it — scaffolding that does
-// not exist yet.
+// The route-level counterpart now exists: src/routes/__tests__/paymentsRefund.test.js
+// drives POST /api/payments/refund through the exported Express app with
+// supertest and asserts non-admins get 403 (defence against the requireAdmin
+// middleware being removed/reordered on the route definition). These unit tests
+// remain the fast, isolated check on requireAdmin's own logic.
 
 const { requireAdmin } = require('../auth');
 
