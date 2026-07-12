@@ -27,13 +27,6 @@ const stripePaymentsRoutes = require('./routes/stripePayments');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Connect to MongoDB
-if (process.env.MONGODB_URI) {
-  connectDB();
-} else {
-  console.log('🔧 Running in development mode without database - using in-memory storage');
-}
-
 // Security middleware
 app.use(helmet());
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS
@@ -479,19 +472,34 @@ function startFundsReleaseJob() {
   console.log('💰 Funds-release job started (every 10 minutes)');
 }
 
-if (process.env.MONGODB_URI) {
-  // Start background jobs only when DB is connected
-  const mongoose = require('mongoose');
-  mongoose.connection.once('open', () => {
-    startNotificationJob();
-    startParentVerificationJob();
-    startFundsReleaseJob();
+function start() {
+  // Connect to MongoDB
+  if (process.env.MONGODB_URI) {
+    connectDB();
+  } else {
+    console.log('🔧 Running in development mode without database - using in-memory storage');
+  }
+
+  if (process.env.MONGODB_URI) {
+    // Start background jobs only when DB is connected
+    const mongoose = require('mongoose');
+    mongoose.connection.once('open', () => {
+      startNotificationJob();
+      startParentVerificationJob();
+      startFundsReleaseJob();
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 YUGI Server running on port ${PORT}`);
+    console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`📱 Network access: http://192.168.1.72:${PORT}/api/health`);
   });
 }
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 YUGI Server running on port ${PORT}`);
-  console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📱 Network access: http://192.168.1.72:${PORT}/api/health`);
-}); 
+if (require.main === module) {
+  start();
+}
+
+module.exports = app;
