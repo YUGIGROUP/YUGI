@@ -1,5 +1,7 @@
 # YUGI Backend API
 
+[![Backend tests](https://github.com/YUGIGROUP/YUGI/actions/workflows/test.yml/badge.svg)](https://github.com/YUGIGROUP/YUGI/actions/workflows/test.yml)
+
 A comprehensive Node.js/Express backend for the YUGI children's class booking platform.
 
 ## 🚀 Features
