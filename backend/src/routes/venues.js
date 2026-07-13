@@ -271,6 +271,13 @@ router.get('/:placeId/enrichment', protect, async (req, res) => {
       console.log(`🧹 Stripped ${citationTagsStripped} citation tags from enrichment response`);
     }
 
+    // 6b. Identity guard — if Claude could not verify the sources refer to the
+    //     venue at the requested address, do not persist and degrade to empty.
+    if (parsed.venueVerified === false) {
+      console.log(`🚫 enrichment rejected: venue identity unverified - ${venueName} (${placeId})`);
+      return res.json({ placeId, venueName, enrichedData: {}, sources: [], confidence: 'web_enriched', cachedAt: null });
+    }
+
     const { sources = [], ...enrichedData } = parsed;
 
     // 7. Upsert into MongoDB (90-day TTL)

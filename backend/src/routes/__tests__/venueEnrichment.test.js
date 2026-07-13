@@ -5,12 +5,12 @@
 // Anthropic SDK are mocked at their boundaries so nothing touches a real
 // database or the network.
 //
-// GAP (intentionally not tested here): STEP 1 identity verification is
-// prompt-only. `venueVerified` is returned by Claude and stored on the document
-// (VenueEnrichment schema + routes/venues.js), but NO code path ever reads it to
-// refuse or fall back — a wrong-venue ("Rockwater") response would be persisted
-// verbatim. A code-level guard is a filed pre-launch task, and its regression
-// test belongs with that change, not here.
+// Identity guard: STEP 1 verification is prompt-driven, but the route also
+// enforces it in code — when Claude returns `venueVerified: false` (its sources
+// referred to the wrong branch), routes/venues.js refuses to persist and
+// degrades to the empty shape rather than caching a wrong-venue ("Rockwater")
+// response verbatim. See the `venueVerified: false` test below. Absent/null
+// verification passes through unchanged.
 
 const jwt = require('jsonwebtoken');
 
@@ -150,6 +150,36 @@ describe('GET /api/venues/:placeId/enrichment', () => {
     expect(res.status).toBe(200);
     expect(res.body.enrichedData).toEqual({});
     expect(res.body.sources).toEqual([]);
+    expect(VenueEnrichment.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
+  test('venueVerified: false — wrong-venue response rejected, degrades to empty, nothing persisted', async () => {
+    loginAs();
+    // Claude verified the sources were about a different branch: per STEP 1 it
+    // nulls every fact and puts the mismatch in additionalNotes.
+    mockMessagesCreate.mockResolvedValue(
+      claudeText(
+        JSON.stringify({
+          venueVerified: false,
+          parking: null,
+          babyChanging: null,
+          pramAccess: null,
+          publicTransport: null,
+          additionalNotes: 'Sources refer to the Rockwater branch in Shoreham, not the address provided.',
+          sources: ['https://rockwater.example/shoreham'],
+        })
+      )
+    );
+
+    const res = await getEnrichment();
+
+    expect(res.status).toBe(200);
+    // Same degrade shape as the parse-fail / Anthropic-failure branches — the
+    // mismatch note in additionalNotes never reaches the app.
+    expect(res.body.enrichedData).toEqual({});
+    expect(res.body.sources).toEqual([]);
+    expect(res.body.confidence).toBe('web_enriched');
+    // Nothing about the wrong venue is cached.
     expect(VenueEnrichment.findOneAndUpdate).not.toHaveBeenCalled();
   });
 });
