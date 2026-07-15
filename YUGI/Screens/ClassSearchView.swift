@@ -403,7 +403,7 @@ struct ClassSearchView: View {
                 ScrollView {
                     LazyVStack(spacing: 16) {
                         ForEach(classes) { classItem in
-                            ClassSearchResultCard(
+                            ClassResultCard(
                                 classItem: classItem,
                                 onBook: { selectedClass in
                                     print("📅 Book button tapped for class: \(selectedClass.name)")
