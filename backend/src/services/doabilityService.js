@@ -390,7 +390,7 @@ function buildReasons(scores, classDoc, parentContext) {
 
   // Logistics reasons
   if (scores.logistics >= 0.7) {
-    reasons.push({ factor: 'logistics', text: 'Well-documented venue — parking, access & facilities verified', priority: 1 });
+    reasons.push({ factor: 'logistics', text: 'Venue info verified — access & facilities documented', priority: 1 });
   } else if (scores.logistics >= 0.5) {
     reasons.push({ factor: 'logistics', text: 'Venue logistics partially verified', priority: 3 });
   }
