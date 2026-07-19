@@ -7,7 +7,7 @@ const User = require('../models/User');
 const { sendAdminNotification } = require('../services/pushNotificationService');
 const { protect, optionalAuth, requireProviderVerification, requireUserType } = require('../middleware/auth');
 const venueDataService = require('../services/venueDataService');
-const { scoreClasses } = require('../services/doabilityService');
+const { scoreClasses, haversineDistance, DEFAULT_SEARCH_RADIUS_KM } = require('../services/doabilityService');
 const { ensureCoordinates } = require('../services/autoGeocode');
 
 const router = express.Router();
@@ -520,6 +520,7 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
       recommend,
       latitude,
       longitude,
+      radiusKm,
       childAge,
       preferredDays,
       preferredTimes
@@ -559,27 +560,35 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
     }
 
     // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const pageNum  = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip     = (pageNum - 1) * limitNum;
 
     console.log('🔍 Filter:', JSON.stringify(filter, null, 2));
 
-    // Execute query with provider population
-    // Use lean() for better performance when scoring
-    let classes = await Class.find(filter)
-      .populate('provider', 'fullName businessName')
-      .lean()
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    // Get total count for pagination
-    const total = await Class.countDocuments(filter);
-
-    console.log(`✅ Found ${classes.length} published classes (total: ${total})`);
-
     // Check if recommendation scoring is requested
     const shouldRecommend = recommend === 'true' && req.user && req.user.userType === 'parent';
-    
+
+    let classes;
+    let total;
+
     if (shouldRecommend) {
+      // ---- Recommendation path: radius filter + doability ranking ----
+      // Fetch the ENTIRE filtered set (no Mongo skip/limit): the haversine radius
+      // filter and doability scoring must run over every candidate that matched the
+      // Mongo filter (category, price, etc.), then we paginate in JS at the very end.
+      // This keeps total/pages honest — they reflect the radius-filtered, ranked set
+      // rather than an arbitrary Mongo page.
+      //
+      // NOTE: this in-memory scan is only safe because the dataset is tiny (~21
+      // classes today). At real scale, add a 2dsphere index on location.coordinates
+      // and push the radius filter into Mongo via $geoNear. Post-launch item.
+      classes = await Class.find(filter)
+        .populate('provider', 'fullName businessName')
+        .lean();
+
+      console.log(`✅ Found ${classes.length} published classes matching filter`);
+
       // Build parentContext from user data and query parameter overrides
       const parentContext = {
         userId: req.user._id.toString(),
@@ -637,7 +646,47 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
           .filter(time => ['morning', 'afternoon', 'evening'].includes(time));
       }
 
-      // Score and rank classes using doabilityService
+      // ---- Radius filter (haversine), reusing the /nearby distance approach ----
+      // Resolve the search radius: explicit radiusKm query param wins, else the
+      // shared default constant (single home for the number).
+      const parsedRadius   = parseFloat(radiusKm);
+      const searchRadiusKm = (radiusKm && !isNaN(parsedRadius) && parsedRadius > 0)
+        ? parsedRadius
+        : DEFAULT_SEARCH_RADIUS_KM;
+
+      const { latitude: parentLat, longitude: parentLng } = parentContext;
+      const hasParentCoords = parentLat != null && parentLng != null &&
+                              !isNaN(parentLat) && !isNaN(parentLng);
+
+      if (hasParentCoords) {
+        const beforeCount = classes.length;
+        let droppedNoCoords = 0;
+
+        classes = classes.filter(cls => {
+          const coords = cls.location?.coordinates || {};
+          const clsLat = coords.latitude;
+          const clsLng = coords.longitude;
+
+          // Classes without real coordinates can't prove they're nearby — exclude them.
+          if (!clsLat || !clsLng || clsLat === 0 || clsLng === 0) {
+            droppedNoCoords++;
+            return false;
+          }
+
+          return haversineDistance(parentLat, parentLng, clsLat, clsLng) <= searchRadiusKm;
+        });
+
+        if (droppedNoCoords > 0) {
+          console.log(`📍 Radius filter: excluded ${droppedNoCoords} of ${beforeCount} class(es) with no coordinates`);
+        }
+        console.log(`📍 Radius filter: ${classes.length} class(es) within ${searchRadiusKm}km`);
+      } else {
+        // No parent coordinates → nothing to measure against; skip the radius filter
+        // rather than returning an empty list.
+        console.log('📍 Radius filter skipped: requesting parent has no coordinates');
+      }
+
+      // Score and rank the radius-filtered set using doabilityService
       const scoredClasses = await scoreClasses(classes, parentContext);
 
       // Attach doability data to each class and maintain original class structure
@@ -660,7 +709,23 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
       });
 
       console.log(`🎯 Scored ${classes.length} classes with doability rankings`);
+
+      // Paginate in JS AFTER filtering + ranking so total/pages reflect the real
+      // radius-filtered, ranked set.
+      total   = classes.length;
+      classes = classes.slice(skip, skip + limitNum);
     } else {
+      // ---- Default path: Mongo-side pagination, newest first ----
+      classes = await Class.find(filter)
+        .populate('provider', 'fullName businessName')
+        .lean()
+        .skip(skip)
+        .limit(limitNum);
+
+      total = await Class.countDocuments(filter);
+
+      console.log(`✅ Found ${classes.length} published classes (total: ${total})`);
+
       // Default sorting when not using recommendations
       classes = classes.sort((a, b) => {
         const dateA = new Date(a.createdAt || 0);
@@ -688,10 +753,10 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
       success: true,
       data: transformedClasses,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limitNum)
       },
       ...(shouldRecommend && { recommendationEnabled: true })
     });

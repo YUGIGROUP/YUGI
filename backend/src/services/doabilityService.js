@@ -26,6 +26,11 @@ const DEFAULT_WEIGHTS = {
   scheduleFit:  0.05,  // Does the class run on preferred days/times
 };
 
+// Default radius (km) for the recommended-classes search when the request does
+// not supply an explicit radiusKm. Single source of truth — the /classes route
+// imports this rather than hard-coding the number.
+const DEFAULT_SEARCH_RADIUS_KM = 25;
+
 // ============================================================
 // MAIN ENTRY POINT
 // ============================================================
@@ -609,4 +614,6 @@ module.exports = {
   buildFrictionWarnings,
   // Export weights for reference
   DEFAULT_WEIGHTS,
+  // Search radius default, shared with the /classes route
+  DEFAULT_SEARCH_RADIUS_KM,
 };
