@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import CoreLocation
 
 struct ClassSearchView: View {
     @State private var location = ""
@@ -442,8 +443,38 @@ struct ClassSearchView: View {
     private func searchClasses() {
         isLoading = true
         error = nil
-        
-        APIService.shared.fetchRecommendedClasses(latitude: LocationService.shared.latitude, longitude: LocationService.shared.longitude, category: selectedCategory?.rawValue)
+
+        // Geocode the typed location string so the search is anchored to where the
+        // parent actually typed (e.g. "Liverpool"), not the device's current location.
+        // On any geocoding failure we fall back to device coordinates, exactly as before.
+        let deviceCoordinate = CLLocationCoordinate2D(
+            latitude: LocationService.shared.latitude,
+            longitude: LocationService.shared.longitude
+        )
+
+        let trimmedLocation = location.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedLocation.isEmpty else {
+            performSearch(latitude: deviceCoordinate.latitude, longitude: deviceCoordinate.longitude)
+            return
+        }
+
+        let geocoder = CLGeocoder()
+        // Bias results to the UK — YUGI is UK-only, so this disambiguates e.g. a
+        // "Manchester" toward the UK city rather than a US one.
+        let ukRegion = CLRegion.ukBiasRegion
+        geocoder.geocodeAddressString(trimmedLocation, in: ukRegion) { placemarks, _ in
+            let coordinate = placemarks?.first?.location?.coordinate ?? deviceCoordinate
+            DispatchQueue.main.async {
+                self.performSearch(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            }
+        }
+    }
+
+    private func performSearch(latitude: Double, longitude: Double) {
+        isLoading = true
+        error = nil
+
+        APIService.shared.fetchRecommendedClasses(latitude: latitude, longitude: longitude, category: selectedCategory?.rawValue)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { completion in
@@ -477,6 +508,20 @@ struct ClassSearchView: View {
         // TODO: Implement AI data update functionality
         // This would typically update the class in the backend with the AI-analyzed facilities
         // For now, we just log the data that would be used to update the class
+    }
+}
+
+// MARK: - Geocoding Region Bias
+private extension CLRegion {
+    /// A coarse circular region covering the UK, used only to bias CLGeocoder
+    /// forward-geocoding toward UK results. YUGI is UK-only, so an ambiguous
+    /// place name resolves to the UK city rather than a same-named one abroad.
+    static var ukBiasRegion: CLRegion {
+        CLCircularRegion(
+            center: CLLocationCoordinate2D(latitude: 54.0, longitude: -2.5),
+            radius: 800_000, // ~800 km — comfortably spans Great Britain & NI
+            identifier: "uk-geocoding-bias"
+        )
     }
 }
 
