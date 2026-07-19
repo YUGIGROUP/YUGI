@@ -686,6 +686,35 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
         console.log('📍 Radius filter skipped: requesting parent has no coordinates');
       }
 
+      // ---- Day-membership filter ----
+      // When the parent selected days, a class only stays if it actually RUNS on one
+      // of them. A Mongo $in on recurringDays can't cover one-off classes whose weekday
+      // is only derivable from classDates, so this is a JS filter over the set, composed
+      // AFTER radius and BEFORE scoring (order: Mongo filter → radius → days → score).
+      // preferredDays also still feeds scoreScheduleFit (scoring), which is left as-is.
+      if (parentContext.preferredDays && parentContext.preferredDays.length > 0) {
+        const selectedDays = parentContext.preferredDays;
+        // getDay(): 0=Sunday … 6=Saturday — same mapping the /nearby route uses.
+        const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const now = new Date();
+        const beforeDays = classes.length;
+
+        classes = classes.filter(cls => {
+          // Recurring class: match if any recurring day is selected.
+          const recurring = (cls.recurringDays || []).map(d => d.toLowerCase());
+          if (recurring.some(d => selectedDays.includes(d))) return true;
+
+          // One-off class: match if any UPCOMING classDate falls on a selected weekday.
+          return (cls.classDates || []).some(d => {
+            const date = new Date(d);
+            if (isNaN(date.getTime()) || date <= now) return false;
+            return selectedDays.includes(dayKeys[date.getDay()]);
+          });
+        });
+
+        console.log(`📅 Day filter: ${classes.length} of ${beforeDays} class(es) run on ${selectedDays.join(', ')}`);
+      }
+
       // Score and rank the radius-filtered set using doabilityService
       const scoredClasses = await scoreClasses(classes, parentContext);
 

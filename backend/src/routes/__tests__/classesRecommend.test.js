@@ -63,7 +63,18 @@ function mockQuery(data) {
 }
 
 // Build a minimal published class doc with real coordinates.
-function makeClass({ id, name, lat, lng, category = 'yoga', hasCoords = true }) {
+// recurringDays / classDates default to a plain recurring Monday class; day tests
+// override them to model recurring vs one-off (classDates) scheduling.
+function makeClass({
+  id,
+  name,
+  lat,
+  lng,
+  category = 'yoga',
+  hasCoords = true,
+  recurringDays = ['monday'],
+  classDates = [],
+}) {
   return {
     _id: id,
     name,
@@ -72,7 +83,8 @@ function makeClass({ id, name, lat, lng, category = 'yoga', hasCoords = true }) 
     ageRange: '0-12 months',
     currentBookings: 0,
     maxParticipants: 10,
-    recurringDays: ['monday'],
+    recurringDays,
+    classDates,
     timeSlots: [{ startTime: '10:00' }],
     duration: 1,
     provider: { _id: 'prov-1', businessName: 'Test Provider' },
@@ -217,5 +229,81 @@ describe('GET /api/classes?recommend=true — radius filter', () => {
     expect(res.status).toBe(200);
     expect(namesOf(res)).toEqual(['Liverpool Baby Yoga']);
     expect(namesOf(res)).not.toContain('Mystery Location Class');
+  });
+});
+
+// The next calendar date landing on the given weekday (0=Sun … 6=Sat), always in
+// the future so it counts as an "upcoming" classDate.
+function nextWeekday(targetDay) {
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+  do {
+    d.setDate(d.getDate() + 1);
+  } while (d.getDay() !== targetDay);
+  return d;
+}
+
+describe('GET /api/classes?recommend=true — day-membership filter', () => {
+  const WEDNESDAY = 3;
+
+  test('(a) Wednesday selected → a Saturday-only class is excluded', async () => {
+    loginAsParent();
+    seedClasses([
+      makeClass({ id: 'wed', name: 'Wednesday Yoga', lat: 53.41, lng: -2.98, recurringDays: ['wednesday'] }),
+      makeClass({ id: 'sat', name: 'Saturday Yoga', lat: 53.41, lng: -2.98, recurringDays: ['saturday'] }),
+    ]);
+
+    const res = await search({ preferredDays: 'wednesday' });
+
+    expect(res.status).toBe(200);
+    expect(namesOf(res)).not.toContain('Saturday Yoga');
+    expect(res.body.pagination.total).toBe(1);
+  });
+
+  test('(b) class recurring on Wednesday is returned', async () => {
+    loginAsParent();
+    seedClasses([
+      makeClass({ id: 'wed', name: 'Wednesday Yoga', lat: 53.41, lng: -2.98, recurringDays: ['wednesday'] }),
+    ]);
+
+    const res = await search({ preferredDays: 'wednesday' });
+
+    expect(res.status).toBe(200);
+    expect(namesOf(res)).toEqual(['Wednesday Yoga']);
+  });
+
+  test('(c) one-off class whose classDate falls on a Wednesday is returned', async () => {
+    loginAsParent();
+    seedClasses([
+      // One-off class: no recurring days, only a specific upcoming Wednesday date.
+      makeClass({
+        id: 'oneoff',
+        name: 'One-off Wednesday Workshop',
+        lat: 53.41,
+        lng: -2.98,
+        recurringDays: [],
+        classDates: [nextWeekday(WEDNESDAY)],
+      }),
+    ]);
+
+    const res = await search({ preferredDays: 'wednesday' });
+
+    expect(res.status).toBe(200);
+    expect(namesOf(res)).toEqual(['One-off Wednesday Workshop']);
+  });
+
+  test('(d) days + radius stack: a right-day class out of radius is excluded', async () => {
+    loginAsParent();
+    seedClasses([
+      makeClass({ id: 'near-wed', name: 'Liverpool Wednesday Yoga', lat: 53.41, lng: -2.98, recurringDays: ['wednesday'] }),
+      makeClass({ id: 'far-wed', name: 'London Wednesday Yoga', lat: LONDON.lat, lng: LONDON.lng, recurringDays: ['wednesday'] }),
+    ]);
+
+    const res = await search({ preferredDays: 'wednesday' });
+
+    expect(res.status).toBe(200);
+    expect(namesOf(res)).toEqual(['Liverpool Wednesday Yoga']);
+    expect(namesOf(res)).not.toContain('London Wednesday Yoga'); // right day, out of radius
+    expect(res.body.pagination.total).toBe(1);
   });
 });
