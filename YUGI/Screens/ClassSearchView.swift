@@ -474,7 +474,13 @@ struct ClassSearchView: View {
         isLoading = true
         error = nil
 
-        APIService.shared.fetchRecommendedClasses(latitude: latitude, longitude: longitude, category: selectedCategory?.rawValue)
+        // Comma-separated lowercase day names in weekday order (e.g. "monday,wednesday"),
+        // or nil when no days are picked — the backend filters membership by these.
+        let preferredDays = selectedDays.isEmpty
+            ? nil
+            : selectedDays.sorted { $0.rawValue < $1.rawValue }.map { $0.apiName }.joined(separator: ",")
+
+        APIService.shared.fetchRecommendedClasses(latitude: latitude, longitude: longitude, category: selectedCategory?.rawValue, preferredDays: preferredDays)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { completion in

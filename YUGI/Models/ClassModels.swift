@@ -343,6 +343,20 @@ enum WeekDay: Int, Codable, CaseIterable {
         case .saturday: return "Sat"
         }
     }
+
+    /// Full lowercase day name sent to the backend (matches the names the
+    /// /classes recommend route parses for preferredDays).
+    var apiName: String {
+        switch self {
+        case .sunday: return "sunday"
+        case .monday: return "monday"
+        case .tuesday: return "tuesday"
+        case .wednesday: return "wednesday"
+        case .thursday: return "thursday"
+        case .friday: return "friday"
+        case .saturday: return "saturday"
+        }
+    }
 }
 
 struct Pricing: Codable {

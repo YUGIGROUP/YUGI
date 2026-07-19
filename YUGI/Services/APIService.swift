@@ -928,7 +928,7 @@ class APIService: ObservableObject, @unchecked Sendable {
         return request(endpoint: "/classes\(queryString)", requiresAuth: false)
     }
     
-    func fetchRecommendedClasses(latitude: Double, longitude: Double, category: String? = nil) -> AnyPublisher<ClassesResponse, APIError> {
+    func fetchRecommendedClasses(latitude: Double, longitude: Double, category: String? = nil, preferredDays: String? = nil) -> AnyPublisher<ClassesResponse, APIError> {
         var queryItems = [
             "recommend=true",
             "latitude=\(latitude)",
@@ -936,6 +936,11 @@ class APIService: ObservableObject, @unchecked Sendable {
         ]
         if let category = category {
             queryItems.append("category=\(category)")
+        }
+        // Comma-separated lowercase day names (e.g. "monday,wednesday"); omitted when
+        // no days are selected. The recommend route filters membership by these.
+        if let preferredDays = preferredDays, !preferredDays.isEmpty {
+            queryItems.append("preferredDays=\(preferredDays)")
         }
         let queryString = "?\(queryItems.joined(separator: "&"))"
         let fullURL = "\(APIConfig.baseURL)/classes\(queryString)"
