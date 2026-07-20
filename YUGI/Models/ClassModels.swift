@@ -144,6 +144,10 @@ struct Class: Identifiable, Codable {
     let tier: String?
     let verificationStatus: String?
     let isPublished: Bool?
+    /// Distance from the searching parent to the venue, in km (one decimal).
+    /// Only present on recommended-search results where coordinates were known;
+    /// nil everywhere else (e.g. the discovery feed), so it decodes as optional.
+    let distanceKm: Double?
 
     enum CodingKeys: String, CodingKey {
         case id, name, description, category, provider, providerName, location
@@ -152,6 +156,7 @@ struct Class: Identifiable, Codable {
         case doability = "_doability"
         case venueAccessibility, intakeQuestions, googlePlaceId
         case tier, verificationStatus, isPublished
+        case distanceKm
     }
 
     init(
@@ -176,7 +181,8 @@ struct Class: Identifiable, Codable {
         googlePlaceId: String?,
         tier: String? = nil,
         verificationStatus: String? = nil,
-        isPublished: Bool? = nil
+        isPublished: Bool? = nil,
+        distanceKm: Double? = nil
     ) {
         self.id = id
         self.name = name
@@ -200,6 +206,7 @@ struct Class: Identifiable, Codable {
         self.tier = tier
         self.verificationStatus = verificationStatus
         self.isPublished = isPublished
+        self.distanceKm = distanceKm
     }
     
     var isAvailable: Bool {

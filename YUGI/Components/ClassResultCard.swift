@@ -182,7 +182,9 @@ struct ClassResultCard: View {
     // MARK: - Venue line (name + short address)
 
     /// Venue name + short address (street + postcode), degrading gracefully when
-    /// any part is missing. Returns nil only when nothing usable is present.
+    /// any part is missing. When the recommendation payload carried a per-class
+    /// distance, it's appended as "· 4.8 km". Returns nil only when nothing usable
+    /// is present.
     private var venueLineText: String? {
         guard let loc = classItem.location else { return nil }
         var parts: [String] = []
@@ -192,7 +194,11 @@ struct ClassResultCard: View {
         if !street.isEmpty { parts.append(street) }
         let postcode = loc.address.postalCode.trimmingCharacters(in: .whitespaces)
         if !postcode.isEmpty { parts.append(postcode) }
-        let composed = parts.joined(separator: ", ")
+        var composed = parts.joined(separator: ", ")
+        if let km = classItem.distanceKm {
+            let distance = "\(String(format: "%.1f", km)) km"
+            composed = composed.isEmpty ? distance : "\(composed) · \(distance)"
+        }
         return composed.isEmpty ? nil : composed
     }
 

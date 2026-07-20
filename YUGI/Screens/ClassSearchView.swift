@@ -6,7 +6,11 @@ struct ClassSearchView: View {
     @State private var location = ""
     @State private var selectedCategory: ClassCategory?
     @State private var selectedDays: Set<WeekDay> = []
+    @State private var selectedRadiusKm = 10   // single-choice search radius; default 10 km
     @State private var showResults = false
+
+    // Selectable search-radius options (km) for the radius picker.
+    private let radiusOptions = [2, 5, 10, 25]
     
     // Add state for real classes
     @State private var classes: [Class] = []
@@ -227,7 +231,41 @@ struct ClassSearchView: View {
                             .fill(Color.white.opacity(0.15))
                     )
                 }
-                
+
+                // Search Radius Picker (single-choice pills, mirroring the days picker)
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("SEARCH RADIUS")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                            .tracking(1.5)
+
+                        Text("How far are you willing to travel?")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.6))
+                            .padding(.leading, 4)
+                    }
+
+                    HStack(spacing: 12) {
+                        ForEach(radiusOptions, id: \.self) { km in
+                            Button(action: {
+                                selectedRadiusKm = km
+                            }) {
+                                Text("\(km) km")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(selectedRadiusKm == km ? Color.yugiMocha : .white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(selectedRadiusKm == km ? Color.white : Color.white.opacity(0.15))
+                                    )
+                            }
+                            .accessibilityLabel("\(km) kilometres")
+                        }
+                    }
+                }
+
                 // Category Picker
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -375,6 +413,9 @@ struct ClassSearchView: View {
                     Text("Days: \(selectedDays.map { $0.shortName }.joined(separator: ", "))")
                         .foregroundColor(.white.opacity(0.8))
                 }
+
+                Text("Within \(selectedRadiusKm) km")
+                    .foregroundColor(.white.opacity(0.8))
             }
             
             // Classes List
@@ -480,7 +521,7 @@ struct ClassSearchView: View {
             ? nil
             : selectedDays.sorted { $0.rawValue < $1.rawValue }.map { $0.apiName }.joined(separator: ",")
 
-        APIService.shared.fetchRecommendedClasses(latitude: latitude, longitude: longitude, category: selectedCategory?.rawValue, preferredDays: preferredDays)
+        APIService.shared.fetchRecommendedClasses(latitude: latitude, longitude: longitude, category: selectedCategory?.rawValue, preferredDays: preferredDays, radiusKm: selectedRadiusKm)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { completion in
