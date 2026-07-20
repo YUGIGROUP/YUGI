@@ -29,7 +29,7 @@ const DEFAULT_WEIGHTS = {
 // Default radius (km) for the recommended-classes search when the request does
 // not supply an explicit radiusKm. Single source of truth — the /classes route
 // imports this rather than hard-coding the number.
-const DEFAULT_SEARCH_RADIUS_KM = 25;
+const DEFAULT_SEARCH_RADIUS_KM = 10;
 
 // ============================================================
 // MAIN ENTRY POINT

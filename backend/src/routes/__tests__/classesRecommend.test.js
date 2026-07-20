@@ -46,8 +46,11 @@ const app = require('../../server');
 // ---- Coordinates ----------------------------------------------------------
 // Parent searches from Liverpool city centre.
 const LIVERPOOL = { lat: 53.4084, lng: -2.9916 };
-// London — ~280 km away, comfortably outside the default 25 km radius.
+// London — ~280 km away, comfortably outside the default 10 km radius.
 const LONDON = { lat: 51.5074, lng: -0.1278 };
+// ~15 km due north of Liverpool: inside the old 25 km default, outside the new
+// 10 km one. Exists to pin the default change (not a mechanical fixture bump).
+const FIFTEEN_KM_NORTH = { lat: 53.543, lng: -2.9916 };
 
 // A chainable, awaitable query stub mirroring the Mongoose query surface the
 // route uses (.populate().lean() on the recommend path).
@@ -190,7 +193,7 @@ describe('GET /api/classes?recommend=true — radius filter', () => {
       makeClass({ id: 'far-1', name: 'London Baby Yoga', lat: LONDON.lat, lng: LONDON.lng }),
     ]);
 
-    // 500 km comfortably includes London (~280 km away), which the 25 km default excluded.
+    // 500 km comfortably includes London (~280 km away), which the default excluded.
     const res = await search({ radiusKm: '500' });
 
     expect(res.status).toBe(200);
@@ -216,6 +219,46 @@ describe('GET /api/classes?recommend=true — radius filter', () => {
     expect(namesOf(res)).not.toContain('Liverpool Baby Swim'); // in radius, wrong category
     expect(namesOf(res)).not.toContain('London Baby Yoga');    // right category, out of radius
     expect(res.body.pagination.total).toBe(1);
+  });
+
+  test('(e) default radius is 10 km: a class ~15 km away is excluded (was inside the old 25 km default)', async () => {
+    loginAsParent();
+    seedClasses([
+      makeClass({ id: 'near-1', name: 'Liverpool Baby Yoga', lat: 53.41, lng: -2.98 }),
+      makeClass({ id: 'mid-15', name: 'Fifteen KM Yoga', lat: FIFTEEN_KM_NORTH.lat, lng: FIFTEEN_KM_NORTH.lng }),
+    ]);
+
+    const res = await search(); // no radiusKm → default (now 10 km)
+
+    expect(res.status).toBe(200);
+    expect(namesOf(res)).toEqual(['Liverpool Baby Yoga']);
+    expect(namesOf(res)).not.toContain('Fifteen KM Yoga'); // ~15 km: outside the 10 km default
+    expect(res.body.pagination.total).toBe(1);
+
+    // Same class IS returned once the radius is widened past it → confirms the
+    // exclusion is the radius, not a coordinate/scheduling problem.
+    const widened = await search({ radiusKm: '25' });
+    expect(namesOf(widened).sort()).toEqual(['Fifteen KM Yoga', 'Liverpool Baby Yoga']);
+  });
+
+  test('(f) each returned class carries distanceKm rounded to one decimal, with no _distanceKm leak', async () => {
+    loginAsParent();
+    seedClasses([
+      makeClass({ id: 'near-1', name: 'Liverpool Baby Yoga', lat: 53.41, lng: -2.98 }),
+    ]);
+
+    const res = await search();
+
+    expect(res.status).toBe(200);
+    const item = res.body.data[0];
+    // Proper public field, present because parent + class coords both exist.
+    expect(item).toHaveProperty('distanceKm');
+    expect(typeof item.distanceKm).toBe('number');
+    expect(item.distanceKm).toBeGreaterThan(0);
+    // One decimal place: rounding to 1 dp is a no-op.
+    expect(item.distanceKm).toBe(Math.round(item.distanceKm * 10) / 10);
+    // The internal underscore field must not leak into the response.
+    expect(item).not.toHaveProperty('_distanceKm');
   });
 
   test('classes without coordinates are excluded from radius-filtered results', async () => {

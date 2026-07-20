@@ -785,9 +785,17 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
         if (scored.scores !== undefined) {
           doabilityData.scores = scored.scores;
         }
-        
+
+        // scoreDistance() stashes the haversine result on the class as the internal
+        // _distanceKm (already rounded to one decimal). Promote it to a proper
+        // distanceKm response field and strip the underscore-prefixed internal so it
+        // no longer leaks into the payload. _distanceKm is only set when both parent
+        // and class coordinates exist, so omit distanceKm when it wasn't computed.
+        const { _distanceKm, ...classPayload } = scored.class;
+
         return {
-          ...scored.class,
+          ...classPayload,
+          ...(_distanceKm !== undefined && { distanceKm: _distanceKm }),
           _doability: doabilityData
         };
       });
