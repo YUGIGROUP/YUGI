@@ -198,6 +198,42 @@ const getNextOccurrenceDate = (recurringDays) => {
   return nextDate;
 };
 
+// ---- Shared "upcoming session" cutoff --------------------------------------
+// Parents can book up to 1 hour before a session starts, so at start-minus-1h a
+// class leaves search entirely. "Upcoming" therefore means the start moment is more
+// than 1 hour away. Both the sessionless-class filter and the day-membership filter
+// use these helpers so "upcoming" means exactly one thing everywhere.
+const BOOKING_CUTOFF_MS = 60 * 60 * 1000; // 1 hour
+
+// The start moment of a one-off session: its classDate combined with the class's
+// first start time. If a class has a date but no start time, fall back to end of that
+// day so a same-day class isn't hidden before it's actually due.
+const sessionStartMoment = (classDate, timeSlots) => {
+  const start = new Date(classDate);
+  if (isNaN(start.getTime())) return null;
+  const slot = Array.isArray(timeSlots) ? timeSlots[0] : null;
+  if (slot && typeof slot.startTime === 'string' && /^\d{1,2}:\d{2}/.test(slot.startTime)) {
+    const [h, m] = slot.startTime.split(':').map(Number);
+    start.setHours(h, m, 0, 0);
+  } else {
+    start.setHours(23, 59, 59, 999); // end-of-day fallback for dates with no start time
+  }
+  return start;
+};
+
+// Is a session's start moment still bookable relative to now (more than 1h away)?
+const isSessionUpcoming = (startMoment, now = new Date()) =>
+  startMoment instanceof Date && !isNaN(startMoment.getTime()) &&
+  startMoment.getTime() - now.getTime() > BOOKING_CUTOFF_MS;
+
+// Does a class have at least one upcoming session a parent could still book? A
+// recurring schedule always generates a next occurrence; a one-off needs a classDate
+// whose start moment is still more than 1h away.
+const hasUpcomingSession = (cls, now = new Date()) => {
+  if ((cls.recurringDays || []).length > 0) return true;
+  return (cls.classDates || []).some(d => isSessionUpcoming(sessionStartMoment(d, cls.timeSlots), now));
+};
+
 // Helper function to transform class for iOS compatibility
 const transformClassForIOS = async (classItem, classDates = null) => {
   try {
@@ -686,6 +722,23 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
         console.log('📍 Radius filter skipped: requesting parent has no coordinates');
       }
 
+      // ---- Sessionless-class filter ----
+      // A class a parent can actually book must have at least one upcoming session
+      // (recurring schedule, or a one-off classDate whose start is still >1h away —
+      // see hasUpcomingSession). Classes with no upcoming sessions have nothing to
+      // book, so drop them here. This runs UNCONDITIONALLY, before the optional day
+      // filter, so a sessionless class never surfaces regardless of day selection.
+      {
+        const now = new Date();
+        const beforeSessionless = classes.length;
+
+        classes = classes.filter(cls => hasUpcomingSession(cls, now));
+
+        if (classes.length !== beforeSessionless) {
+          console.log(`🗓️ Sessionless filter: excluded ${beforeSessionless - classes.length} of ${beforeSessionless} class(es) with no upcoming sessions`);
+        }
+      }
+
       // ---- Day-membership filter ----
       // When the parent selected days, a class only stays if it actually RUNS on one
       // of them. A Mongo $in on recurringDays can't cover one-off classes whose weekday
@@ -704,11 +757,13 @@ router.get('/', optionalAuth, normalizeCategoryInResponse, async (req, res) => {
           const recurring = (cls.recurringDays || []).map(d => d.toLowerCase());
           if (recurring.some(d => selectedDays.includes(d))) return true;
 
-          // One-off class: match if any UPCOMING classDate falls on a selected weekday.
+          // One-off class: match if any UPCOMING session (same >1h cutoff as the
+          // sessionless filter, via sessionStartMoment/isSessionUpcoming) falls on a
+          // selected weekday.
           return (cls.classDates || []).some(d => {
-            const date = new Date(d);
-            if (isNaN(date.getTime()) || date <= now) return false;
-            return selectedDays.includes(dayKeys[date.getDay()]);
+            const start = sessionStartMoment(d, cls.timeSlots);
+            if (!isSessionUpcoming(start, now)) return false;
+            return selectedDays.includes(dayKeys[start.getDay()]);
           });
         });
 

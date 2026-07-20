@@ -1,3 +1,13 @@
+/**
+ * ⚠️ SUPERSEDED by scripts/refresh-seed-dates.js — do not use.
+ *
+ * This script sets classDates to a HARDCODED date (2026-01-10). That was the exact
+ * failure mode we hit: hardcoded dates silently go stale, and once they're in the
+ * past the recommend endpoint drops those classes and the demo looks empty.
+ * refresh-seed-dates.js computes dates RELATIVE to today (dry-run by default), so
+ * re-running just rolls them forward. Kept for history only.
+ */
+
 const mongoose = require('mongoose');
 require('dotenv').config();
 

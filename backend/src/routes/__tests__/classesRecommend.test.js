@@ -74,6 +74,7 @@ function makeClass({
   hasCoords = true,
   recurringDays = ['monday'],
   classDates = [],
+  timeSlots = [{ startTime: '10:00' }],
 }) {
   return {
     _id: id,
@@ -85,7 +86,7 @@ function makeClass({
     maxParticipants: 10,
     recurringDays,
     classDates,
-    timeSlots: [{ startTime: '10:00' }],
+    timeSlots,
     duration: 1,
     provider: { _id: 'prov-1', businessName: 'Test Provider' },
     location: {
@@ -305,5 +306,89 @@ describe('GET /api/classes?recommend=true — day-membership filter', () => {
     expect(namesOf(res)).toEqual(['Liverpool Wednesday Yoga']);
     expect(namesOf(res)).not.toContain('London Wednesday Yoga'); // right day, out of radius
     expect(res.body.pagination.total).toBe(1);
+  });
+});
+
+// A one-off class whose single session starts `mins` minutes from now, with its
+// timeSlot startTime matching so the route's sessionStartMoment reconstructs that
+// same moment. Used to probe the 1-hour booking cutoff precisely.
+function oneOffStartingInMinutes({ id, name, lat, lng, mins }) {
+  const start = new Date();
+  start.setSeconds(0, 0);
+  start.setMinutes(start.getMinutes() + mins);
+  const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+  return makeClass({
+    id, name, lat, lng,
+    recurringDays: [],
+    classDates: [start],
+    timeSlots: [{ startTime }],
+  });
+}
+
+describe('GET /api/classes?recommend=true — sessionless-class filter (1-hour cutoff)', () => {
+  test('a class starting in 2 hours is included (still bookable)', async () => {
+    loginAsParent();
+    seedClasses([
+      oneOffStartingInMinutes({ id: 'soon', name: 'Starts In 2 Hours', lat: 53.41, lng: -2.98, mins: 120 }),
+    ]);
+
+    const res = await search(); // no preferredDays
+
+    expect(res.status).toBe(200);
+    expect(namesOf(res)).toEqual(['Starts In 2 Hours']);
+    expect(res.body.pagination.total).toBe(1);
+  });
+
+  test('a class starting in 30 minutes is excluded (inside the 1-hour cutoff)', async () => {
+    loginAsParent();
+    seedClasses([
+      oneOffStartingInMinutes({ id: 'imminent', name: 'Starts In 30 Minutes', lat: 53.41, lng: -2.98, mins: 30 }),
+    ]);
+
+    const res = await search(); // no preferredDays
+
+    expect(res.status).toBe(200);
+    expect(namesOf(res)).not.toContain('Starts In 30 Minutes');
+    expect(res.body.pagination.total).toBe(0);
+  });
+
+  test('a class whose only classDates are in the past is excluded even with no day filter', async () => {
+    loginAsParent();
+    const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    seedClasses([
+      makeClass({ id: 'live', name: 'Upcoming Recurring Yoga', lat: 53.41, lng: -2.98, recurringDays: ['monday'] }),
+      makeClass({
+        id: 'stale',
+        name: 'Past-only Workshop',
+        lat: 53.41, lng: -2.98,
+        recurringDays: [],
+        classDates: [THIRTY_DAYS_AGO],
+      }),
+    ]);
+
+    const res = await search(); // no preferredDays
+
+    expect(res.status).toBe(200);
+    expect(namesOf(res)).toEqual(['Upcoming Recurring Yoga']);
+    expect(namesOf(res)).not.toContain('Past-only Workshop');
+    expect(res.body.pagination.total).toBe(1);
+  });
+
+  test('cancelled classes are excluded upstream: the recommend query requires isActive & isPublished', async () => {
+    // Cancelling a class sets isActive:false (routes/classes.js PUT /:id/cancel). The
+    // recommend query's base Mongo filter requires isActive:true AND isPublished:true,
+    // so a cancelled class can never match — exclusion happens at the DB, before the
+    // post-query filters. This asserts that safeguard is in place, as found.
+    loginAsParent();
+    seedClasses([
+      makeClass({ id: 'live', name: 'Liverpool Baby Yoga', lat: 53.41, lng: -2.98 }),
+    ]);
+
+    const res = await search();
+
+    expect(res.status).toBe(200);
+    // The recommend path calls Class.find with the base filter first.
+    const recommendFilter = Class.find.mock.calls[0][0];
+    expect(recommendFilter).toMatchObject({ isActive: true, isPublished: true });
   });
 });
