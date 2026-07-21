@@ -146,7 +146,7 @@ struct TermsOfServiceView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 // Meta line
-                Text("Last updated October 15, 2025")
+                Text("Last updated 20 July 2026")
                     .font(.custom("Raleway-Regular", size: 12))
                     .foregroundColor(Color.yugiBodyText)
                     .padding(.bottom, 14)
@@ -182,7 +182,7 @@ struct TermsOfServiceView: View {
     private var providerTermsContent: some View {
         TermsProseSection(
             title: "YUGI Group Limited — Provider Terms & Conditions",
-            content: "Effective Date: 15 October 2025\n\nCompany Name: YUGI Group Limited\nRegistered in England and Wales, Company No. 16318935\nRegistered Address: 167 Sandbanks Road, BH14 8EJ\nContact Email: info@yugiapp.ai"
+            content: "Effective Date: 20 July 2026\n\nCompany Name: YUGI Group Limited\nRegistered in England and Wales, Company No. 16318935\nRegistered Address: 167 Sandbanks Road, BH14 8EJ\nContact Email: info@yugiapp.ai"
         )
         TermsProseSection(
             title: "1. Purpose of the Agreement",
@@ -226,7 +226,7 @@ struct TermsOfServiceView: View {
         )
         TermsProseSection(
             title: "9A. Children's Data",
-            content: "Providers may receive a child's first name and month/year of birth only. This data is for class delivery and safety purposes and must be deleted once no longer needed."
+            content: "Providers may receive a child's first name and age only. This data is for class delivery and safety purposes and must be deleted once no longer needed."
         )
         TermsProseSection(
             title: "10. Termination and Enforcement",
@@ -266,7 +266,7 @@ struct TermsOfServiceView: View {
     private var parentTermsContent: some View {
         TermsProseSection(
             title: "YUGI Group Limited — Parent / Guardian Terms & Conditions",
-            content: "Effective Date: 15 October 2025\n\nCompany Name: YUGI Group Limited\nRegistered in England and Wales, Company No. 16318935\nRegistered Address: 167 Sandbanks Road, BH14 8EJ\nContact Email: info@yugiapp.ai"
+            content: "Effective Date: 20 July 2026\n\nCompany Name: YUGI Group Limited\nRegistered in England and Wales, Company No. 16318935\nRegistered Address: 167 Sandbanks Road, BH14 8EJ\nContact Email: info@yugiapp.ai"
         )
         TermsProseSection(
             title: "1. About YUGI",
@@ -298,7 +298,7 @@ struct TermsOfServiceView: View {
         )
         TermsProseSection(
             title: "8. Data and Privacy",
-            content: "By booking a class, you consent to YUGI sharing your name, email, and your child's first name and month/year of birth with the provider for class delivery. Data is handled according to our Privacy Policy."
+            content: "By booking a class, you consent to YUGI sharing your name, email, and your child's first name and age with the provider for class delivery. Data is handled according to our Privacy Policy."
         )
         TermsProseSection(
             title: "9. AI Usage",
@@ -374,13 +374,89 @@ struct TermsOfServiceView: View {
     }
 }
 
+// MARK: - Shared Privacy Policy content (single source of truth)
+//
+// Both PrivacyPolicyView (current design) and the legacy TermsAgreementScreen
+// privacy tab render from this one array, so the two on-screen copies cannot
+// drift apart again. Each view maps the sections into its own section style
+// (TermsProseSection vs TermsLegalSection) — only the presentation differs.
+
+struct PrivacyPolicySection: Identifiable {
+    let id = UUID()
+    let title: String
+    let content: String
+}
+
+enum PrivacyPolicyContent {
+    static let lastUpdated = "Last updated 20 July 2026"
+
+    static let sections: [PrivacyPolicySection] = [
+        PrivacyPolicySection(
+            title: "Effective Date and Company Details",
+            content: "Effective Date: 20 July 2026\n\nCompany Name: YUGI Group Limited\nRegistered in England and Wales, Company No. 16318935\nICO Registration Number: ZC144838\nRegistered Address: 167 Sandbanks Road, BH14 8EJ\nContact Email: info@yugiapp.ai"
+        ),
+        PrivacyPolicySection(
+            title: "1. Introduction",
+            content: "YUGI Group Limited (\"YUGI\", \"we\", \"our\", or \"us\") complies with the United Kingdom General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018. This Privacy Policy applies to all users of the YUGI platform, including parents, guardians, and providers."
+        ),
+        PrivacyPolicySection(
+            title: "2. Data We Collect",
+            content: "We may collect:\n- Name and contact details.\n- Booking and payment information.\n- Child's first name and age.\n- Provider details (class descriptions, DBS verification).\n- Technical data such as IP address, device type, and usage."
+        ),
+        PrivacyPolicySection(
+            title: "3. How We Use Your Data",
+            content: "We use data to:\n- Facilitate bookings, payments, and communication.\n- Share necessary data with providers for class delivery.\n- Ensure safety and safeguarding.\n- Improve recommendations using AI.\n- Detect and prevent fraud."
+        ),
+        PrivacyPolicySection(
+            title: "4. Third-Party Services",
+            content: "We share data with trusted service providers strictly as needed to run YUGI:\n\nRailway: application hosting.\nMongoDB Atlas: secure database storage.\nAmazon Web Services (S3): file and document storage.\nStripe: payment processing. YUGI never stores card details.\nFirebase (Google): authentication and analytics.\nResend / Amazon SES: transactional email, such as booking confirmations, which include your child's first name and age.\nGoogle Places, Foursquare, OpenWeather and Anthropic: venue information and accessibility insights, using venue name and address only, with no child or account data.\n\nSome providers process data outside the UK/EEA. Where they do, transfers are protected by appropriate safeguards such as the UK IDTA or Standard Contractual Clauses.\n\nStripe Privacy Policy: https://stripe.com/gb/privacy"
+        ),
+        PrivacyPolicySection(
+            title: "5. AI Usage",
+            content: "YUGI uses AI (including Anthropic) for venue intelligence, recommendations, and fraud detection. Only venue name and address are sent for enrichment; personal data is anonymised or pseudonymised where possible."
+        ),
+        PrivacyPolicySection(
+            title: "6. Data Retention",
+            content: "Booking records (including your child's first name and age) are retained for 6 years for legal, financial and safeguarding compliance, then deleted. Venue information is automatically deleted 90 days after it is generated. Operational logs contain only technical identifiers and exclude personal and child data."
+        ),
+        PrivacyPolicySection(
+            title: "7. Data Security",
+            content: "Encryption and access controls protect all personal data. Only authorised staff and verified service providers have access."
+        ),
+        PrivacyPolicySection(
+            title: "8. Your Rights",
+            content: "Under UK GDPR, you can:\n- Access your data.\n- Request correction or deletion.\n- Withdraw consent.\n- Request data portability.\n\nContact info@yugiapp.ai to exercise these rights."
+        ),
+        PrivacyPolicySection(
+            title: "9. Events Outside Our Control",
+            content: "YUGI is not responsible for delays or data issues caused by events beyond reasonable control."
+        ),
+        PrivacyPolicySection(
+            title: "10. Enforcement",
+            content: "Misuse of data may lead to account suspension or removal. YUGI will report serious breaches to the ICO as required."
+        ),
+        PrivacyPolicySection(
+            title: "11. Governing Law",
+            content: "This policy is governed by the laws of England and Wales, with exclusive jurisdiction in the courts of England and Wales."
+        ),
+        PrivacyPolicySection(
+            title: "12. Updates",
+            content: "We may update this policy. Continued use of YUGI indicates acceptance of the latest version."
+        ),
+        PrivacyPolicySection(
+            title: "13. Contact",
+            content: "For privacy questions or data rights, contact:\nYUGI Group Limited\nICO Registration Number: ZC144838\nEmail: info@yugiapp.ai\nAddress: 167 Sandbanks Road, BH14 8EJ"
+        ),
+    ]
+}
+
 // MARK: - Privacy Policy View
 
 struct PrivacyPolicyView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Last updated October 15, 2025")
+                Text(PrivacyPolicyContent.lastUpdated)
                     .font(.custom("Raleway-Regular", size: 12))
                     .foregroundColor(Color.yugiBodyText)
                     .padding(.bottom, 14)
@@ -392,62 +468,9 @@ struct PrivacyPolicyView: View {
                     .lineSpacing(5)
                     .padding(.bottom, 20)
 
-                TermsProseSection(
-                    title: "Effective Date and Company Details",
-                    content: "Effective Date: 15 October 2025\n\nCompany Name: YUGI Group Limited\nRegistered in England and Wales, Company No. 16318935\nRegistered Address: 167 Sandbanks Road, BH14 8EJ\nContact Email: info@yugiapp.ai"
-                )
-                TermsProseSection(
-                    title: "1. Introduction",
-                    content: "YUGI Group Limited (\"YUGI\", \"we\", \"our\", or \"us\") complies with the United Kingdom General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018. This Privacy Policy applies to all users of the YUGI platform, including parents, guardians, and providers."
-                )
-                TermsProseSection(
-                    title: "2. Data We Collect",
-                    content: "We may collect:\n- Name and contact details.\n- Booking and payment information.\n- Child's first name and month/year of birth.\n- Provider details (class descriptions, DBS verification).\n- Technical data such as IP address, device type, and usage."
-                )
-                TermsProseSection(
-                    title: "3. How We Use Your Data",
-                    content: "We use data to:\n- Facilitate bookings, payments, and communication.\n- Share necessary data with providers for class delivery.\n- Ensure safety and safeguarding.\n- Improve recommendations using AI.\n- Detect and prevent fraud."
-                )
-                TermsProseSection(
-                    title: "4. Third-Party Services",
-                    content: "- AWS and MongoDB Atlas host and store data securely within the UK/EEA.\n- Firebase (by Google) provides authentication and analytics.\n- Stripe processes all payments; YUGI does not store card details.\n\nStripe Privacy Policy: stripe.com/gb/privacy"
-                )
-                TermsProseSection(
-                    title: "5. AI Usage",
-                    content: "YUGI uses AI for recommendations, venue intelligence, and fraud detection. Data is anonymised or pseudonymised where possible."
-                )
-                TermsProseSection(
-                    title: "6. Data Retention",
-                    content: "- Child data is deleted within 30 days after a class or dispute resolution.\n- Account data is retained for 6 years for legal compliance."
-                )
-                TermsProseSection(
-                    title: "7. Data Security",
-                    content: "Encryption and access controls protect all personal data. Only authorised staff and verified service providers have access."
-                )
-                TermsProseSection(
-                    title: "8. Your Rights",
-                    content: "Under UK GDPR, you can:\n- Access your data.\n- Request correction or deletion.\n- Withdraw consent.\n- Request data portability.\n\nContact info@yugiapp.ai to exercise these rights."
-                )
-                TermsProseSection(
-                    title: "9. Events Outside Our Control",
-                    content: "YUGI is not responsible for delays or data issues caused by events beyond reasonable control."
-                )
-                TermsProseSection(
-                    title: "10. Enforcement",
-                    content: "Misuse of data may lead to account suspension or removal. YUGI will report serious breaches to the ICO as required."
-                )
-                TermsProseSection(
-                    title: "11. Governing Law",
-                    content: "This policy is governed by the laws of England and Wales, with exclusive jurisdiction in the courts of England and Wales."
-                )
-                TermsProseSection(
-                    title: "12. Updates",
-                    content: "We may update this policy. Continued use of YUGI indicates acceptance of the latest version."
-                )
-                TermsProseSection(
-                    title: "13. Contact",
-                    content: "For privacy questions or data rights, contact:\nYUGI Group Limited\nEmail: info@yugiapp.ai\nAddress: 167 Sandbanks Road, BH14 8EJ"
-                )
+                ForEach(PrivacyPolicyContent.sections) { section in
+                    TermsProseSection(title: section.title, content: section.content)
+                }
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 40)
@@ -579,7 +602,7 @@ struct TermsAgreementScreen: View {
                         ScrollView {
                             VStack(alignment: .leading, spacing: 24) {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Last Updated: October 15, 2025")
+                                    Text("Last Updated: 20 July 2026")
                                         .font(.system(size: 14))
                                         .foregroundColor(Color.yugiGray.opacity(0.7))
 
@@ -625,12 +648,12 @@ struct TermsAgreementScreen: View {
 
                                 TermsLegalSection(
                                     title: "8. Data and Privacy",
-                                    content: "8.1 YUGI handles all personal data in accordance with the United Kingdom General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.\n\n8.2 By booking a class, you consent to YUGI sharing your name, email address, and your child's first name, month/year of birth, and any relevant health information with the booked provider for class delivery and safety purposes."
+                                    content: "8.1 YUGI handles all personal data in accordance with the United Kingdom General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.\n\n8.2 By booking a class, you consent to YUGI sharing your name, email address, and your child's first name, age, and any relevant health information with the booked provider for class delivery and safety purposes."
                                 )
 
                                 TermsLegalSection(
                                     title: "8A. Children's Personal Data",
-                                    content: "8A.1 You confirm you are the parent or legal guardian of the child whose data you provide.\n\n8A.2 You consent to YUGI collecting, storing, and sharing your child's first name, month/year of birth, and any relevant health information solely for the purpose of class delivery, attendance, and safety.\n\n8A.3 This data will be securely stored, shared only with the booked provider, and deleted within 30 days after the class or resolution of any disputes.\n\n8A.4 This data will never be used for marketing without your explicit consent."
+                                    content: "8A.1 You confirm you are the parent or legal guardian of the child whose data you provide.\n\n8A.2 You consent to YUGI collecting, storing, and sharing your child's first name, age, and any relevant health information solely for the purpose of class delivery, attendance, and safety.\n\n8A.3 This data will be securely stored, shared only with the booked provider, and retained as part of your booking records for 6 years for legal, financial and safeguarding compliance, after which it is deleted.\n\n8A.4 This data will never be used for marketing without your explicit consent."
                                 )
 
                                 TermsLegalSection(
@@ -738,64 +761,17 @@ struct TermsAgreementScreen: View {
                                     Text("YUGI Group Limited - Privacy Policy")
                                         .font(.system(size: 24, weight: .bold))
                                         .foregroundColor(Color.yugiGray)
+
+                                    Text(PrivacyPolicyContent.lastUpdated)
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Color.yugiGray.opacity(0.7))
                                 }
 
-                                TermsLegalSection(
-                                    title: "Effective Date and Company Details",
-                                    content: "Effective Date: 15 October 2025\n\nCompany Name: YUGI Group Limited\nRegistered in England and Wales, Company No. 16318935\nRegistered Address: 167 Sandbanks Road, BH14 8EJ\nContact Email: info@yugiapp.ai"
-                                )
-                                TermsLegalSection(
-                                    title: "1. Introduction",
-                                    content: "YUGI Group Limited (\"YUGI\", \"we\", \"our\", or \"us\") complies with the United Kingdom General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018. This Privacy Policy applies to all users of the YUGI platform, including parents, guardians, and providers."
-                                )
-                                TermsLegalSection(
-                                    title: "2. Data We Collect",
-                                    content: "We may collect:\n- Name and contact details.\n- Booking and payment information.\n- Child's first name and month/year of birth.\n- Provider details (class descriptions, DBS verification).\n- Technical data such as IP address, device type, and usage."
-                                )
-                                TermsLegalSection(
-                                    title: "3. How We Use Your Data",
-                                    content: "We use data to:\n- Facilitate bookings, payments, and communication.\n- Share necessary data with providers for class delivery.\n- Ensure safety and safeguarding.\n- Improve recommendations using AI.\n- Detect and prevent fraud."
-                                )
-                                TermsLegalSection(
-                                    title: "4. Third-Party Services",
-                                    content: "- AWS and MongoDB Atlas host and store data securely within the UK/EEA.\n- Firebase (by Google) provides authentication and analytics.\n- Stripe processes all payments; YUGI does not store card details.\n\nStripe Privacy Policy: https://stripe.com/gb/privacy"
-                                )
-                                TermsLegalSection(
-                                    title: "5. AI Usage",
-                                    content: "YUGI uses AI for recommendations, venue intelligence, and fraud detection. Data is anonymised or pseudonymised where possible."
-                                )
-                                TermsLegalSection(
-                                    title: "6. Data Retention",
-                                    content: "- Child data is deleted within 30 days after a class or dispute resolution.\n- Account data is retained for 6 years for legal compliance."
-                                )
-                                TermsLegalSection(
-                                    title: "7. Data Security",
-                                    content: "Encryption and access controls protect all personal data. Only authorised staff and verified service providers have access."
-                                )
-                                TermsLegalSection(
-                                    title: "8. Your Rights",
-                                    content: "Under UK GDPR, you can:\n- Access your data.\n- Request correction or deletion.\n- Withdraw consent.\n- Request data portability.\n\nContact info@yugiapp.ai to exercise these rights."
-                                )
-                                TermsLegalSection(
-                                    title: "9. Events Outside Our Control",
-                                    content: "YUGI is not responsible for delays or data issues caused by events beyond reasonable control."
-                                )
-                                TermsLegalSection(
-                                    title: "10. Enforcement",
-                                    content: "Misuse of data may lead to account suspension or removal. YUGI will report serious breaches to the ICO as required."
-                                )
-                                TermsLegalSection(
-                                    title: "11. Governing Law",
-                                    content: "This policy is governed by the laws of England and Wales, with exclusive jurisdiction in the courts of England and Wales."
-                                )
-                                TermsLegalSection(
-                                    title: "12. Updates",
-                                    content: "We may update this policy. Continued use of YUGI indicates acceptance of the latest version."
-                                )
-                                TermsLegalSection(
-                                    title: "13. Contact",
-                                    content: "For privacy questions or data rights, contact:\nYUGI Group Limited\nEmail: info@yugiapp.ai\nAddress: 167 Sandbanks Road, BH14 8EJ"
-                                )
+                                // Renders the shared single source of truth so this legacy
+                                // tab can never drift from PrivacyPolicyView again.
+                                ForEach(PrivacyPolicyContent.sections) { section in
+                                    TermsLegalSection(title: section.title, content: section.content)
+                                }
                             }
                             .padding(20)
                         }
