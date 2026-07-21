@@ -253,10 +253,10 @@ struct PersonalInformationScreen: View {
 
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Personalised recommendations")
+                    Text("Help improve YUGI")
                         .font(.custom("Raleway-Regular", size: 15))
                         .foregroundColor(Color.yugiSoftBlack)
-                    Text("We'll tailor suggestions to your family")
+                    Text("Lets us learn which classes and venues parents find useful. Turn this off and we'll stop collecting that activity.")
                         .font(.custom("Raleway-Regular", size: 12))
                         .foregroundColor(Color.yugiBodyText)
                 }
